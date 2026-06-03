@@ -1,0 +1,32 @@
+### Fetch room by name
+GET http://127.0.0.1:8000/api/room/fetch/name/Howard%20Hughes
+Accept: application/json
+
+### Fetch all rooms
+GET http://127.0.0.1:8000/api/room/fetch/all
+Accept: application/json
+
+
+### CREATE RESERVATION TEST
+POST http://127.0.0.1:8000/api/reservation/create/Youri Gargarine
+Content-Type: application/json
+
+{
+    "start": "2026-06-02 16:30",
+    "end": "2026-06-02 17:30",
+    "title": "Just a Test",
+    "reserved_by": "Adrien Dumontet"
+}
+
+> {%
+    let res = response.body;
+
+    let reservationUid = res.reservation.uid;
+
+    client.global.set("reservation_uid", reservationUid);
+%}
+
+### REMOVE RESERVATION TEST
+POST http://127.0.0.1:8000/api/reservation/remove/Youri%20Gargarine/{{reservation_uid}}
+
+###
