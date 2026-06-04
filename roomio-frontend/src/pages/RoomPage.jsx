@@ -34,6 +34,7 @@ import {
     renderRoomTimeline
 } from "../utils/timelineUtils";
 import { renderFloorPlan } from "../utils/floorPlan";
+import colors from "../config/colorTheme";
 
 
 /* Génère les 7 prochains jours à partir d'aujourd'hui */
@@ -179,15 +180,15 @@ export default function RoomPage() {
 
     if (!room)
         return (
-            <Flex minH="100vh" align="center" justify="center" bg="#1A202C">
-                <Spinner size="xl" color="#9B6A6C" />
-                <Text color="#424B54" ml="10px">Chargement...</Text>
+            <Flex minH="100vh" align="center" justify="center" bg={colors.PAGE_BG}>
+                <Spinner size="xl" color={colors.SPINNER_COLOR} />
+                <Text color={colors.TEXT_PRIMARY} ml="10px">Chargement...</Text>
             </Flex>
         );
 
 
     return (
-        <Box minH="100vh" bg="#1A202C">
+        <Box minH="100vh" bg={colors.PAGE_BG}>
 
             {/* Titre + bouton retour */}
             <Box position="relative" display="flex" justifyContent="center" alignItems="center" h="120px">
@@ -196,32 +197,32 @@ export default function RoomPage() {
                     left="20px"
                     top="50%"
                     transform="translateY(-50%)"
-                    bg="#93A8AC"
-                    color="white"
+                    bg={colors.BUTTON_BACK_BG}
+                    color={colors.BUTTON_BACK_COLOR}
                     borderRadius="full"
                     p={2}
                     minW="40px"
                     h="40px"
-                    _hover={{ bg: "#9B6A6C" }}
+                    _hover={{ bg: colors.BUTTON_BACK_HOVER }}
                     onClick={() => navigate("/")}
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.BUTTON_BACK_COLOR} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 12H5m7-7-7 7 7 7"/>
                     </svg>
                 </Button>
-                <Heading size="5xl" color="#424B54" textAlign="center" fontFamily="'Anta', sans-serif" letterSpacing="widest" fontWeight="extrabold">
+                <Heading size="5xl" color={colors.TEXT_PRIMARY} textAlign="center" fontFamily="'Anta', sans-serif" letterSpacing="widest" fontWeight="extrabold">
                     RoomIO
                 </Heading>
             </Box>
 
-            <Box h="4px" bg="#424B54" opacity="0.3" mx={4} />
+            <Box h="4px" bg={colors.DIVIDER} opacity="0.3" mx={4} />
 
             {/* En-tête : nom de la salle + horloge */}
             <Flex justify="space-between" align="center" p={4}>
                 <Box>
-                    <Heading size="4xl" color="#E2E8F0">{room.name}</Heading>
+                    <Heading size="4xl" color={colors.TEXT_ON_DARK}>{room.name}</Heading>
                 </Box>
-                <Text fontSize="xl" color="#93A8AC">{time}</Text>
+                <Text fontSize="xl" color={colors.CARD_BORDER}>{time}</Text>
             </Flex>
 
             {/* Sélecteur de jour (semaine) */}
@@ -231,13 +232,13 @@ export default function RoomPage() {
                         key={i}
                         px={3}
                         py={2}
-                        bg={i === selectedDay ? "#9B6A6C" : "#93A8AC"}
-                        color="white"
+                        bg={i === selectedDay ? colors.DAY_PILL_SELECTED : colors.DAY_PILL_DEFAULT}
+                        color={colors.DAY_PILL_TEXT}
                         borderRadius="md"
                         cursor="pointer"
                         onClick={() => setSelectedDay(i)}
                         transition="0.2s"
-                        _hover={{bg: "#9B6A6C"}}
+                        _hover={{bg: colors.DAY_PILL_HOVER}}
                     >
                         <Text fontSize="sm">
                             {d.toLocaleDateString("fr-FR", {weekday: "short"})}
@@ -247,8 +248,8 @@ export default function RoomPage() {
             </HStack>
 
             {/* Timeline + réservation + infos salle */}
-            <Box mx="auto" w="95%" bg="#FFFFFF" borderRadius="xl" border="1px solid" borderColor="#93A8AC" p={6} mb={6} color="#424B54">
-                <Badge mt={2} bg={getStatusBg(getRoomStatus(room.reservations))} color="white" px={2.5} py={0.5} borderRadius="md">
+            <Box mx="auto" w="95%" bg={colors.CARD_BG} borderRadius="xl" border="1px solid" borderColor={colors.CARD_BORDER} p={6} mb={6} color={colors.TEXT_PRIMARY}>
+                <Badge mt={2} bg={getStatusBg(getRoomStatus(room.reservations))} color={colors.BADGE_TEXT} px={2.5} py={0.5} borderRadius="md">
                     {getRoomStatus(room.reservations)}
                 </Badge>
 
@@ -262,15 +263,15 @@ export default function RoomPage() {
 
                     <Drawer.Root open={isOpen} onOpenChange={(e) => setOpen(e.open)}>
                         <Drawer.Trigger asChild>
-                            <Button bg="#9B6A6C" color="white" size="sm" _hover={{ bg: "#8A5B5D" }}>
+                            <Button bg={colors.BUTTON_PRIMARY_BG} color={colors.BUTTON_PRIMARY_COLOR} size="sm" _hover={{ bg: colors.BUTTON_PRIMARY_HOVER }}>
                                 Reserver
                             </Button>
                         </Drawer.Trigger>
 
                         <Portal>
                             <Drawer.Positioner>
-                                <Drawer.Body color="#424B54" position="absolute" w="500px" h="auto" p={6} top="50%" left="50%" transform="translate(-50%, -50%)"
-                                             bg="#FFFFFF" border="2px solid" borderColor="#93A8AC" rounded="xl" boxShadow="2xl">
+                                <Drawer.Body color={colors.TEXT_PRIMARY} position="absolute" w="500px" h="auto" p={6} top="50%" left="50%" transform="translate(-50%, -50%)"
+                                             bg={colors.CARD_BG} border="2px solid" borderColor={colors.CARD_BORDER} rounded="xl" boxShadow="2xl">
                                     <Flex justify="flex-end" mb={2}>
                                         <CloseButton onClick={() => setOpen(false)} />
                                     </Flex>
@@ -280,41 +281,41 @@ export default function RoomPage() {
                                             <Text fontSize="sm" mb={2} fontWeight="bold">Titre</Text>
                                             <Input placeholder="Ex: Réunion équipe" value={title}
                                                    onChange={(e) => setTitle(e.target.value)}
-                                                   bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                                                   _focus={{borderColor: "#9B6A6C", outline: "none"}}
-                                                   _placeholder={{color: "gray.400"}} />
+                                                   bg={colors.INPUT_BG} border="1px solid" borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR}
+                                                   _focus={{borderColor: colors.INPUT_FOCUS_BORDER, outline: "none"}}
+                                                   _placeholder={{color: colors.INPUT_PLACEHOLDER}} />
                                         </Box>
                                         <Box w="100%">
                                             <Text fontSize="sm" mb={2} fontWeight="bold">Nom</Text>
                                             <Input placeholder="Votre nom" value={user}
                                                    onChange={(e) => setUser(e.target.value)}
-                                                   bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                                                   _focus={{borderColor: "#9B6A6C", outline: "none"}}
-                                                   _placeholder={{color: "gray.400"}} />
+                                                   bg={colors.INPUT_BG} border="1px solid" borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR}
+                                                   _focus={{borderColor: colors.INPUT_FOCUS_BORDER, outline: "none"}}
+                                                   _placeholder={{color: colors.INPUT_PLACEHOLDER}} />
                                         </Box>
                                         <Box w="100%">
                                             <Text fontSize="sm" mb={2} fontWeight="bold">Date</Text>
                                             <Input type="date" value={startDate}
                                                    onChange={(e) => setStartDate(e.target.value)}
-                                                   bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                                                   _focus={{borderColor: "#9B6A6C", outline: "none"}} />
+                                                   bg={colors.INPUT_BG} border="1px solid" borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR}
+                                                   _focus={{borderColor: colors.INPUT_FOCUS_BORDER, outline: "none"}} />
                                         </Box>
                                         <Box w="100%">
                                             <Text fontSize="sm" mb={2} fontWeight="bold">Heure de début</Text>
                                             <Input type="time" value={startTime}
                                                    onChange={handleStartTimeChange}
-                                                   bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                                                   _focus={{borderColor: "#9B6A6C", outline: "none"}} />
+                                                   bg={colors.INPUT_BG} border="1px solid" borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR}
+                                                   _focus={{borderColor: colors.INPUT_FOCUS_BORDER, outline: "none"}} />
                                         </Box>
                                         <Box w="100%">
                                             <Text fontSize="sm" mb={2} fontWeight="bold">Heure de fin</Text>
                                             <Input type="time" value={endTime}
                                                    onChange={(e) => setEndTime(e.target.value)}
-                                                   bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                                                   _focus={{borderColor: "#9B6A6C", outline: "none"}} />
+                                                   bg={colors.INPUT_BG} border="1px solid" borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR}
+                                                   _focus={{borderColor: colors.INPUT_FOCUS_BORDER, outline: "none"}} />
                                         </Box>
-                                        <Button bg="#9B6A6C" color="white" size="md" w="100%"
-                                                _hover={{ bg: "#8A5B5D" }} onClick={handleSubmit}>
+                                        <Button bg={colors.BUTTON_PRIMARY_BG} color={colors.BUTTON_PRIMARY_COLOR} size="md" w="100%"
+                                                _hover={{ bg: colors.BUTTON_PRIMARY_HOVER }} onClick={handleSubmit}>
                                             Creer
                                         </Button>
                                     </VStack>
@@ -329,7 +330,7 @@ export default function RoomPage() {
 
                 {/* Équipements et caractéristiques de la salle */}
                 {room.elements && (
-                <Box mt={6} pt={6} borderTop="1px solid" borderColor="#93A8AC">
+                <Box mt={6} pt={6} borderTop="1px solid" borderColor={colors.CARD_BORDER}>
                     <Flex flexWrap="wrap" gap={4} align="center">
                         {room.size === "large" && <Flex align="center" gap={2}><Text fontSize="xl">🏢</Text><Text fontSize="sm">Grande salle</Text></Flex>}
                         {room.size === "medium" && <Flex align="center" gap={2}><Text fontSize="xl">🏠</Text><Text fontSize="sm">Salle moyenne</Text></Flex>}
@@ -344,34 +345,34 @@ export default function RoomPage() {
             </Box>
 
             {/* Plan du bâtiment */}
-            <Box mx="auto" w="95%" bg="#FFFFFF" borderRadius="xl" border="1px solid" borderColor="#93A8AC" boxShadow="lg" p={6} mb={6} mt={6} color="#424B54">
+            <Box mx="auto" w="95%" bg={colors.CARD_BG} borderRadius="xl" border="1px solid" borderColor={colors.CARD_BORDER} boxShadow="lg" p={6} mb={6} mt={6} color={colors.TEXT_PRIMARY}>
                 {renderFloorPlan([room], room.name)}
             </Box>
 
             {/* Modale de confirmation de suppression */}
             {reservationToDelete && (
                 <Flex position="fixed" top="0" left="0" right="0" bottom="0"
-                      bg="rgba(15, 23, 42, 0.4)" backdropFilter="blur(4px)"
+                      bg={colors.OVERLAY} backdropFilter="blur(4px)"
                       justify="center" align="center" zIndex={100}>
-                    <Box bg="#FFFFFF" w="440px" p={6} borderRadius="xl" border="1px solid" borderColor="#93A8AC" boxShadow="2xl" position="relative">
-                        <CloseButton position="absolute" top="16px" right="16px" color="#424B54"
+                    <Box bg={colors.CARD_BG} w="440px" p={6} borderRadius="xl" border="1px solid" borderColor={colors.CARD_BORDER} boxShadow="2xl" position="relative">
+                        <CloseButton position="absolute" top="16px" right="16px" color={colors.TEXT_PRIMARY}
                                      onClick={() => { setReservationToDelete(null); setDeleteConfirmText(""); }} />
-                        <Heading size="md" color="#424B54" mb={4}>Supprimer la réservation</Heading>
-                        <Text fontSize="sm" color="#424B54" mb={6}>
+                        <Heading size="md" color={colors.TEXT_PRIMARY} mb={4}>Supprimer la réservation</Heading>
+                        <Text fontSize="sm" color={colors.TEXT_PRIMARY} mb={6}>
                             Voulez-vous vraiment supprimer la réunion <strong>{reservationToDelete.title}</strong> de <strong>{reservationToDelete.reserved_by}</strong> ?
                             <br /><br />
                             Pour éviter les erreurs, veuillez saisir <strong>"Oui"</strong> ci-dessous :
                         </Text>
                         <Input placeholder='Écrivez "Oui"' value={deleteConfirmText}
                                onChange={(e) => setDeleteConfirmText(e.target.value)} mb={6}
-                               bg="#FFFFFF" border="1px solid" borderColor="#93A8AC" color="#424B54"
-                               _focus={{ borderColor: "#DC2626", outline: "none" }} />
+                               bg={colors.CARD_BG} border="1px solid" borderColor={colors.CARD_BORDER} color={colors.TEXT_PRIMARY}
+                               _focus={{ borderColor: colors.DANGER_FOCUS, outline: "none" }} />
                         <HStack justify="end" spacing={3}>
-                            <Button variant="outline" borderColor="#93A8AC" color="#424B54"
+                            <Button variant="outline" borderColor={colors.BUTTON_OUTLINE_BORDER} color={colors.BUTTON_OUTLINE_COLOR}
                                     onClick={() => { setReservationToDelete(null); setDeleteConfirmText(""); }}>
                                 Annuler
                             </Button>
-                            <Button bg="#DC2626" color="white" _hover={{ bg: "#B91C1C" }}
+                            <Button bg={colors.DANGER} color={colors.BADGE_TEXT} _hover={{ bg: colors.DANGER_HOVER }}
                                     disabled={deleteConfirmText !== "Oui"} onClick={handleDeleteConfirm}>
                                 Supprimer
                             </Button>

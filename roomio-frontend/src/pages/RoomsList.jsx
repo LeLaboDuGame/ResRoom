@@ -23,6 +23,7 @@ import {
     renderRoomTimeline
 } from "../utils/timelineUtils";
 import { renderFloorPlan } from "../utils/floorPlan";
+import colors from "../config/colorTheme";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const FILTER_INACTIVITY_MIN = 15;
@@ -119,8 +120,8 @@ export default function RoomsList() {
 
     if (loading) {
         return (
-            <Flex minH="100vh" justify="center" align="center" bg="#1A202C" color="#E2E8F0">
-                <Spinner size="xl" color="#9B6A6C" />
+            <Flex minH="100vh" justify="center" align="center" bg={colors.PAGE_BG} color={colors.TEXT_ON_DARK}>
+                <Spinner size="xl" color={colors.SPINNER_COLOR} />
                 <Text ml="10px">Chargement...</Text>
             </Flex>
         );
@@ -158,30 +159,15 @@ export default function RoomsList() {
     const highlightedRooms = hasActiveFilters ? new Set(filteredRooms.map(r => r.name)) : null;
 
     return (
-        <Box minH="100vh" bg="#1A202C">
-
-            {/* Horloge */}
-            <Text color="#424B54" fontSize="xl" position="absolute" right="10px" top="10px" fontWeight="semibold">
-                {time}
-            </Text>
-
-            {/* Titre */}
-            <Box display="flex" justifyContent="center" alignItems="center" h="120px">
-                <Heading size="5xl" color="#424B54" textAlign="center" fontFamily="'Anta', sans-serif" letterSpacing="widest" fontWeight="extrabold">
-                    RoomIO
-                </Heading>
-            </Box>
-
-            <Box h="4px" bg="#424B54" opacity="0.3" mx={4} />
-
+        <Box minH="100vh" bg={colors.PAGE_BG}>
             <Box p={6}>
                 {/* Panneau de filtres + timeline */}
-                <Box bg="#FFFFFF" borderRadius="xl" border="1px solid" borderColor="#93A8AC" boxShadow="lg" p={6} mb={6} mt={6} color="#424B54">
+                <Box bg={colors.CARD_BG} borderRadius="xl" border="1px solid" borderColor={colors.CARD_BORDER} boxShadow="lg" p={6} mb={6} mt={6} color={colors.TEXT_PRIMARY}>
                     {/* Filtres */}
-                    <Flex flexWrap="wrap" gap={4} align="end" mb={6} pb={6} borderBottom="1px solid" borderColor="#93A8AC">
+                    <Flex flexWrap="wrap" gap={4} align="end" mb={6} pb={6} borderBottom="1px solid" borderColor={colors.CARD_BORDER}>
                         <Box>
-                            <Text fontSize="xs" fontWeight="bold" mb={1} color="#424B54">Taille Min.</Text>
-                            <select value={filterSize} onChange={(e) => setFilterSize(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid #93A8AC", background: "#FFFFFF", color: "#424B54", fontSize: "14px" }}>
+                            <Text fontSize="xs" fontWeight="bold" mb={1} color={colors.TEXT_PRIMARY}>Taille Min.</Text>
+                            <select value={filterSize} onChange={(e) => setFilterSize(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: `1px solid ${colors.INPUT_BORDER}`, background: colors.INPUT_BG, color: colors.INPUT_COLOR, fontSize: "14px" }}>
                                 <option value="">Toutes</option>
                                 <option value="small">Petite</option>
                                 <option value="medium">Moyenne</option>
@@ -189,15 +175,15 @@ export default function RoomsList() {
                             </select>
                         </Box>
                         <Box>
-                            <Text fontSize="xs" fontWeight="bold" mb={1} color="#424B54">Capacité Min.</Text>
-                            <Input size="sm" type="number" min={0} value={filterCapacity} onChange={(e) => setFilterCapacity(Number(e.target.value))} bg="#FFFFFF" borderColor="#93A8AC" color="#424B54" w="80px" />
+                            <Text fontSize="xs" fontWeight="bold" mb={1} color={colors.TEXT_PRIMARY}>Capacité Min.</Text>
+                            <Input size="sm" type="number" min={0} value={filterCapacity} onChange={(e) => setFilterCapacity(Number(e.target.value))} bg={colors.INPUT_BG} borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR} w="80px" />
                         </Box>
                         <Box>
-                            <Text fontSize="xs" fontWeight="bold" mb={1} color="#424B54">Dispo à</Text>
+                            <Text fontSize="xs" fontWeight="bold" mb={1} color={colors.TEXT_PRIMARY}>Dispo à</Text>
                             <HStack gap={2}>
-                                <Input size="sm" type="time" value={filterTime} onChange={(e) => setFilterTime(e.target.value)} bg="#FFFFFF" borderColor="#93A8AC" color="#424B54" />
-                                <Text fontSize="sm" color="#424B54">pour</Text>
-                                <select value={filterDuration} onChange={(e) => setFilterDuration(Number(e.target.value))} style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid #93A8AC", background: "#FFFFFF", color: "#424B54", fontSize: "14px" }}>
+                                <Input size="sm" type="time" value={filterTime} onChange={(e) => setFilterTime(e.target.value)} bg={colors.INPUT_BG} borderColor={colors.INPUT_BORDER} color={colors.INPUT_COLOR} />
+                                <Text fontSize="sm" color={colors.TEXT_PRIMARY}>pour</Text>
+                                <select value={filterDuration} onChange={(e) => setFilterDuration(Number(e.target.value))} style={{ padding: "4px 8px", borderRadius: "6px", border: `1px solid ${colors.INPUT_BORDER}`, background: colors.INPUT_BG, color: colors.INPUT_COLOR, fontSize: "14px" }}>
                                     <option value={15}>15 min</option>
                                     <option value={30}>30 min</option>
                                     <option value={60}>1h</option>
@@ -209,22 +195,22 @@ export default function RoomsList() {
                             </HStack>
                         </Box>
                         <Box>
-                            <Text fontSize="xs" fontWeight="bold" mb={1} color="#424B54">Équipement</Text>
+                            <Text fontSize="xs" fontWeight="bold" mb={1} color={colors.TEXT_PRIMARY}>Équipement</Text>
                             <HStack gap={3}>
                                 <Checkbox.Root size="sm" checked={filterTv} onCheckedChange={(e) => setFilterTv(e.checked)}>
-                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color="#424B54">📺 TV</Checkbox.Label>
+                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color={colors.TEXT_PRIMARY}>📺 TV</Checkbox.Label>
                                 </Checkbox.Root>
                                 <Checkbox.Root size="sm" checked={filterWhiteboard} onCheckedChange={(e) => setFilterWhiteboard(e.checked)}>
-                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color="#424B54">📋 Tableau</Checkbox.Label>
+                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color={colors.TEXT_PRIMARY}>📋 Tableau</Checkbox.Label>
                                 </Checkbox.Root>
                                 <Checkbox.Root size="sm" checked={filterComputer} onCheckedChange={(e) => setFilterComputer(e.checked)}>
-                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color="#424B54">💻 PC</Checkbox.Label>
+                                    <Checkbox.HiddenInput /><Checkbox.Control /><Checkbox.Label fontSize="sm" color={colors.TEXT_PRIMARY}>💻 PC</Checkbox.Label>
                                 </Checkbox.Root>
                             </HStack>
                         </Box>
                         <Box>
                             <Text fontSize="xs" mb={1}>&nbsp;</Text>
-                            <Button size="sm" variant="outline" borderColor="#93A8AC" color="#424B54" onClick={() => {
+                            <Button size="sm" variant="outline" borderColor={colors.BUTTON_OUTLINE_BORDER} color={colors.BUTTON_OUTLINE_COLOR} onClick={() => {
                                 setFilterSize("");
                                 setFilterCapacity(0);
                                 setFilterTime("");
@@ -234,21 +220,15 @@ export default function RoomsList() {
                                 setFilterComputer(false);
                             }}>Réinitialiser</Button>
                         </Box>
+                        <Box flex="1" />
+                        <Text fontSize="xl" fontWeight="semibold">{time}</Text>
                     </Flex>
 
-                    {renderRoomTimeline(filteredRooms, time, null, null, [
-                        ["#9B6A6C", "#E2B4BD"],
-                        ["#2B6CB0", "#BEE3F8"],
-                        ["#B7791F", "#FEFCBF"],
-                        ["#276749", "#C6F6D5"],
-                        ["#805AD5", "#E9D8FD"],
-                        ["#C05621", "#FEEBCB"],
-                        ["#319795", "#B2F5EA"],
-                    ])}
+                    {renderRoomTimeline(filteredRooms, time, null, null, colors.RESERVATION_PALETTE.map(p => [p.border, p.bg]))}
                 </Box>
 
                 {/* Plan du bâtiment */}
-                <Box mx="auto" w="100%" bg="#FFFFFF" borderRadius="xl" border="1px solid" borderColor="#93A8AC" boxShadow="lg" p={6} mb={6} mt={6} color="#424B54">
+                <Box mx="auto" w="100%" bg={colors.CARD_BG} borderRadius="xl" border="1px solid" borderColor={colors.CARD_BORDER} boxShadow="lg" p={6} mb={6} mt={6} color={colors.TEXT_PRIMARY}>
                     {renderFloorPlan(rooms, null, highlightedRooms)}
                 </Box>
             </Box>
