@@ -160,6 +160,13 @@ def create_a_reservation(room_name: str, reservation: Reservation):
             detail="Cannot create a reservation in the past"
         )
 
+    # Prevent reservation where end is not after start
+    if end_dt <= start_dt:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="End time must be after start time"
+        )
+
     # Check for any overlapping reservations in the same room
     for r in room_res["reservations"]:
         r_start_dt = datetime.strptime(r["start"], DATE_FORMAT)
