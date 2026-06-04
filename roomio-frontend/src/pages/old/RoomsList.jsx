@@ -12,7 +12,7 @@ import {
     Button
 } from "@chakra-ui/react";
 
-import {useClock} from "../hooks/useClock";
+import {useClock} from "../../hooks/useClock.js";
 import {useEffect, useState, useRef} from "react";
 import {useNavigate} from "react-router-dom";
 import {
@@ -21,9 +21,9 @@ import {
     getStatusColor,
     getRoomStatus,
     renderRoomTimeline
-} from "../utils/timelineUtils";
-import { renderFloorPlan } from "../utils/floorPlan";
-import colors from "../config/colorTheme";
+} from "../../utils/timelineUtils.jsx";
+import { renderFloorPlan } from "../../utils/floorPlan.jsx";
+import colors from "../../config/colorTheme.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const FILTER_INACTIVITY_MIN = 15;
