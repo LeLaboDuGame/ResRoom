@@ -40,3 +40,14 @@ export async function updateRoom(name, data) {
   if (!res.ok) throw new Error("Failed to update room");
   return res.json();
 }
+
+export async function uploadPhoto(name, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/api/room/upload-photo/${encodeURIComponent(name)}`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Failed to upload photo");
+  return res.json();
+}
