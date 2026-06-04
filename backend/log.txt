@@ -77736,3 +77736,66 @@
 2026-06-04 02:07:05,541 uvicorn.error INFO Waiting for application startup.
 2026-06-04 02:07:05,544 uvicorn.error INFO Application startup complete.
 2026-06-04 02:07:05,545 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 02:40:30,922 root INFO Reservation 1e8213bc-04f3-47ec-99b2-d687f176c4e4 removed from room: Youri Gargarine!
+2026-06-04 10:12:14,255 uvicorn.error INFO Started server process [11280]
+2026-06-04 10:12:14,257 uvicorn.error INFO Waiting for application startup.
+2026-06-04 10:12:14,267 uvicorn.error INFO Application startup complete.
+2026-06-04 10:12:14,270 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 13:37:41,052 uvicorn.error INFO Shutting down
+2026-06-04 13:37:41,158 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 13:37:41,161 uvicorn.error INFO Application shutdown complete.
+2026-06-04 13:37:41,163 uvicorn.error INFO Finished server process [11280]
+2026-06-04 13:37:50,338 uvicorn.error INFO Started server process [111421]
+2026-06-04 13:37:50,339 uvicorn.error INFO Waiting for application startup.
+2026-06-04 13:37:50,344 uvicorn.error INFO Application startup complete.
+2026-06-04 13:37:50,346 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 13:40:45,533 uvicorn.error INFO Shutting down
+2026-06-04 13:40:45,638 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 13:40:45,641 uvicorn.error INFO Application shutdown complete.
+2026-06-04 13:40:45,643 uvicorn.error INFO Finished server process [111421]
+2026-06-04 13:40:53,229 uvicorn.error INFO Started server process [112324]
+2026-06-04 13:40:53,230 uvicorn.error INFO Waiting for application startup.
+2026-06-04 13:40:53,236 uvicorn.error INFO Application startup complete.
+2026-06-04 13:40:53,238 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 13:42:57,189 uvicorn.error INFO Shutting down
+2026-06-04 13:42:57,293 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 13:42:57,296 uvicorn.error INFO Application shutdown complete.
+2026-06-04 13:42:57,299 uvicorn.error INFO Finished server process [112324]
+2026-06-04 13:43:05,122 uvicorn.error INFO Started server process [113044]
+2026-06-04 13:43:05,124 uvicorn.error INFO Waiting for application startup.
+2026-06-04 13:43:05,130 uvicorn.error INFO Application startup complete.
+2026-06-04 13:43:05,132 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 14:02:35,679 root INFO Reservation 171c0395-218c-423f-808e-b67f5e2f03d6 removed from room: Howard Hughes!
+2026-06-04 14:02:51,783 root INFO Reservation created in room: Howard Hughes! ->
+{'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'Reu test', 'reserved_by': 'Adrien', 'uid': 'b7c92760-680d-4bd7-8f96-b1f06f8acc12'}
+2026-06-04 14:03:01,582 root INFO Reservation created in room: NoName 4! ->
+{'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'Reu test', 'reserved_by': 'test', 'uid': '955d9467-df25-47d0-81b3-777bda21cf18'}
+2026-06-04 14:03:16,262 root INFO Reservation created in room: NoName 3! ->
+{'start': '2026-06-04 14:00', 'end': '2026-06-04 15:00', 'title': 'Reu test', 'reserved_by': 'ok', 'uid': 'b4eb375a-cd24-43ff-8401-9a27dd0cd975'}
+2026-06-04 14:03:44,587 root INFO Reservation created in room: Ken Miles! ->
+{'start': '2026-06-04 14:11', 'end': '2026-06-04 15:11', 'title': 'Reu test', 'reserved_by': 'z', 'uid': '5d9f79c2-bb6b-47c2-935e-c082bee1d0ee'}
+2026-06-04 14:04:08,673 root INFO Reservation created in room: NoName 1! ->
+{'start': '2026-06-04 11:00', 'end': '2026-06-04 20:00', 'title': 'Reu test', 'reserved_by': 'test', 'uid': 'b8eedb54-b97a-4a84-bae2-0a48845bf595'}
+2026-06-04 14:59:20,462 uvicorn.error INFO Shutting down
+2026-06-04 14:59:20,566 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 14:59:20,569 uvicorn.error INFO Application shutdown complete.
+2026-06-04 14:59:20,571 uvicorn.error INFO Finished server process [113044]
+2026-06-04 15:52:53,754 uvicorn.error INFO Started server process [169740]
+2026-06-04 15:52:53,758 uvicorn.error INFO Waiting for application startup.
+2026-06-04 15:52:53,764 uvicorn.error INFO Application startup complete.
+2026-06-04 15:52:53,766 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 15:55:20,729 uvicorn.error INFO Shutting down
+2026-06-04 15:55:20,832 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 15:55:20,835 uvicorn.error INFO Application shutdown complete.
+2026-06-04 15:55:20,836 uvicorn.error INFO Finished server process [169740]
+2026-06-04 15:55:28,154 uvicorn.error INFO Started server process [170624]
+2026-06-04 15:55:28,155 uvicorn.error INFO Waiting for application startup.
+2026-06-04 15:55:28,158 uvicorn.error INFO Application startup complete.
+2026-06-04 15:55:28,159 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 16:46:25,164 root INFO Reservation 5d9f79c2-bb6b-47c2-935e-c082bee1d0ee removed from room: Ken Miles!
+2026-06-04 16:54:01,296 root INFO Reservation created in room: Ken Miles! ->
+{'start': '2026-06-04 17:00', 'end': '2026-06-04 18:00', 'title': 'test', 'reserved_by': 'test', 'uid': 'afd79cc9-5cb4-46bb-98c0-74f6ebd55c40'}
+2026-06-04 16:56:00,897 root INFO Reservation afd79cc9-5cb4-46bb-98c0-74f6ebd55c40 removed from room: Ken Miles!
+2026-06-04 17:29:57,157 root INFO Reservation created in room: NoName 2! ->
+{'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'e', 'reserved_by': 'azr', 'uid': '3e862487-b5ff-4105-aa3f-d09a18eaefeb'}
+2026-06-04 17:30:04,984 root INFO Reservation 3e862487-b5ff-4105-aa3f-d09a18eaefeb removed from room: NoName 2!
