@@ -203,19 +203,31 @@ def remove_a_reservation(room_name: str, reservation_uid: str):
             detail="Room doesn't exist"
         )
 
-    initial_count = len(room_res["reservations"])
+    # Find the reservation matching the given UID
+    target = next(
+        (r for r in room_res["reservations"] if r["uid"] == reservation_uid),
+        None,
+    )
+
+    if not target:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reservation UID not found",
+        )
+
+    # Prevent deletion if the reservation has already started or is in the past
+    now = datetime.now()
+    r_start = datetime.strptime(target["start"], DATE_FORMAT)
+    if now >= r_start:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a reservation that is already in progress or past",
+        )
 
     # Filter out the reservation matching the given UID
     room_res["reservations"] = [
         r for r in room_res["reservations"] if r["uid"] != reservation_uid
     ]
-
-    # If the list size did not change, the UID was not found
-    if len(room_res["reservations"]) == initial_count:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Reservation UID not found"
-        )
 
     # Maintain the sorted order by start date (descending)
     room_res["reservations"].sort(
