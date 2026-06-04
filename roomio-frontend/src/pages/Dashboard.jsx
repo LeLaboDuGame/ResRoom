@@ -1,5 +1,6 @@
 import { usePlan } from "../hooks/usePlan";
 import { Clock } from "../components/ui/Clock";
+import { StatusBadge } from "../components/ui/StatusBadge";
 
 export default function Dashboard() {
   const { background, walls, roomPolygons, loading } = usePlan();
@@ -11,7 +12,7 @@ export default function Dashboard() {
       <p>Murs : {walls.length}</p>
       <p>Salles : {Object.keys(roomPolygons).length}</p>
         <Clock />
-
+        <StatusBadge/>
     </div>
   );
 }
