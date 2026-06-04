@@ -51,3 +51,25 @@ export async function uploadPhoto(name, file) {
   if (!res.ok) throw new Error("Failed to upload photo");
   return res.json();
 }
+
+export async function fetchHistory() {
+  const res = await fetch(`${API_URL}/api/reservations/history`);
+  if (!res.ok) throw new Error("Failed to fetch history");
+  return res.json();
+}
+
+export async function fetchSettings() {
+  const res = await fetch(`${API_URL}/api/settings`);
+  if (!res.ok) throw new Error("Failed to fetch settings");
+  return res.json();
+}
+
+export async function updateSettings(settings) {
+  const res = await fetch(`${API_URL}/api/settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) throw new Error("Failed to update settings");
+  return res.json();
+}
