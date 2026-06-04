@@ -77799,3 +77799,7 @@
 2026-06-04 17:29:57,157 root INFO Reservation created in room: NoName 2! ->
 {'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'e', 'reserved_by': 'azr', 'uid': '3e862487-b5ff-4105-aa3f-d09a18eaefeb'}
 2026-06-04 17:30:04,984 root INFO Reservation 3e862487-b5ff-4105-aa3f-d09a18eaefeb removed from room: NoName 2!
+2026-06-04 20:35:47,633 uvicorn.error INFO Started server process [13130]
+2026-06-04 20:35:47,634 uvicorn.error INFO Waiting for application startup.
+2026-06-04 20:35:47,637 uvicorn.error INFO Application startup complete.
+2026-06-04 20:35:47,639 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
