@@ -77707,3 +77707,32 @@
 2026-06-03 17:23:04,555 root INFO Reservation 6f8ecb05-c5c3-4de9-b3c6-675ac6be1837 removed from room: Youri Gargarine!
 2026-06-03 18:52:07,161 root INFO Reservation created in room: Howard Hughes! ->
 {'start': '2026-06-03 19:00', 'end': '2026-06-03 20:00', 'title': 'test', 'reserved_by': 'Adrien', 'uid': '1dcaf3bb-b993-44e9-aeed-b2196b00e3a5'}
+2026-06-03 19:55:15,224 uvicorn.error INFO Started server process [9199]
+2026-06-03 19:55:15,226 uvicorn.error INFO Waiting for application startup.
+2026-06-03 19:55:15,231 uvicorn.error INFO Application startup complete.
+2026-06-03 19:55:15,233 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-03 21:03:07,722 root INFO Reservation 1dcaf3bb-b993-44e9-aeed-b2196b00e3a5 removed from room: Howard Hughes!
+2026-06-03 23:12:31,655 uvicorn.error INFO Started server process [361722]
+2026-06-03 23:12:31,659 uvicorn.error INFO Waiting for application startup.
+2026-06-03 23:12:31,676 uvicorn.error INFO Application startup complete.
+2026-06-03 23:12:31,686 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 01:31:11,463 root INFO Reservation created in room: Youri Gargarine! ->
+{'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'Test', 'reserved_by': 'aaa', 'uid': '1e8213bc-04f3-47ec-99b2-d687f176c4e4'}
+2026-06-04 01:35:38,524 root INFO Reservation created in room: Howard Hughes! ->
+{'start': '2026-06-04 09:00', 'end': '2026-06-04 10:00', 'title': 'zzz', 'reserved_by': 'Adrien DUMONTET', 'uid': '171c0395-218c-423f-808e-b67f5e2f03d6'}
+2026-06-04 01:52:35,912 uvicorn.error INFO Shutting down
+2026-06-04 01:52:36,014 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 01:52:36,016 uvicorn.error INFO Application shutdown complete.
+2026-06-04 01:52:36,018 uvicorn.error INFO Finished server process [361722]
+2026-06-04 01:52:43,686 uvicorn.error INFO Started server process [465011]
+2026-06-04 01:52:43,686 uvicorn.error INFO Waiting for application startup.
+2026-06-04 01:52:43,690 uvicorn.error INFO Application startup complete.
+2026-06-04 01:52:43,693 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-06-04 02:06:58,299 uvicorn.error INFO Shutting down
+2026-06-04 02:06:58,401 uvicorn.error INFO Waiting for application shutdown.
+2026-06-04 02:06:58,402 uvicorn.error INFO Application shutdown complete.
+2026-06-04 02:06:58,402 uvicorn.error INFO Finished server process [465011]
+2026-06-04 02:07:05,540 uvicorn.error INFO Started server process [476707]
+2026-06-04 02:07:05,541 uvicorn.error INFO Waiting for application startup.
+2026-06-04 02:07:05,544 uvicorn.error INFO Application startup complete.
+2026-06-04 02:07:05,545 uvicorn.error INFO Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
