@@ -21,3 +21,12 @@ export async function createReservation(roomName, reservation) {
   if (!res.ok) throw new Error("Failed to create reservation");
   return res.json();
 }
+
+export async function deleteReservation(roomName, reservationUid) {
+  const res = await fetch(
+    `${API_URL}/api/reservation/remove/${encodeURIComponent(roomName)}/${encodeURIComponent(reservationUid)}`,
+    { method: "POST" },
+  );
+  if (!res.ok) throw new Error("Failed to delete reservation");
+  return res.json();
+}
