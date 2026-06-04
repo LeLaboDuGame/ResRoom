@@ -5,3 +5,9 @@ export async function fetchRooms() {
   if (!res.ok) throw new Error("Failed to fetch rooms");
   return res.json();
 }
+
+export async function fetchRoom(name) {
+  const res = await fetch(`${API_URL}/api/room/fetch/name/${encodeURIComponent(name)}`);
+  if (!res.ok) throw new Error("Failed to fetch room");
+  return res.json();
+}
