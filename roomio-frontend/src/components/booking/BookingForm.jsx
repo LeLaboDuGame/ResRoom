@@ -16,11 +16,16 @@ import { createReservation } from "../../api/rooms";
 export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel }) {
   const today = new Date().toISOString().slice(0, 10);
 
+  const now = new Date();
+  const roundedMin = Math.ceil(now.getMinutes() / 5) * 5;
+  now.setMinutes(roundedMin, 0, 0);
+  const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
   const [date, setDate] = useState(today);
-  const [startTime, setStartTime] = useState("");
+  const [startTime, setStartTime] = useState(defaultTime);
   const [duration, setDuration] = useState(30);
   const [title, setTitle] = useState("");
-  const [reservedBy, setReservedBy] = useState("Vous");
+  const [reservedBy, setReservedBy] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -106,14 +111,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   }
 
   return (
-    <Box
-      bg="bg.elevated"
-      borderRadius="lg"
-      border="1px solid"
-      borderColor="border.default"
-      p={4}
-      onKeyDown={handleKeyDown}
-    >
+    <Box onKeyDown={handleKeyDown}>
       <Flex direction="column" gap={3}>
         <Text fontSize="sm" fontWeight="medium" color="text.primary">
           Nouvelle réservation · {roomName}
@@ -186,6 +184,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
             size="sm"
             value={reservedBy}
             onChange={(e) => setReservedBy(e.target.value)}
+            placeholder="Votre nom"
             bg="bg.primary"
             borderColor="border.default"
             color="text.primary"
