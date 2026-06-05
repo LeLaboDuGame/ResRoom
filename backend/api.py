@@ -380,7 +380,7 @@ async def upload_room_photo(room_name: str, file: UploadFile = File(...)):
     # Save to assets/rooms/{name}.jpeg (or .png)
     ext = "jpeg" if file.content_type == "image/jpeg" else "png"
     filename = f"{room_name}.{ext}"
-    assets_dir = os.path.join(os.path.dirname(__file__), "..", "roomio-frontend", "src", "assets", "rooms")
+    assets_dir = os.path.join(os.path.dirname(__file__), "..", "roomio-frontend", "public", "rooms")
     os.makedirs(assets_dir, exist_ok=True)
     filepath = os.path.join(assets_dir, filename)
 
