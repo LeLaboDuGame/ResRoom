@@ -21,6 +21,11 @@ const bgColors = {
   finishingSoon: "rgba(251,146,60,0.12)",
 };
 
+/**
+ * Compact pill badge showing room status.
+ * @param {string} [status="free"] Room status key
+ * @return {JSX.Element} Status badge
+ */
 export function StatusBadge({ status = "free" }) {
   return (
     <Flex
