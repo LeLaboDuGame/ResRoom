@@ -15,7 +15,7 @@ export function RoomStatusCard({ room, onBook }) {
   const [photoError, setPhotoError] = useState(false);
   const el = room?.elements || {};
   const roomName = room?.name || "";
-  const photoUrl = "/src/assets/rooms/" + encodeURIComponent(roomName) + ".jpeg";
+  const photoUrl = "/rooms/" + encodeURIComponent(roomName) + ".jpeg";
 
   const now = new Date();
   const activeRes = (room?.reservations || []).find((r) => {
@@ -30,27 +30,30 @@ export function RoomStatusCard({ room, onBook }) {
       overflow="hidden"
       bg="bg.secondary"
       position="relative"
-      minH="280px"
+      flex={1}
       display="flex"
       flexDirection="column"
+      minH="280px"
     >
-      {/* Photo or gradient fallback */}
-      <Box position="relative" h="160px" bg="bg.elevated">
-        {!photoError && (
-          <Box
-            as="img"
+      {/* Photo with gradient overlay */}
+      <Box position="relative" h="160px" bg="bg.elevated" overflow="hidden">
+        {photoError ? (
+          <Flex w="100%" h="100%" align="center" justify="center" bg="bg.secondary">
+            <Text color="text.muted" fontSize="sm">{roomName}</Text>
+          </Flex>
+        ) : (
+          <img
             src={photoUrl}
             alt={room?.name}
-            w="100%"
-            h="100%"
-            objectFit="cover"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             onError={() => setPhotoError(true)}
           />
         )}
         <Box
           position="absolute"
           inset={0}
-          bgGradient="linear(to-t, rgba(0,0,0,0.7), transparent)"
+          pointerEvents="none"
+          bgGradient="linear(to-t, rgba(0,0,0,0.7), transparent 40%)"
         />
       </Box>
 
