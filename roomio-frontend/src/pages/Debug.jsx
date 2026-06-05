@@ -16,6 +16,10 @@ import { usePlan } from "../hooks/usePlan";
 import { BookingButton } from "../components/booking/BookingButton";
 import { BookingForm } from "../components/booking/BookingForm";
 import { DeleteModal } from "../components/booking/DeleteModal";
+import { AdminTabs } from "../components/admin/AdminTabs";
+import { RoomsTab } from "../components/admin/RoomsTab";
+import { SettingsTab } from "../components/admin/SettingsTab";
+import { HistoryTab } from "../components/admin/HistoryTab";
 
 function Section({ title, children }) {
   return (
@@ -298,6 +302,12 @@ export default function Debug() {
                 setDeleteModalOpen(false);
               }}
             />
+          </Section>
+
+          <Section title="AdminTabs">
+            <Box maxW="100%" bg="bg.secondary" borderRadius="lg" p={4}>
+              <AdminTabs />
+            </Box>
           </Section>
         </Box>
       )}
