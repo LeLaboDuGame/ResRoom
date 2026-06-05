@@ -13,6 +13,9 @@ import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { usePlan } from "../hooks/usePlan";
+import { BookingButton } from "../components/booking/BookingButton";
+import { BookingForm } from "../components/booking/BookingForm";
+import { DeleteModal } from "../components/booking/DeleteModal";
 
 function Section({ title, children }) {
   return (
@@ -69,14 +72,31 @@ export default function Debug() {
   const [updateSettingsRes, setUpdateSettingsRes] = useState(null);
   const [roomNameInput, setRoomNameInput] = useState("Howard Hughes");
 
-  const sampleRoom = {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bookingFormKey, setBookingFormKey] = useState(0);
+
+  const sampleRoom1 = {
     name: "Howard Hughes",
     elements: { capacity: 6, tv: true, whiteboard: true, computer: false },
+    status: "free",
     reservations: [
-      { uid: "1", title: "Stand-up", start: "2026-06-05 09:00", end: "2026-06-05 09:30", reserved_by: "Alice" },
-      { uid: "2", title: "Sprint Review", start: "2026-06-05 14:00", end: "2026-06-05 15:00", reserved_by: "Bob" },
+      { uid: "r1", title: "Stand-up", start: "2026-06-05 09:00", end: "2026-06-05 09:30", reserved_by: "Alice" },
+      { uid: "r2", title: "Sprint Review", start: "2026-06-05 14:00", end: "2026-06-05 15:00", reserved_by: "Bob" },
     ],
   };
+
+  const sampleRoom2 = {
+    name: "Youri Gargarine",
+    elements: { capacity: 10, tv: true, whiteboard: false, computer: true },
+    status: "free",
+    reservations: [
+      { uid: "r3", title: "Daily Meeting", start: "2026-06-05 08:30", end: "2026-06-05 08:45", reserved_by: "Charlie" },
+      { uid: "r4", title: "Design Review", start: "2026-06-05 11:00", end: "2026-06-05 12:00", reserved_by: "Diana" },
+      { uid: "r5", title: "Client Call", start: "2026-06-05 16:00", end: "2026-06-05 17:30", reserved_by: "Eric" },
+    ],
+  };
+
 
   useEffect(() => {
     api.fetchRooms().then(d => { setRooms(d.rooms || []); setFetchRoomsRes(d); }).catch(() => {});
@@ -197,7 +217,7 @@ export default function Debug() {
           <Section title="ReservationList">
             <Box maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
               <ReservationList
-                reservations={sampleRoom.reservations}
+                reservations={sampleRoom1.reservations}
                 onDelete={(uid) => console.log("Delete:", uid)}
               />
             </Box>
@@ -207,28 +227,77 @@ export default function Debug() {
           </Section>
 
           <Section title="RoomInfoPanel">
-            <Box bg="bg.secondary" borderRadius="lg" p={4} maxW="280px">
-              <RoomInfoPanel room={sampleRoom} />
-            </Box>
+            <Flex gap={4} wrap="wrap">
+              <Box bg="bg.secondary" borderRadius="lg" p={4} maxW="280px">
+                <RoomInfoPanel room={sampleRoom1} />
+              </Box>
+              <Box bg="bg.secondary" borderRadius="lg" p={4} maxW="280px">
+                <RoomInfoPanel room={sampleRoom2} />
+              </Box>
+            </Flex>
           </Section>
 
           <Section title="RoomStatusCard">
             <Flex gap={4} wrap="wrap">
               <Box w="260px">
-                <RoomStatusCard room={{
-                  ...sampleRoom,
-                  status: "free",
-                  reservations: [],
-                }} onBook={() => alert("Book!")} />
+                <RoomStatusCard room={sampleRoom1} onBook={() => alert("Book Howard!")} />
               </Box>
               <Box w="260px">
-                <RoomStatusCard room={{
-                  ...sampleRoom,
-                  status: "meeting",
-                  reservations: [{ uid: "3", title: "Meeting", start: new Date(new Date() - 600000).toISOString().replace("T", " ").slice(0, 16), end: new Date(new Date() + 1800000).toISOString().replace("T", " ").slice(0, 16), reserved_by: "You" }],
-                }} onBook={() => alert("Book!")} />
+                <RoomStatusCard room={sampleRoom2} onBook={() => alert("Book Youri!")} />
               </Box>
             </Flex>
+          </Section>
+
+          <Section title="BookingButton">
+            <Flex gap={4} align="center">
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={1}>variant="plus"</Text>
+                <BookingButton variant="plus" onClick={() => alert("Plus clicked")} />
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={1}>variant="default"</Text>
+                <BookingButton variant="default" onClick={() => alert("Default clicked")} />
+              </Box>
+            </Flex>
+          </Section>
+
+          <Section title="BookingForm">
+            <Box maxW="360px">
+              <BookingForm
+                key={bookingFormKey}
+                roomName="Howard Hughes"
+                existingReservations={sampleRoom1.reservations}
+                onSuccess={(res) => {
+                  alert(`Réservation créée ! ${res.title}`);
+                  setBookingFormKey((k) => k + 1);
+                }}
+                onCancel={() => alert("Formulaire annulé")}
+              />
+            </Box>
+          </Section>
+
+          <Section title="DeleteModal">
+            <Button
+              size="sm"
+              bg="#f87171"
+              color="white"
+              _hover={{ bg: "#ef4444" }}
+              onClick={() => {
+                setDeleteTarget(sampleRoom1.reservations[0]);
+                setDeleteModalOpen(true);
+              }}
+            >
+              Ouvrir DeleteModal
+            </Button>
+            <DeleteModal
+              isOpen={deleteModalOpen}
+              onClose={() => setDeleteModalOpen(false)}
+              reservation={deleteTarget}
+              onConfirm={(uid) => {
+                alert(`Suppression confirmée pour ${uid}`);
+                setDeleteModalOpen(false);
+              }}
+            />
           </Section>
         </Box>
       )}
