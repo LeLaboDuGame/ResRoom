@@ -2,15 +2,12 @@ import { useState, useEffect } from "react";
 import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
 import * as api from "../../api/rooms";
 
-/**
- * Settings editor for dayStart, dayEnd, startingSoonBefore, finishingSoonBefore.
- * @return {JSX.Element} SettingsTab component
- */
 export function SettingsTab() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -28,16 +25,23 @@ export function SettingsTab() {
   function update(field, value) {
     setSettings((prev) => ({ ...prev, [field]: value }));
     setSuccess(false);
+    setError("");
   }
 
   async function handleSave() {
+    if (settings.dayStart >= settings.dayEnd) {
+      setError("Le début de journée doit être avant la fin de journée");
+      return;
+    }
     setSaving(true);
     try {
       await api.updateSettings(settings);
       setSuccess(true);
+      setError("");
       setTimeout(() => setSuccess(false), 2000);
     } catch (e) {
       console.error(e);
+      setError(e.message);
     }
     setSaving(false);
   }
@@ -124,6 +128,9 @@ export function SettingsTab() {
           </Button>
           {success && (
             <Text fontSize="sm" color="#4ade80">✓ Enregistré</Text>
+          )}
+          {error && (
+            <Text fontSize="sm" color="#f87171">{error}</Text>
           )}
         </Flex>
       </Flex>

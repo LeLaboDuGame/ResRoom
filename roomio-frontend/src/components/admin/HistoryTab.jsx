@@ -3,10 +3,6 @@ import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
 import { Trash2 } from "lucide-react";
 import * as api from "../../api/rooms";
 
-/**
- * Reservation history table with filters (room, date, text search) and delete.
- * @return {JSX.Element} HistoryTab component
- */
 export function HistoryTab() {
   const [reservations, setReservations] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -15,6 +11,7 @@ export function HistoryTab() {
   const [filterDate, setFilterDate] = useState("");
   const [filterText, setFilterText] = useState("");
   const [deleting, setDeleting] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +56,7 @@ export function HistoryTab() {
       console.error(e);
     }
     setDeleting(null);
+    setConfirmDelete(null);
   }
 
   if (loading) {
@@ -75,7 +73,6 @@ export function HistoryTab() {
           <Text fontSize="xs" color="text.muted" mb={1}>Salle</Text>
           <Box
             as="select"
-            size="sm"
             value={filterRoom}
             onChange={(e) => setFilterRoom(e.target.value)}
             bg="bg.primary"
@@ -126,12 +123,7 @@ export function HistoryTab() {
         <Text color="text.muted" py={8} textAlign="center">Aucune réservation trouvée</Text>
       ) : (
         <Box overflowX="auto">
-          <Box
-            as="table"
-            w="100%"
-            fontSize="sm"
-            borderCollapse="collapse"
-          >
+          <Box as="table" w="100%" fontSize="sm" borderCollapse="collapse">
             <Box as="thead">
               <Box as="tr" color="text.muted" borderBottom="1px solid" borderColor="border.default">
                 <Box as="th" textAlign="left" px={3} py={2} fontWeight="medium">Date</Box>
@@ -172,8 +164,7 @@ export function HistoryTab() {
                       variant="ghost"
                       color="text.muted"
                       _hover={{ color: "#f87171" }}
-                      isLoading={deleting === r.uid}
-                      onClick={() => handleDelete(r)}
+                      onClick={() => setConfirmDelete(r)}
                       aria-label="Supprimer"
                     >
                       <Trash2 size={14} />
@@ -186,6 +177,46 @@ export function HistoryTab() {
           <Text fontSize="xs" color="text.muted" mt={2}>
             {filtered.length} réservation{filtered.length > 1 ? "s" : ""}
           </Text>
+        </Box>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {confirmDelete && (
+        <Box
+          position="fixed"
+          inset={0}
+          bg="rgba(0,0,0,0.6)"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex={1000}
+        >
+          <Box bg="#1a1a1d" borderRadius="xl" p={6} maxW="360px" w="90%" boxShadow="0 0 40px rgba(0,0,0,0.5)">
+            <Text fontWeight="bold" mb={3}>Supprimer la réservation ?</Text>
+            <Text fontSize="sm" color="text.secondary" mb={4}>
+              <strong>{confirmDelete.title}</strong> par <strong>{confirmDelete.reserved_by}</strong> le {confirmDelete.start?.slice(0, 10)} ({confirmDelete.start?.slice(-5)} – {confirmDelete.end?.slice(-5)})
+            </Text>
+            <Flex gap={2} justify="flex-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                color="text.muted"
+                onClick={() => setConfirmDelete(null)}
+              >
+                Annuler
+              </Button>
+              <Button
+                size="sm"
+                bg="#f87171"
+                color="white"
+                _hover={{ bg: "#ef4444" }}
+                isLoading={deleting === confirmDelete.uid}
+                onClick={() => handleDelete(confirmDelete)}
+              >
+                Supprimer
+              </Button>
+            </Flex>
+          </Box>
         </Box>
       )}
     </Box>

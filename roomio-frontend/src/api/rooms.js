@@ -119,3 +119,29 @@ export async function updateSettings(settings) {
   if (!res.ok) throw new Error("Failed to update settings");
   return res.json();
 }
+
+/**
+ * Create a new room with default equipment.
+ * @param {string} name Room name
+ * @return {Promise<{message: string, room: Object}>} Created room
+ */
+export async function createRoom(name) {
+  const res = await fetch(`${API_URL}/api/room/create/${encodeURIComponent(name)}`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to create room");
+  return res.json();
+}
+
+/**
+ * Delete a room by name.
+ * @param {string} name Room name to delete
+ * @return {Promise<{message: string}>} Confirmation message
+ */
+export async function deleteRoom(name) {
+  const res = await fetch(`${API_URL}/api/room/delete/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete room");
+  return res.json();
+}
