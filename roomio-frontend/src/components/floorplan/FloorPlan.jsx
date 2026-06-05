@@ -34,8 +34,9 @@ export function FloorPlan({ walls, roomPolygons, selectedRoom, dimmedRooms, onRo
   const pad = 40;
   const vb = `${bounds.minX - pad} ${bounds.minY - pad} ${bounds.maxX - bounds.minX + pad * 2} ${bounds.maxY - bounds.minY + pad * 2}`;
 
-  // Replace all 'space' of `selectedRoom` by a '_'
-  selectedRoom = selectedRoom.replaceAll(" ", "_")
+  if(selectedRoom)
+    // Replace all 'space' of `selectedRoom` by a '_'
+    selectedRoom = selectedRoom.replaceAll(" ", "_")
 
   return (
     <svg
