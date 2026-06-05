@@ -7,6 +7,11 @@ const variants = {
   card: { h: 32, w: "full", borderRadius: "lg" },
 };
 
+/**
+ * Loading skeleton with pulse animation.
+ * @param {string} [variant="text"] Skeleton shape variant
+ * @return {JSX.Element} Skeleton element
+ */
 export function LoadingSkeleton({ variant = "text", ...props }) {
   useEffect(() => {
     const id = "skeleton-keyframes";

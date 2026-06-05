@@ -1,5 +1,9 @@
 import { createSystem, defaultConfig, mergeConfigs } from "@chakra-ui/react";
 
+// Custom dark theme — bg #0a0a0b, accent blue #4f8cff
+// Tokens are accessible in Chakra props via dot notation
+// e.g. color="text.primary", bg="bg.elevated", color="status.free"
+
 const customConfig = {
   theme: {
     tokens: {
@@ -25,10 +29,10 @@ const customConfig = {
           text:    { value: "#ffffff" },
         },
         status: {
-          free:          { value: "#34d399" },
-          startingSoon:  { value: "#fbbf24" },
-          meeting:       { value: "#f87171" },
-          finishingSoon: { value: "#fb923c" },
+          free:          { value: "#34d399" }, // green — room available
+          startingSoon:  { value: "#fbbf24" }, // yellow — starts within STATUS_BEFORE minutes
+          meeting:       { value: "#f87171" }, // red — currently occupied
+          finishingSoon: { value: "#fb923c" }, // orange — ends within STATUS_BEFORE minutes
         },
         danger:  { value: "#f87171" },
         overlay: { value: "rgba(0,0,0,0.6)" },
@@ -59,9 +63,9 @@ const customConfig = {
       },
     },
     breakpoints: {
-      sm: "640px",
-      md: "1024px",
-      lg: "1200px",
+      sm: "640px",   // mobile
+      md: "1024px",  // tablet
+      lg: "1200px",  // desktop
     },
   },
 };

@@ -1,9 +1,21 @@
+/**
+ * Index walls by their ID for fast lookup.
+ * @param {Array} walls Array of wall objects with id property
+ * @return {Object} Map of wall id -> wall object
+ */
 function wallsById(walls) {
   const map = {};
   walls.forEach(w => map[w.id] = w);
   return map;
 }
 
+/**
+ * Build a room polygon from referenced wall IDs.
+ * Walks walls in order, takes start then end of each, deduplicates consecutive points.
+ * @param {Array<string>} wallIds Ordered wall ID references
+ * @param {Object} wallMap Map of wall id -> wall object
+ * @return {Array<{x: number, y: number}>} Polygon vertices
+ */
 function roomPolygon(wallIds, wallMap) {
   const points = [];
   wallIds.forEach(id => {
@@ -27,6 +39,12 @@ function roomPolygon(wallIds, wallMap) {
   return deduped;
 }
 
+/**
+ * Parse floor plan JSON.
+ * Extracts walls, computes room polygons, captures SVG background.
+ * @param {Object} json Raw plan.json data
+ * @return {{background: Object|null, walls: Array, roomPolygons: Object}} Parsed plan
+ */
 export function parsePlan(json) {
   const floor = json.floors?.[0];
   if (!floor) return { background: null, walls: [], roomPolygons: {} };
