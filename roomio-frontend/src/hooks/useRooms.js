@@ -55,9 +55,9 @@ export function useRoom(name) {
 
     const load = async () => {
       try {
-        const data = await fetchRoom(name);
+        const { room } = await fetchRoom(name);
         if (!cancelled) {
-          setRoom(data);
+          setRoom(room ?? null);
           setError(null);
         }
       } catch (err) {
