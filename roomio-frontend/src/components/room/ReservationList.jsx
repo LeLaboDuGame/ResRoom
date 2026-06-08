@@ -1,4 +1,5 @@
-import { Box, Flex, IconButton, Text } from "@chakra-ui/react";
+import { useState } from "react";
+import { Box, Flex, IconButton, Text, Input, Button } from "@chakra-ui/react";
 import { X } from "lucide-react";
 
 const getDayLabel = (dateStr) => {
@@ -28,7 +29,12 @@ const fmtHm = (dateStr) => {
  * @return {JSX.Element} ReservationList component
  */
 export function ReservationList({ reservations = [], onDelete }) {
-  const sorted = [...reservations].sort((a, b) => a.start.localeCompare(b.start));
+  const [confirmUid, setConfirmUid] = useState(null);
+  const [confirmInput, setConfirmInput] = useState("");
+
+  const now = new Date();
+  const upcoming = reservations.filter((r) => new Date(r.end) > now);
+  const sorted = [...upcoming].sort((a, b) => a.start.localeCompare(b.start));
 
   const grouped = {};
   for (const r of sorted) {
@@ -60,37 +66,91 @@ export function ReservationList({ reservations = [], onDelete }) {
           <Text fontSize="xs" fontWeight="bold" color="text.secondary" px={3} py={1.5} textTransform="capitalize">
             {getDayLabel(dayRes[0].start)}
           </Text>
-          {dayRes.map((r) => (
-            <Flex
-              key={r.uid}
-              align="center"
-              justify="space-between"
-              px={3}
-              py={2.5}
-              borderBottom="1px solid"
-              borderColor="border.default"
-              gap={3}
-            >
-              <Box flex={1} minW={0}>
-                <Text fontSize="sm" fontWeight="medium" color="text.primary" truncate>
-                  {r.title}
-                </Text>
-                <Text fontSize="xs" color="text.muted">
-                  {fmtHm(r.start)} – {fmtHm(r.end)} · {r.reserved_by}
-                </Text>
-              </Box>
-              <IconButton
-                aria-label="Delete reservation"
-                size="xs"
-                variant="ghost"
-                color="text.muted"
-                _hover={{ color: "danger" }}
-                onClick={() => onDelete?.(r.uid)}
+          {dayRes.map((r) => {
+            if (confirmUid === r.uid) {
+              return (
+                <Flex
+                  key={r.uid}
+                  align="center"
+                  gap={2}
+                  px={3}
+                  py={2.5}
+                  borderBottom="1px solid"
+                  borderColor="border.default"
+                >
+                  <Input
+                    size="xs"
+                    placeholder='Tape "Oui" pour confirmer'
+                    value={confirmInput}
+                    onChange={(e) => setConfirmInput(e.target.value)}
+                    bg="bg.elevated"
+                    borderColor="border.default"
+                    color="text.primary"
+                    _placeholder={{ color: "text.muted", fontSize: "xs" }}
+                    flex={1}
+                  />
+                  <Button
+                    size="xs"
+                    colorScheme="red"
+                    isDisabled={confirmInput !== "Oui"}
+                    onClick={() => {
+                      onDelete?.(r.uid);
+                      setConfirmUid(null);
+                      setConfirmInput("");
+                    }}
+                  >
+                    Supprimer
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="text.muted"
+                    onClick={() => {
+                      setConfirmUid(null);
+                      setConfirmInput("");
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </Flex>
+              );
+            }
+
+            return (
+              <Flex
+                key={r.uid}
+                align="center"
+                justify="space-between"
+                px={3}
+                py={2.5}
+                borderBottom="1px solid"
+                borderColor="border.default"
+                gap={3}
               >
-                <X size={14} />
-              </IconButton>
-            </Flex>
-          ))}
+                <Box flex={1} minW={0}>
+                  <Text fontSize="sm" fontWeight="medium" color="text.primary" truncate>
+                    {r.title}
+                  </Text>
+                  <Text fontSize="xs" color="text.muted">
+                    {fmtHm(r.start)} – {fmtHm(r.end)} · {r.reserved_by}
+                  </Text>
+                </Box>
+                <IconButton
+                  aria-label="Delete reservation"
+                  size="xs"
+                  variant="ghost"
+                  color="text.muted"
+                  _hover={{ color: "danger" }}
+                  onClick={() => {
+                    setConfirmUid(r.uid);
+                    setConfirmInput("");
+                  }}
+                >
+                  <X size={14} />
+                </IconButton>
+              </Flex>
+            );
+          })}
         </Box>
       ))}
     </Box>
