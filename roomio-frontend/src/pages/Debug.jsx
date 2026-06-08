@@ -12,7 +12,6 @@ import { ReservationList } from "../components/room/ReservationList";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
-import { usePlan } from "../hooks/usePlan";
 import { BookingButton } from "../components/booking/BookingButton";
 import { BookingForm } from "../components/booking/BookingForm";
 import { DeleteModal } from "../components/booking/DeleteModal";
@@ -60,7 +59,6 @@ function ApiButton({ label, action, onResult }) {
 }
 
 export default function Debug() {
-  const { background, walls, roomPolygons } = usePlan();
   const [rooms, setRooms] = useState([]);
   const [activeTab, setActiveTab] = useState("ui");
 
@@ -424,8 +422,8 @@ export default function Debug() {
       {/* === FLOOR PLAN TAB === */}
       {activeTab === "floorplan" && (
         <Box>
-          <Section title="Raw plan data">
-            <Text fontSize="sm" color="text.secondary">Walls: {walls.length} | Rooms: {Object.keys(roomPolygons).length}</Text>
+          <Section title="Floor plan data">
+            <Text fontSize="sm" color="text.secondary">API rooms loaded: {rooms.length}</Text>
           </Section>
 
           <Section title="FloorPlan SVG">
@@ -436,8 +434,7 @@ export default function Debug() {
               p={2}
             >
               <FloorPlan
-                walls={walls}
-                roomPolygons={roomPolygons}
+                rooms={rooms}
                 onRoomClick={(name) => alert(`Room clicked: ${name}`)}
               />
             </Box>
@@ -451,10 +448,9 @@ export default function Debug() {
               p={2}
             >
               <FloorPlan
-                walls={walls}
-                roomPolygons={roomPolygons}
-                selectedRoom="Youri_Gargarine"
-                dimmedRooms={["Youri_Gargarine"]}
+                rooms={rooms}
+                selectedRoom="Youri Gargarine"
+                dimmedRooms={["Youri Gargarine"]}
                 onRoomClick={(name) => alert(`Room clicked: ${name}`)}
               />
             </Box>
