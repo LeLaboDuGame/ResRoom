@@ -10,6 +10,7 @@ import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { BookingForm } from "../components/booking/BookingForm";
 import { BookingButton } from "../components/booking/BookingButton";
 import { FilterBar } from "../components/ui/FilterBar";
+import { ResRoomLogo } from "../components/ui/ResRoomLogo";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { SETTINGS } from "../config/settings";
 
@@ -109,7 +110,26 @@ export default function FleetRoom() {
   // === ROOM VIEW (default) ===
   if (view === "room") {
     return (
-      <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
+        <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
+        {/* Floating logo badge */}
+        <Flex
+          position="absolute"
+          top={4}
+          left={4}
+          zIndex={20}
+          w="36px"
+          h="36px"
+          borderRadius="full"
+          bg="bg.elevated"
+          align="center"
+          justify="center"
+          boxShadow="0 0 12px rgba(0,0,0,0.5)"
+        >
+          <Box position="relative" display="flex" alignItems="center" justifyContent="center">
+            <ResRoomLogo h="32px" />
+          </Box>
+        </Flex>
+
         <Flex h="100%" w="100%">
           {/* Left 50%: Room status card */}
           <Box w="50%" h="100%" p={6} display="flex" flexDirection="column">
@@ -153,6 +173,25 @@ export default function FleetRoom() {
 
   return (
     <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
+      {/* Floating logo badge */}
+      <Flex
+        position="absolute"
+        top={4}
+        left={4}
+        zIndex={20}
+        w="36px"
+        h="36px"
+        borderRadius="full"
+        bg="bg.elevated"
+        align="center"
+        justify="center"
+        boxShadow="0 0 12px rgba(0,0,0,0.5)"
+      >
+        <Box display="flex" alignItems="center" justifyContent="center" w="full" h="full">
+          <ResRoomLogo h="32px"/>
+        </Box>
+      </Flex>
+
       <Flex h="100%" w="100%">
         {/* Left 35%: filters + info + form */}
         <Box w="35%" h="100%" p={6} display="flex" flexDirection="column" gap={4} overflow="hidden">
