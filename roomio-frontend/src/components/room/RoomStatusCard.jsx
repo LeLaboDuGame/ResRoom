@@ -9,20 +9,36 @@ import { MeetingProgress } from "./MeetingProgress";
  * Room status card with photo, overlay, booking button, and meeting progress.
  * @param {Object} room Room object
  * @param {Function} onBook Click handler for booking
+ * @param {boolean} [activateReservationButton=true] Show/hide the booking button
  * @return {JSX.Element} RoomStatusCard component
  */
-export function RoomStatusCard({ room, onBook }) {
+export function RoomStatusCard({ room, onBook, activateReservationButton = true }) {
   const [photoError, setPhotoError] = useState(false);
   const el = room?.elements || {};
   const roomName = room?.name || "";
   const photoUrl = "/rooms/" + encodeURIComponent(roomName) + ".jpeg";
 
   const now = new Date();
-  const activeRes = (room?.reservations || []).find((r) => {
+  const reservations = room?.reservations || [];
+
+  const activeRes = reservations.find((r) => {
     const s = new Date(r.start.replace(" ", "T"));
     const e = new Date(r.end.replace(" ", "T"));
     return now >= s && now < e;
   });
+
+  const nextRes = reservations.find((r) => {
+    const s = new Date(r.start.replace(" ", "T"));
+    return s > now && (s - now) <= 15 * 60 * 1000;
+  });
+
+  let derivedStatus = "free";
+  if (activeRes) {
+    const endDt = new Date(activeRes.end.replace(" ", "T"));
+    derivedStatus = (endDt - now) <= 15 * 60 * 1000 ? "finishingSoon" : "meeting";
+  } else if (nextRes) {
+    derivedStatus = "startingSoon";
+  }
 
   return (
     <Box
@@ -62,7 +78,7 @@ export function RoomStatusCard({ room, onBook }) {
         {/* Top row: clock + status */}
         <Flex align="center" justify="space-between">
           <Clock />
-          <StatusBadge status={room?.status || "free"} />
+          <StatusBadge status={derivedStatus} />
         </Flex>
 
         {/* Room name */}
@@ -77,23 +93,25 @@ export function RoomStatusCard({ room, onBook }) {
           ) : (
             <Box />
           )}
-          <Box
-            as="button"
-            w={12}
-            h={12}
-            borderRadius="full"
-            bg="rgba(79,140,255,0.15)"
-            color="accent.default"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            cursor="pointer"
-            _hover={{ bg: "rgba(79,140,255,0.25)" }}
-            onClick={onBook}
-            aria-label="Book this room"
-          >
-            <Plus size={24} />
-          </Box>
+          {activateReservationButton && (
+            <Box
+              as="button"
+              w={12}
+              h={12}
+              borderRadius="full"
+              bg="rgba(79,140,255,0.15)"
+              color="accent.default"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              cursor="pointer"
+              _hover={{ bg: "rgba(79,140,255,0.25)" }}
+              onClick={onBook}
+              aria-label="Book this room"
+            >
+              <Plus size={24} />
+            </Box>
+          )}
         </Flex>
       </Box>
     </Box>

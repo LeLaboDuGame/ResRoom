@@ -30,7 +30,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   const [error, setError] = useState("");
 
   function formatDatetime(dateStr, timeStr) {
-    return `${dateStr} ${timeStr}:00`;
+    return `${dateStr} ${timeStr}`;
   }
 
   function computeEnd(dateStr, timeStr, dur) {
