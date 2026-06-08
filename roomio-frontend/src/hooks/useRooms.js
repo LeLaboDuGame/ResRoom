@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchRoom, fetchRooms } from "../api/rooms";
 import { SETTINGS } from "../config/settings";
 
@@ -11,33 +11,35 @@ export function useRooms() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchRooms();
+      setRooms(data.rooms);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
-      try {
-        const data = await fetchRooms();
-        if (!cancelled) {
-          setRooms(data.rooms);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    const safeLoad = async () => {
+      if (!cancelled) await load();
     };
 
-    load();
-    const interval = setInterval(load, SETTINGS.POLL_INTERVAL);
+    safeLoad();
+    const interval = setInterval(safeLoad, SETTINGS.POLL_INTERVAL);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [load]);
 
-  return { rooms, loading, error };
+  return { rooms, loading, error, refetchRooms: load };
 }
 
 /**
@@ -50,31 +52,33 @@ export function useRoom(name) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const load = useCallback(async () => {
+    try {
+      const { room: fetched } = await fetchRoom(name);
+      setRoom(fetched ?? null);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [name]);
+
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
-      try {
-        const { room } = await fetchRoom(name);
-        if (!cancelled) {
-          setRoom(room ?? null);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    const safeLoad = async () => {
+      if (!cancelled) await load();
     };
 
-    load();
-    const interval = setInterval(load, SETTINGS.POLL_INTERVAL);
+    safeLoad();
+    const interval = setInterval(safeLoad, SETTINGS.POLL_INTERVAL);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [name]);
+  }, [load]);
 
-  return { room, loading, error };
+  return { room, loading, error, refetchRoom: load };
 }

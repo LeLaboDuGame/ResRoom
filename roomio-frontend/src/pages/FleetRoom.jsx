@@ -15,8 +15,8 @@ import { SETTINGS } from "../config/settings";
 export default function FleetRoom() {
   const { roomName } = useParams();
   const navigate = useNavigate();
-  const { room, loading, error } = useRoom(roomName);
-  const { rooms } = useRooms();
+  const { room, loading, error, refetchRoom } = useRoom(roomName);
+  const { rooms, refetchRooms } = useRooms();
 
   const [view, setView] = useState("room");
   const [selectedRoomName, setSelectedRoomName] = useState(roomName);
@@ -71,6 +71,8 @@ export default function FleetRoom() {
 
   function handleBookingSuccess() {
     setBookingKey((k) => k + 1);
+    refetchRoom();
+    refetchRooms();
     goToRoom();
   }
 
