@@ -15,6 +15,7 @@ import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { BookingButton } from "../components/booking/BookingButton";
 import { BookingForm } from "../components/booking/BookingForm";
 import { DeleteModal } from "../components/booking/DeleteModal";
+import { ResRoomLogo } from "../components/ui/ResRoomLogo";
 import { AdminTabs } from "../components/admin/AdminTabs";
 import { RoomsTab } from "../components/admin/RoomsTab";
 import { SettingsTab } from "../components/admin/SettingsTab";
@@ -124,7 +125,8 @@ export default function Debug() {
   return (
     <Box minH="100vh" bg="#0a0a0b" color="text.primary" p={6}>
       {/* Nav */}
-      <Flex gap={4} mb={6} wrap="wrap">
+      <Flex gap={4} mb={6} wrap="wrap" align="center">
+        <ResRoomLogo />
         <Text as={Link} to="/debug" fontWeight="bold" color="accent.default" fontSize="lg">Debug</Text>
         <Text as={Link} to="/" color="text.secondary" _hover={{ color: "text.primary" }}>Dashboard</Text>
         <Text as={Link} to="/fleet/Howard%20Hughes" color="text.secondary" _hover={{ color: "text.primary" }}>FleetRoom</Text>
