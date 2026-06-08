@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Box, Flex, Text, IconButton } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { usePlan } from "../hooks/usePlan";
 import { useRooms } from "../hooks/useRooms";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
@@ -11,7 +10,6 @@ import { Clock } from "../components/ui/Clock";
 import { X, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Dashboard() {
-  const { walls, roomPolygons, loading: planLoading } = usePlan();
   const { rooms, loading: roomsLoading } = useRooms();
   const [selectedRoomName, setSelectedRoomName] = useState(null);
   const [bookingKey, setBookingKey] = useState(0);
@@ -85,14 +83,13 @@ export default function Dashboard() {
           transition="width 0.25s ease"
           position="relative"
         >
-          {planLoading || roomsLoading ? (
+          {roomsLoading ? (
             <Flex h="100%" align="center" justify="center">
               <Text color="text.muted">Loading plan…</Text>
             </Flex>
           ) : (
             <FloorPlan
-              walls={walls}
-              roomPolygons={roomPolygons}
+              rooms={rooms}
               selectedRoom={selectedRoomName}
               onRoomClick={handleRoomClick}
             />

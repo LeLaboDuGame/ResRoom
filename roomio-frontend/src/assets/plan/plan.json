@@ -66,8 +66,36 @@
       ],
       "rooms": [
         {
+          "name": "Howard Hughes",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "rectangle", "L1": 1.4, "L2": 2},
+            "x": 581,
+            "y": 1874,
+            "size": 300,
+            "rot": 90,
+            "z": 1
+          }
+        },
+        {
+          "name": "Ken Miles",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "triangle", "L1": 1.2, "L2": 1.5, "angle": 90},
+            "x": 1305.6,
+            "y": 1350,
+            "size": 220,
+            "rot": -90,
+            "z": 1
+          }
+        },
+        {
           "id": "room-1-1780593075522",
-          "name": "Youri_Gargarine",
+          "name": "Youri Gargarine",
           "walls": [
             "c8a4izkq",
             "6335lkcu",
@@ -80,7 +108,71 @@
             "x": 0,
             "y": 0
           },
-          "color": "#ffffff"
+          "color": "#ffffff",
+          "zone": {
+            "shape": {"type": "rectangle", "L1": 1.1, "L2": 1.3},
+            "x": 540,
+            "y": 1303,
+            "size": 270,
+            "rot": 0,
+            "z": 1
+          }
+        },
+        {
+          "name": "NoName 1",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "triangle", "L1": 1.3, "L2": 1.5, "angle": 90},
+            "x": 1090,
+            "y": 1170,
+            "size": 220,
+            "rot": -90,
+            "z": 1
+          }
+        },
+        {
+          "name": "NoName 2",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "rectangle", "L1": 1, "L2": 0.65},
+            "x": 1405,
+            "y": 1555,
+            "size": 150,
+            "rot": 0,
+            "z": 1
+          }
+        },
+        {
+          "name": "NoName 3",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "rectangle", "L1": 1, "L2": 0.7},
+            "x": 1405,
+            "y": 1647,
+            "size": 150,
+            "rot": 0,
+            "z": 1
+          }
+        },
+        {
+          "name": "NoName 4",
+          "walls": [],
+          "color": "#ffffff",
+          "area": 0,
+          "zone": {
+            "shape": {"type": "rectangle", "L1": 1.05, "L2": 0.6},
+            "x": 332,
+            "y": 1848,
+            "size": 200,
+            "rot": 0,
+            "z": 1
+          }
         }
       ],
       "doors": [],
