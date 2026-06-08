@@ -1,13 +1,7 @@
-import { Box, Flex, Text, Image } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Clock } from "../ui/Clock";
-import logoSvg from "../../assets/logo/ResRoomLogo.svg";
-
-export function ResRoomLogo() {
-  return (
-    <Image src={logoSvg} alt="ResRoom" h="32px" w="auto" userSelect="none" draggable={false} />
-  );
-}
+import { ResRoomLogo } from "../ui/ResRoomLogo";
 
 export function Header() {
   return (
