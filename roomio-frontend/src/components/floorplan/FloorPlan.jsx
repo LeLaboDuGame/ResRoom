@@ -297,9 +297,10 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
 
             <Box
                 position="absolute"
-                bottom={3}
+                bottom={{ base: "64px", md: 3 }}
                 right={3}
-                bg="#46464b"
+                zIndex={10}
+                bg="rgba(21,21,24,0.85)"
                 borderRadius="md"
                 px={3}
                 py={2}
