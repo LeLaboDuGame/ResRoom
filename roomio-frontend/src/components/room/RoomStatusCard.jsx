@@ -21,24 +21,27 @@ export function RoomStatusCard({ room, onBook, activateReservationButton = true 
   const now = new Date();
   const reservations = room?.reservations || [];
 
+  const parseDate = (d) => new Date(d.replace(" ", "T"));
+
   const activeRes = reservations.find((r) => {
-    const s = new Date(r.start.replace(" ", "T"));
-    const e = new Date(r.end.replace(" ", "T"));
+    const s = parseDate(r.start);
+    const e = parseDate(r.end);
     return now >= s && now < e;
   });
 
-  const nextRes = reservations.find((r) => {
-    const s = new Date(r.start.replace(" ", "T"));
-    return s > now && (s - now) <= 15 * 60 * 1000;
-  });
+  const nextRes = reservations
+    .filter((r) => parseDate(r.start) > now && (!activeRes || parseDate(r.start) >= parseDate(activeRes.end)))
+    .sort((a, b) => parseDate(a.start) - parseDate(b.start))[0];
 
   let derivedStatus = "free";
   if (activeRes) {
-    const endDt = new Date(activeRes.end.replace(" ", "T"));
+    const endDt = parseDate(activeRes.end);
     derivedStatus = (endDt - now) <= 15 * 60 * 1000 ? "finishingSoon" : "meeting";
-  } else if (nextRes) {
+  } else if (nextRes && (parseDate(nextRes.start) - now) <= 15 * 60 * 1000) {
     derivedStatus = "startingSoon";
   }
+
+  const fmtTime = (d) => d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <Box
@@ -51,8 +54,8 @@ export function RoomStatusCard({ room, onBook, activateReservationButton = true 
       flexDirection="column"
       minH="280px"
     >
-      {/* Photo with gradient overlay */}
-      <Box position="relative" h="160px" bg="bg.elevated" overflow="hidden">
+      {/* Photo 3/4 of card height */}
+      <Box position="relative" flex={3} bg="bg.elevated" overflow="hidden" minH="0">
         {photoError ? (
           <Flex w="100%" h="100%" align="center" justify="center" bg="bg.secondary">
             <Text color="text.muted" fontSize="sm">{roomName}</Text>
@@ -71,6 +74,19 @@ export function RoomStatusCard({ room, onBook, activateReservationButton = true 
           pointerEvents="none"
           bgGradient="linear(to-t, rgba(0,0,0,0.7), transparent 40%)"
         />
+        {/* Status color overlay */}
+        <Box
+          position="absolute"
+          inset={0}
+          pointerEvents="none"
+          opacity={0.25}
+          bg={
+            derivedStatus === "free" ? "green.500" :
+            derivedStatus === "startingSoon" ? "yellow.500" :
+            derivedStatus === "meeting" || derivedStatus === "finishingSoon" ? "red.500" :
+            "transparent"
+          }
+        />
       </Box>
 
       {/* Content */}
@@ -85,6 +101,21 @@ export function RoomStatusCard({ room, onBook, activateReservationButton = true 
         <Text fontSize="xl" fontWeight="bold" color="text.primary">
           {room?.name}
         </Text>
+
+        {/* Next reservation */}
+        {nextRes && (
+          <Box bg="bg.elevated" borderRadius="md" px={3} py={2} mt={1}>
+            <Flex align="center" justify="space-between">
+              <Text fontSize="xs" color="text.muted">
+                {fmtTime(parseDate(nextRes.start))} - {fmtTime(parseDate(nextRes.end))}
+              </Text>
+              <Text fontSize="xs" color="text.muted" noOfLines={1}>{nextRes.reserved_by}</Text>
+            </Flex>
+            <Text fontSize="sm" color="text.primary" fontWeight="medium" noOfLines={1}>
+              {nextRes.title}
+            </Text>
+          </Box>
+        )}
 
         {/* Bottom section */}
         <Flex align="center" justify="space-between" mt="auto">
