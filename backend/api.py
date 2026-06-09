@@ -299,6 +299,54 @@ def update_room(room_name: str, update: RoomUpdate):
     return {"message": "Room updated!", "room": room_res}
 
 
+@app.post("/api/room/create/{room_name}")
+def create_room(room_name: str):
+    """
+    Create a new room with default equipment.
+
+    :param room_name: Name of the new room.
+    :return: The created room object.
+    """
+    existing = get_room(room_name)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A room with this name already exists"
+        )
+
+    new_room = {
+        "name": room_name,
+        "elements": {"capacity": 1, "tv": False, "whiteboard": False, "computer": False},
+        "status": "free",
+        "reservations": [],
+    }
+    database.data["rooms"].append(new_room)
+    database.save()
+    logging.info(f"Room created: {room_name}")
+    return {"message": "Room created!", "room": new_room}
+
+
+@app.delete("/api/room/delete/{room_name}")
+def delete_room(room_name: str):
+    """
+    Delete a room by name.
+
+    :param room_name: Name of the room to delete.
+    :return: Confirmation message.
+    """
+    room_res = get_room(room_name)
+    if not room_res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room doesn't exist"
+        )
+
+    database.data["rooms"] = [r for r in database.data["rooms"] if r["name"] != room_name]
+    database.save()
+    logging.info(f"Room deleted: {room_name}")
+    return {"message": "Room deleted!"}
+
+
 @app.get("/api/reservations/history")
 def get_reservations_history(room: str | None = None):
     """
