@@ -8,7 +8,9 @@ import { X } from "lucide-react";
  * @return {JSX.Element} ReservationList component
  */
 export function ReservationList({ reservations = [], onDelete }) {
-  if (!reservations.length) {
+  const sorted = [...reservations].sort((a, b) => a.start.localeCompare(b.start));
+
+  if (!sorted.length) {
     return (
       <Text fontSize="sm" color="text.muted" textAlign="center" py={6}>
         No reservations today
@@ -25,7 +27,7 @@ export function ReservationList({ reservations = [], onDelete }) {
         "&::-webkit-scrollbar-thumb": { bg: "#2c2c30", borderRadius: "full" },
       }}
     >
-      {reservations.map((r) => (
+      {sorted.map((r) => (
         <Flex
           key={r.uid}
           align="center"
