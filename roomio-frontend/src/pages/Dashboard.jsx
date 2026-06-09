@@ -6,7 +6,7 @@ import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { ReservationList } from "../components/room/ReservationList";
 import { BookingForm } from "../components/booking/BookingForm";
-import { Clock } from "../components/ui/Clock";
+import { AppShell } from "../components/layout/AppShell";
 import { X, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Dashboard() {
@@ -31,51 +31,8 @@ export default function Dashboard() {
   const panelOpen = !!selectedRoomName;
 
   return (
-    <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
-      {/* Top bar (desktop) */}
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        zIndex={10}
-        display="flex"
-        alignItems="center"
-        justify="space-between"
-        px={6}
-        py={3}
-        bg="rgba(10,10,11,0.85)"
-        borderBottom="1px solid"
-        borderColor="border.default"
-      >
-        <Flex align="center" gap={3}>
-          <Text fontSize="lg" fontWeight="bold" color="text.primary" letterSpacing="tight">
-            RoomIO
-          </Text>
-          <Text as={Link} to="/debug" fontSize="xs" color="text.muted" _hover={{ color: "accent.default" }}>
-            Debug
-          </Text>
-        </Flex>
-        <Flex align="center" gap={4}>
-          <Clock />
-          <Box
-            as={Link}
-            to="/admin"
-            display="flex"
-            alignItems="center"
-            gap={1.5}
-            fontSize="xs"
-            color="text.muted"
-            _hover={{ color: "accent.default" }}
-          >
-            <Settings size={14} />
-            Admin
-          </Box>
-        </Flex>
-      </Box>
-
-      {/* Main content */}
-      <Box h="100%" pt="52px" position="relative">
+    <AppShell>
+      <Box h="100%" position="relative">
         {/* Floor plan */}
         <Box
           h="100%"
@@ -255,6 +212,6 @@ export default function Dashboard() {
           </Flex>
         </Box>
       </Box>
-    </Box>
+    </AppShell>
   );
 }

@@ -1,8 +1,8 @@
-# RoomIO — Présentation du Projet
+# ResRoom — Présentation du Projet
 
 ## Contexte
 
-RoomIO est une application web de **réservation de salles de réunion** pour les entreprises. Elle permet aux employés de visualiser la disponibilité des salles en temps réel, de réserver un créneau, et de gérer l'ensemble des réservations depuis une interface centralisée.
+ResRoom est une application web de **réservation de salles de réunion** pour les entreprises. Elle permet aux employés de visualiser la disponibilité des salles en temps réel, de réserver un créneau, et de gérer l'ensemble des réservations depuis une interface centralisée.
 
 Le projet comprend une **tablette dédiée** dans chaque salle de réunion qui affiche le statut en direct et permet une réservation rapide depuis la salle elle-même.
 
@@ -59,7 +59,7 @@ La refonte vise à :
 ## Architecture du code (après refonte)
 
 ```
-RoomIO/
+ResRoom/
 ├── backend/                          # API Python FastAPI
 │   ├── api.py                        # Endpoints REST
 │   ├── config.py                     # Constantes (log, format date)
