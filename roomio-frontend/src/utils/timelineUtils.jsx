@@ -153,10 +153,12 @@ export function isSameDay(dateStr, selectedDate) {
     );
 }
 
+const DEFAULT_COLOR_PALETTE = [["#9B6A6C", "#E2B4BD"]];
+
 /**
  * RoomTimeline Component
  */
-export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationClick }) {
+export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationClick, colorPalette = DEFAULT_COLOR_PALETTE }) {
     const navigate = useNavigate();
     const filterDate = selectedDate || new Date();
 
@@ -240,10 +242,11 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
 
             {/* Room Timeline Tracks */}
             <VStack gap={5} align="stretch" position="relative">
-                {rooms.map((room) => {
+                {rooms.map((room, idx) => {
                     const roomReservations = (room.reservations || []).filter(res =>
                         isSameDay(res.start, filterDate)
                     );
+                    const [borderColor, bgColor] = colorPalette[idx % colorPalette.length];
 
                     return (
                         <Flex key={room.name} align="center" position="relative">
@@ -323,7 +326,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                             right={isNearEnd ? `${100 - endPercent}%` : "auto"}
                                             w={`${width}%`}
                                             h="80%"
-                                            bg="#E2B4BD"
+                                            bg={bgColor}
                                             borderRadius="md"
                                             px={3}
                                             py={1}
@@ -333,7 +336,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                             flexDirection="column"
                                             justifyContent="center"
                                             borderLeft="3px solid"
-                                            borderLeftColor="#9B6A6C"
+                                            borderLeftColor={borderColor}
                                             boxShadow="sm"
                                             role="group"
                                             transition="all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
@@ -341,7 +344,6 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                                 w: "max-content",
                                                 minW: `${width}%`,
                                                 zIndex: 10,
-                                                bg: "#9B6A6C",
                                                 boxShadow: "2xl",
                                                 transform: "scale(1.02)",
                                                 overflow: "visible",
@@ -357,15 +359,23 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                                 }
                                             }}
                                         >
-                                            <Text fontSize="11px" fontWeight="bold" color="#424B54" _groupHover={{ color: "white" }} noOfLines={1} lineHeight="short" whiteSpace="nowrap">
+                                            <Text fontSize="11px" fontWeight="bold" color="#424B54" noOfLines={1} lineHeight="short" whiteSpace="nowrap">
                                                 {res.title}
                                             </Text>
-                                            <Text fontSize="9px" color="#9B6A6C" _groupHover={{ color: "#E2B4BD" }} noOfLines={1} whiteSpace="nowrap">
+                                            <Text fontSize="9px" color="#9B6A6C" noOfLines={1} whiteSpace="nowrap">
                                                 {formatTime(res.start)} - {formatTime(res.end)} | {res.reserved_by}
                                             </Text>
                                         </Box>
                                     );
                                 })}
+
+                                {!roomReservations.length && (
+                                <Flex position="absolute" inset={0} justify="center" align="center">
+                                    <Text color="#9B6A6C" fontSize="xs" fontWeight="medium">
+                                        Aucune réservation
+                                    </Text>
+                                </Flex>
+                                )}
 
                                 {/* Red Vertical Current Time Line */}
                                 {showCurrentTimeLine && (
@@ -386,15 +396,6 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                     );
                 })}
             </VStack>
-
-            {/* Empty State message */}
-            {!hasAnyReservations && (
-                <Box py={8} textAlign="center" mt={4}>
-                    <Text color="#9B6A6C" fontSize="sm" fontWeight="medium">
-                        Aucune réservation pour cette journée
-                    </Text>
-                </Box>
-            )}
         </Box>
     );
 }
@@ -402,13 +403,14 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
 /**
  * Compatibility wrapper function to render the RoomTimeline component.
  */
-export function renderRoomTimeline(rooms, currentTime, selectedDate = null, onReservationClick = null) {
+export function renderRoomTimeline(rooms, currentTime, selectedDate = null, onReservationClick = null, colorPalette) {
     return (
         <RoomTimeline
             rooms={rooms}
             currentTime={currentTime}
             selectedDate={selectedDate}
             onReservationClick={onReservationClick}
+            colorPalette={colorPalette}
         />
     );
 }
