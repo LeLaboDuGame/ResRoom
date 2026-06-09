@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { parsePlan } from "../utils/planUtils";
 import planData from "../assets/plan/plan.json";
 
+/**
+ * Hook: load and parse the floor plan on mount.
+ * @return {{background: Object|null, walls: Array, roomPolygons: Object, loading: boolean}} Plan state
+ */
 export function usePlan() {
   const [background, setBackground] = useState(null);
   const [walls, setWalls] = useState([]);

@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { fetchRoom, fetchRooms } from "../api/rooms";
 import { SETTINGS } from "../config/settings";
 
+/**
+ * Hook: fetch all rooms with polling.
+ * @return {{rooms: Array, loading: boolean, error: string|null}} Rooms state
+ */
 export function useRooms() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,11 @@ export function useRooms() {
   return { rooms, loading, error };
 }
 
+/**
+ * Hook: fetch a single room by name with polling.
+ * @param {string} name Room name
+ * @return {{room: Object|null, loading: boolean, error: string|null}} Room state
+ */
 export function useRoom(name) {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
