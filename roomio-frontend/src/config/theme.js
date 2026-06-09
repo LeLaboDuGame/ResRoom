@@ -1,50 +1,46 @@
 import { createSystem, defaultConfig, mergeConfigs } from "@chakra-ui/react";
 
-// Custom dark theme — bg #0a0a0b, accent blue #4f8cff
-// Tokens are accessible in Chakra props via dot notation
-// e.g. color="text.primary", bg="bg.elevated", color="status.free"
-
 const customConfig = {
   theme: {
     tokens: {
       colors: {
-        bg: {
-          primary:   { value: "#0a0a0b" },
-          secondary: { value: "#141416" },
-          elevated:  { value: "#1c1c1f" },
+        rawBg: {
+          primary:  { value: "#0a0a0b" },
+          secondary:{ value: "#141416" },
+          elevated: { value: "#1c1c1f" },
         },
-        border: {
-          default: { value: "#2c2c30" },
-          hover:   { value: "#3d3d44" },
+        rawBorder: {
+          default:  { value: "#2c2c30" },
+          hover:    { value: "#3d3d44" },
         },
-        text: {
-          primary:   { value: "#f5f5f7" },
-          secondary: { value: "#a0a0ab" },
-          muted:     { value: "#6b6b76" },
+        rawText: {
+          primary:  { value: "#f5f5f7" },
+          secondary:{ value: "#a0a0ab" },
+          muted:    { value: "#6b6b76" },
         },
-        accent: {
-          default: { value: "#4f8cff" },
-          hover:   { value: "#3b72e3" },
-          muted:   { value: "#1a3366" },
-          text:    { value: "#ffffff" },
+        rawAccent: {
+          default:  { value: "#4f8cff" },
+          hover:    { value: "#3b72e3" },
+          muted:    { value: "#1a3366" },
+          text:     { value: "#ffffff" },
         },
-        status: {
-          free:          { value: "#34d399" }, // green — room available
-          startingSoon:  { value: "#fbbf24" }, // yellow — starts within STATUS_BEFORE minutes
-          meeting:       { value: "#f87171" }, // red — currently occupied
-          finishingSoon: { value: "#fb923c" }, // orange — ends within STATUS_BEFORE minutes
+        rawStatus: {
+          free:          { value: "#34d399" },
+          startingSoon:  { value: "#fbbf24" },
+          meeting:       { value: "#f87171" },
+          finishingSoon: { value: "#fb923c" },
         },
-        danger:  { value: "#f87171" },
-        overlay: { value: "rgba(0,0,0,0.6)" },
-        success: { value: "#34d399" },
-        warning: { value: "#fbbf24" },
+        rawDanger:  { value: "#f87171" },
+        rawOverlay: { value: "rgba(0,0,0,0.6)" },
+        rawSuccess: { value: "#34d399" },
+        rawWarning: { value: "#fbbf24" },
       },
       radii: {
         sm:  { value: "4px" },
         md:  { value: "8px" },
         lg:  { value: "12px" },
         xl:  { value: "16px" },
-        full: { value: "9999px" },
+        full:{ value: "9999px" },
       },
       shadows: {
         sm: { value: "0 1px 2px rgba(0,0,0,0.3)" },
@@ -56,16 +52,41 @@ const customConfig = {
     semanticTokens: {
       colors: {
         bg: {
-          primary:   { value: "{colors.bg.primary}" },
-          secondary: { value: "{colors.bg.secondary}" },
-          elevated:  { value: "{colors.bg.elevated}" },
+          primary:  { value: "{colors.rawBg.primary}" },
+          secondary:{ value: "{colors.rawBg.secondary}" },
+          elevated: { value: "{colors.rawBg.elevated}" },
         },
+        border: {
+          default:  { value: "{colors.rawBorder.default}" },
+          hover:    { value: "{colors.rawBorder.hover}" },
+        },
+        text: {
+          primary:  { value: "{colors.rawText.primary}" },
+          secondary:{ value: "{colors.rawText.secondary}" },
+          muted:    { value: "{colors.rawText.muted}" },
+        },
+        accent: {
+          default:  { value: "{colors.rawAccent.default}" },
+          hover:    { value: "{colors.rawAccent.hover}" },
+          muted:    { value: "{colors.rawAccent.muted}" },
+          text:     { value: "{colors.rawAccent.text}" },
+        },
+        status: {
+          free:          { value: "{colors.rawStatus.free}" },
+          startingSoon:  { value: "{colors.rawStatus.startingSoon}" },
+          meeting:       { value: "{colors.rawStatus.meeting}" },
+          finishingSoon: { value: "{colors.rawStatus.finishingSoon}" },
+        },
+        danger:  { value: "{colors.rawDanger}" },
+        overlay: { value: "{colors.rawOverlay}" },
+        success: { value: "{colors.rawSuccess}" },
+        warning: { value: "{colors.rawWarning}" },
       },
     },
     breakpoints: {
-      sm: "640px",   // mobile
-      md: "1024px",  // tablet
-      lg: "1200px",  // desktop
+      sm: "640px",
+      md: "1024px",
+      lg: "1200px",
     },
   },
 };
