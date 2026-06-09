@@ -22,19 +22,19 @@ import {
     CloseButton,
     Spinner
 } from "@chakra-ui/react";
-import '../index.css'
+import '../../index.css'
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-import {useClock} from "../hooks/useClock";
+import {useClock} from "../../hooks/useClock.js";
 import {
     getStatusBg,
     getStatusColor,
     getRoomStatus,
     renderRoomTimeline
-} from "../utils/timelineUtils";
-import { renderFloorPlan } from "../utils/floorPlan";
-import colors from "../config/colorTheme";
+} from "../../utils/timelineUtils.jsx";
+import { renderFloorPlan } from "../../utils/floorPlan.jsx";
+import colors from "../../config/colorTheme.jsx";
 
 
 /* Génère les 7 prochains jours à partir d'aujourd'hui */
