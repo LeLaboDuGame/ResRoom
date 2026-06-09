@@ -1,8 +1,8 @@
-# RoomIO — Design System
+# ResRoom — Design System
 
 ## Identité visuelle
 
-RoomIO est une application professionnelle de réservation de salles de réunion. L'identité visuelle se veut **sobre, élégante et fonctionnelle**, comparable aux outils SaaS modernes comme Linear, Notion ou Stripe Dashboard.
+ResRoom est une application professionnelle de réservation de salles de réunion. L'identité visuelle se veut **sobre, élégante et fonctionnelle**, comparable aux outils SaaS modernes comme Linear, Notion ou Stripe Dashboard.
 
 - **Ambiance** : sombre, minimaliste, haute lisibilité
 - **Ton** : sérieux, efficace, non ludique
