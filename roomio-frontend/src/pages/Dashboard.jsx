@@ -1,20 +1,27 @@
-import { usePlan } from "../hooks/usePlan";
-import { Clock } from "../components/ui/Clock";
-import { StatusBadge } from "../components/ui/StatusBadge";
-import { FilterBar } from "../components/ui/FilterBar";
+import {usePlan} from "../hooks/usePlan";
+import {Clock} from "../components/ui/Clock";
+import {StatusBadge} from "../components/ui/StatusBadge";
+import {FilterBar} from "../components/ui/FilterBar";
+import {LoadingSkeleton} from "../components/ui/LoadingSkeleton";
 
 export default function Dashboard() {
-  const { background, walls, roomPolygons, loading } = usePlan();
+    const {background, walls, roomPolygons, loading} = usePlan();
 
-  if (loading) return <p>Chargement du plan...</p>;
+    if (loading) return <p>Chargement du plan...</p>;
 
-  return (
-    <div>
-      <p>Murs : {walls.length}</p>
-      <p>Salles : {Object.keys(roomPolygons).length}</p>
-        <Clock />
-        <StatusBadge/>
-        <FilterBar/>
-    </div>
-  );
+    return (
+        <div>
+            <p>Murs : {walls.length}</p>
+            <p>Salles : {Object.keys(roomPolygons).length}</p>
+            <Clock/>
+            <StatusBadge/>
+            <FilterBar/>
+
+            <div>
+                <LoadingSkeleton variant="card" mb={4}/>
+                <LoadingSkeleton variant="text" mb={2}/>
+                <LoadingSkeleton variant="circle"/>
+            </div>
+        </div>
+    );
 }
