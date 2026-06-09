@@ -3,6 +3,7 @@ import {Clock} from "../components/ui/Clock";
 import {StatusBadge} from "../components/ui/StatusBadge";
 import {FilterBar} from "../components/ui/FilterBar";
 import {LoadingSkeleton} from "../components/ui/LoadingSkeleton";
+import {EmptyState} from "../components/ui/EmptyState";
 
 export default function Dashboard() {
     const {background, walls, roomPolygons, loading} = usePlan();
@@ -22,6 +23,7 @@ export default function Dashboard() {
                 <LoadingSkeleton variant="text" mb={2}/>
                 <LoadingSkeleton variant="circle"/>
             </div>
+            <EmptyState title={"Title"} description={"TEST"}/>
         </div>
     );
 }
