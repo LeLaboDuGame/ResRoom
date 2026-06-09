@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Flex, Text, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Text, IconButton, Spinner } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useRoom, useRooms } from "../hooks/useRooms";
@@ -71,6 +71,7 @@ export default function FleetRoom() {
 
   function handleBookingSuccess() {
     setBookingKey((k) => k + 1);
+    goToRoom();
   }
 
   function goToBooking() {
@@ -86,7 +87,7 @@ export default function FleetRoom() {
   if (loading) {
     return (
       <Box minH="100vh" bg="#0a0a0b" display="flex" alignItems="center" justifyContent="center">
-        <Text color="text.muted">Chargement…</Text>
+        <Spinner size="xl" color="accent.default" thickness="4px" />
       </Box>
     );
   }
@@ -110,7 +111,7 @@ export default function FleetRoom() {
           {/* Left 50%: Room status card */}
           <Box w="50%" h="100%" p={6} display="flex" flexDirection="column">
             <Box w="100%" maxW="500px" flex={1} display="flex" flexDirection="column">
-              <RoomStatusCard room={room} onBook={goToBooking} />
+              <RoomStatusCard room={room} onBook={goToBooking} activateReservationButton={false} />
             </Box>
           </Box>
 
