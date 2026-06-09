@@ -1,5 +1,6 @@
 import { Badge, Box, HStack, Text, VStack, Flex } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import colors from "../config/colorTheme";
 
 export const dayStart = 8;
 export const dayEnd = 20;
@@ -72,15 +73,15 @@ export function getStatusColor(status) {
 export function getStatusBg(status) {
     switch (status) {
         case "Free":
-            return "#16A34A";
+            return colors.STATUS_FREE;
         case "Starting Soon":
-            return "#2563EB";
+            return colors.STATUS_STARTING_SOON;
         case "Meeting":
-            return "#DC2626";
+            return colors.STATUS_MEETING;
         case "Finishing Soon":
-            return "#F87171";
+            return colors.STATUS_FINISHING_SOON;
         default:
-            return "#475569";
+            return colors.STATUS_DEFAULT;
     }
 }
 
@@ -91,6 +92,8 @@ export function getStatusBg(status) {
  */
 export function getRoomStatus(reservations) {
     const now = new Date();
+    //now.setHours(19)
+    //now.setMinutes(50)
 
     if (!reservations || !reservations.length) return "Free";
 
@@ -153,7 +156,7 @@ export function isSameDay(dateStr, selectedDate) {
     );
 }
 
-const DEFAULT_COLOR_PALETTE = [["#9B6A6C", "#E2B4BD"]];
+const DEFAULT_COLOR_PALETTE = [[colors.RESERVATION_PALETTE[0].border, colors.RESERVATION_PALETTE[0].bg]];
 
 /**
  * RoomTimeline Component
@@ -166,7 +169,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
     if (!rooms || rooms.length === 0) {
         return (
             <Box p={6} textAlign="center">
-                <Text color="gray.400" fontSize="lg">Aucune salle disponible</Text>
+                <Text color={colors.INPUT_PLACEHOLDER} fontSize="lg">Aucune salle disponible</Text>
             </Box>
         );
     }
@@ -192,19 +195,19 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
     return (
         <Box
             w="100%"
-            bg="#FFFFFF"
+            bg={colors.CARD_BG}
             borderRadius="xl"
             border="1px solid"
-            borderColor="#93A8AC"
+            borderColor={colors.CARD_BORDER}
             p={6}
             boxShadow="md"
-            color="#424B54"
+            color={colors.TEXT_PRIMARY}
         >
             {/* Horizontal Hour Labels Row */}
             <Flex align="center" mb={6} position="relative">
                 {/* Left Column Spacer matching the Room list width */}
                 <Box w="240px" pr={4}>
-                    <Text fontSize="xs" fontWeight="bold" color="#9B6A6C" letterSpacing="wider">
+                    <Text fontSize="xs" fontWeight="bold" color={colors.ACCENT} letterSpacing="wider">
                         SALLES / RESERVATIONS
                     </Text>
                 </Box>
@@ -217,7 +220,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                           left={`${timeToPercent(t)}%`}
                           transform="translateX(-50%)"
                         >
-                            <Text fontSize="11px" fontWeight="semibold" color="#424B54">
+                            <Text fontSize="11px" fontWeight="semibold" color={colors.TEXT_PRIMARY}>
                                 {t}
                             </Text>
                         </Box>
@@ -231,9 +234,9 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                             h="8px"
                             w="8px"
                             borderRadius="full"
-                            bg="red.500"
+                            bg={colors.TIMELINE_NOW_DOT_BG}
                             transform="translate(-50%, -50%)"
-                            boxShadow="0 0 8px rgba(239, 68, 68, 0.9)"
+                            boxShadow={`0 0 8px ${colors.TIMELINE_NOW_GLOW}`}
                             zIndex={5}
                         />
                     )}
@@ -249,7 +252,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                     const [borderColor, bgColor] = colorPalette[idx % colorPalette.length];
 
                     return (
-                        <Flex key={room.name} align="center" position="relative">
+                        <Flex key={room.name + '-' + idx} align="center" position="relative">
                             {/* Room Info Left Column */}
                             <Box w="240px" pr={4}>
                                 <HStack justify="space-between" align="center">
@@ -257,21 +260,21 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                         <Text
                                             fontSize="md"
                                             fontWeight="bold"
-                                            color="#424B54"
+                                            color={colors.TEXT_PRIMARY}
                                             noOfLines={1}
                                             cursor="pointer"
-                                            _hover={{ color: "#9B6A6C" }}
+                                            _hover={{ color: colors.ACCENT }}
                                             onClick={() => navigate(`/rooms/${encodeURIComponent(room.name)}`)}
                                         >
                                             {room.name}
                                         </Text>
-                                        <Text fontSize="xs" color="#93A8AC" noOfLines={1}>
+                                        <Text fontSize="xs" color={colors.CARD_BORDER} noOfLines={1}>
                                             {room.description ? room.description.split('\n')[0].replace("- ", "") : `${room.size} capacity`}
                                         </Text>
                                     </VStack>
                                     <Badge
                                         bg={getStatusBg(room.status || getRoomStatus(room.reservations))}
-                                        color="white"
+                                        color={colors.BADGE_TEXT}
                                         px={2}
                                         py={0.5}
                                         borderRadius="md"
@@ -286,14 +289,14 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                 flex="1"
                                 position="relative"
                                 h="52px"
-                                bg="#F8FAFC"
+                                bg={colors.TIMELINE_TRACK_BG}
                                 borderRadius="lg"
                                 border="1px solid"
-                                borderColor="#93A8AC"
+                                borderColor={colors.TIMELINE_TRACK_BORDER}
                                 overflow="visible"
                                 cursor="pointer"
                                 transition="all 0.2s ease"
-                                _hover={{ borderColor: "#424B54", bg: "#F1F5F9" }}
+                                _hover={{ borderColor: colors.TIMELINE_TRACK_HOVER_BORDER, bg: colors.TIMELINE_TRACK_HOVER_BG }}
                                 onClick={() => navigate(`/rooms/${encodeURIComponent(room.name)}`)}
                             >
                                 {/* Vertical hour grid lines */}
@@ -304,7 +307,7 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                         left={`${timeToPercent(t)}%`}
                                         h="100%"
                                         w="1px"
-                                        bg="#93A8AC"
+                                        bg={colors.TIMELINE_GRID_LINE}
                                         opacity={0.35}
                                         zIndex={1}
                                     />
@@ -359,10 +362,10 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                                 }
                                             }}
                                         >
-                                            <Text fontSize="11px" fontWeight="bold" color="#424B54" noOfLines={1} lineHeight="short" whiteSpace="nowrap">
+                                            <Text fontSize="11px" fontWeight="bold" color={colors.TEXT_PRIMARY} noOfLines={1} lineHeight="short" whiteSpace="nowrap">
                                                 {res.title}
                                             </Text>
-                                            <Text fontSize="9px" color="#9B6A6C" noOfLines={1} whiteSpace="nowrap">
+                                            <Text fontSize="9px" color={colors.ACCENT} noOfLines={1} whiteSpace="nowrap">
                                                 {formatTime(res.start)} - {formatTime(res.end)} | {res.reserved_by}
                                             </Text>
                                         </Box>
@@ -371,13 +374,13 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
 
                                 {!roomReservations.length && (
                                 <Flex position="absolute" inset={0} justify="center" align="center">
-                                    <Text color="#9B6A6C" fontSize="xs" fontWeight="medium">
+                                    <Text color={colors.ACCENT} fontSize="xs" fontWeight="medium">
                                         Aucune réservation
                                     </Text>
                                 </Flex>
                                 )}
 
-                                {/* Red Vertical Current Time Line */}
+                                {/* Current Time Line */}
                                 {showCurrentTimeLine && (
                                     <Box
                                         position="absolute"
@@ -385,10 +388,10 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
                                         top="0"
                                         bottom="0"
                                         w="2px"
-                                        bg="red.500"
+                                        bg={colors.TIMELINE_NOW_LINE_BG}
                                         zIndex={3}
                                         pointerEvents="none"
-                                        boxShadow="0 0 6px rgba(239, 68, 68, 0.8)"
+                                        boxShadow={`0 0 6px ${colors.TIMELINE_LINE_GLOW}`}
                                     />
                                 )}
                             </Box>
