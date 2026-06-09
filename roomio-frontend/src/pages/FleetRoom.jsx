@@ -3,6 +3,7 @@ import { Box, Flex, Text, IconButton, Spinner } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useRoom, useRooms } from "../hooks/useRooms";
+import { deleteReservation } from "../api/rooms";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { ReservationList } from "../components/room/ReservationList";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
@@ -125,7 +126,15 @@ export default function FleetRoom() {
             <Box flex={1} bg="bg.secondary" borderRadius="xl" overflow="hidden">
               <ReservationList
                 reservations={room?.reservations || []}
-                onDelete={(uid) => console.log("Delete:", uid)}
+                onDelete={async (uid) => {
+                  try {
+                    await deleteReservation(roomName, uid);
+                    refetchRoom();
+                    refetchRooms();
+                  } catch {
+                    console.error("Failed to delete reservation");
+                  }
+                }}
               />
             </Box>
           </Box>
