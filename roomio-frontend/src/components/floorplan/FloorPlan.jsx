@@ -3,16 +3,20 @@ import {Box, Flex, Circle, Text} from "@chakra-ui/react";
 import {getShapePolygon, shapePointsToAttr} from "../../utils/shapes";
 import bureauShapeSvg from "../../assets/BureauShape.svg";
 import planData from "../../assets/plan/plan.json";
-
 const VB_SIZE = 2048;
 const MIN_ZOOM = 300;
 const MAX_ZOOM = 4096;
 
+const FREE_COLOR = "var(--chakra-colors-status-free)"
+const STARTING_SOON_COLOR = "var(--chakra-colors-status-starting-soon)"
+const MEETING_COLOR = "var(--chakra-colors-status-meeting)"
+const FINISHING_SOON_COLOR = "var(--chakra-colors-status-finishing-soon)"
+
 const STATUS_COLORS = {
-    "Free": {fill: "#ffffff", stroke: "#ffffff"},
-    "Starting Soon": {fill: "#4f8cff", stroke: "#4f8cff"},
-    "Meeting": {fill: "#e74c3c", stroke: "#e74c3c"},
-    "Finishing Soon": {fill: "#ff6b9d", stroke: "#ff6b9d"},
+    "Free": {fill: FREE_COLOR, stroke: FREE_COLOR},
+    "Starting Soon": {fill: STARTING_SOON_COLOR, stroke: STARTING_SOON_COLOR},
+    "Meeting": {fill: MEETING_COLOR, stroke: MEETING_COLOR},
+    "Finishing Soon": {fill: FINISHING_SOON_COLOR, stroke: FINISHING_SOON_COLOR},
 };
 
 function getRoomStatus(reservations) {
@@ -177,7 +181,7 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
 
         let fill = colors.fill;
         let stroke = colors.stroke;
-        let fillOpacity = 0.12;
+        let fillOpacity = 0.3;
         let strokeOpacity = 0.5;
         let strokeWidth = 1;
 
@@ -188,7 +192,7 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         if (isSelected) {
             fill = "#4f8cff";
             stroke = "#4f8cff";
-            fillOpacity = 0.25;
+            fillOpacity = 0.3;
             strokeWidth = 2.5;
         }
 
@@ -297,9 +301,10 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
 
             <Box
                 position="absolute"
-                bottom={3}
+                bottom={{ base: "64px", md: 3 }}
                 right={3}
-                bg="#46464b"
+                zIndex={10}
+                bg="rgba(21,21,24,0.85)"
                 borderRadius="md"
                 px={3}
                 py={2}
