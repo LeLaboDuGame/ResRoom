@@ -1,4 +1,5 @@
 import {useState, useMemo, useRef, useCallback, useEffect} from "react";
+import {Box, Flex, Circle, Text} from "@chakra-ui/react";
 import {getShapePolygon, shapePointsToAttr} from "../../utils/shapes";
 import bureauShapeSvg from "../../assets/BureauShape.svg";
 import planData from "../../assets/plan/plan.json";
@@ -159,6 +160,13 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
 
     const vbStr = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
 
+    const legendItems = [
+        {color: "#ffffff", label: "Libre / Free"},
+        {color: "#4f8cff", label: "Bientôt libre / Starting Soon"},
+        {color: "#74394d", label: "En réunion / Meeting"},
+        {color: "#ff6b9d", label: "Termine / Finishing Soon"},
+    ];
+
     function getZoneColors(zone) {
         const room = roomMap[zone.name];
         const status = room ? getRoomStatus(room.reservations) : "Free";
@@ -188,102 +196,127 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     }
 
     return (
-        <svg
-            ref={svgRef}
-            viewBox={vbStr}
-            width="100%"
-            height="100%"
-            preserveAspectRatio="xMidYMid meet"
-            draggable={false}
-            style={{
-                display: "block",
-                cursor: isPanning ? "grabbing" : "grab",
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                touchAction: "none",
-            }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            onDoubleClick={handleDblClick}
-        >
-            <rect
-                x="0"
-                y="0"
-                width={VB_SIZE}
-                height={VB_SIZE}
-                fill="#151518"
-                rx="4"
-            />
-
-            <image
-                href={bureauShapeSvg}
-                x="0"
-                y="0"
-                width={VB_SIZE}
-                height={VB_SIZE}
+        <Box position="relative" w="100%" h="100%">
+            <svg
+                ref={svgRef}
+                viewBox={vbStr}
+                width="100%"
+                height="100%"
                 preserveAspectRatio="xMidYMid meet"
                 draggable={false}
                 style={{
-                    filter: "invert(0.92)",
-                    pointerEvents: "none",
+                    display: "block",
+                    cursor: isPanning ? "grabbing" : "grab",
                     userSelect: "none",
                     WebkitUserSelect: "none",
+                    touchAction: "none",
                 }}
-            />
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onDoubleClick={handleDblClick}
+            >
+                <rect
+                    x="0"
+                    y="0"
+                    width={VB_SIZE}
+                    height={VB_SIZE}
+                    fill="#151518"
+                    rx="4"
+                />
 
-            {sorted.map(zone => {
-                const {points} = getShapePolygon(zone.shape);
-                if (points.length === 0) return null;
-                const {fill, stroke, fillOpacity, strokeOpacity, strokeWidth, isDimmed} = getZoneColors(zone);
-                const off = centroidOffset(zone);
+                <image
+                    href={bureauShapeSvg}
+                    x="0"
+                    y="0"
+                    width={VB_SIZE}
+                    height={VB_SIZE}
+                    preserveAspectRatio="xMidYMid meet"
+                    draggable={false}
+                    style={{
+                        filter: "invert(0.92)",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                    }}
+                />
 
-                return (
-                    <g key={zone.name}>
-                        <g
-                            transform={`translate(${zone.x}, ${zone.y}) rotate(${zone.rot || 0}) scale(${zone.size})`}
-                        >
-                            <g>
-                                <polygon
-                                    points={shapePointsToAttr(points)}
-                                    fill={fill}
-                                    fillOpacity={fillOpacity}
-                                    stroke={stroke}
-                                    strokeWidth={strokeWidth}
-                                    strokeOpacity={strokeOpacity}
-                                    strokeLinejoin="round"
-                                    vectorEffect="non-scaling-stroke"
-                                    cursor="pointer"
-                                    role="button"
-                                    aria-label={zone.name}
-                                    onClick={() => onRoomClick?.(zone.name)}
-                                    onKeyDown={e => {
-                                        if (e.key === "Enter" || e.key === " ") {
-                                            e.preventDefault();
-                                            onRoomClick?.(zone.name);
-                                        }
-                                    }}
-                                    onMouseEnter={() => setHovered(zone.name)}
-                                    onMouseLeave={() => setHovered(null)}
-                                />
+                {sorted.map(zone => {
+                    const {points} = getShapePolygon(zone.shape);
+                    if (points.length === 0) return null;
+                    const {fill, stroke, fillOpacity, strokeOpacity, strokeWidth, isDimmed} = getZoneColors(zone);
+                    const off = centroidOffset(zone);
+
+                    return (
+                        <g key={zone.name}>
+                            <g
+                                transform={`translate(${zone.x}, ${zone.y}) rotate(${zone.rot || 0}) scale(${zone.size})`}
+                            >
+                                <g>
+                                    <polygon
+                                        points={shapePointsToAttr(points)}
+                                        fill={fill}
+                                        fillOpacity={fillOpacity}
+                                        stroke={stroke}
+                                        strokeWidth={strokeWidth}
+                                        strokeOpacity={strokeOpacity}
+                                        strokeLinejoin="round"
+                                        vectorEffect="non-scaling-stroke"
+                                        cursor="pointer"
+                                        role="button"
+                                        aria-label={zone.name}
+                                        onClick={() => onRoomClick?.(zone.name)}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                onRoomClick?.(zone.name);
+                                            }
+                                        }}
+                                        onMouseEnter={() => setHovered(zone.name)}
+                                        onMouseLeave={() => setHovered(null)}
+                                    />
+                                </g>
                             </g>
+                            <text
+                                x={zone.x + off.x}
+                                y={zone.y + off.y}
+                                fill="#f5f5f7"
+                                fontSize={Math.max(8, Math.min(16, zone.size / 5))}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                pointerEvents="none"
+                                style={{textShadow: "0 1px 3px rgba(0,0,0,0.8)"}}
+                            >
+                                {zone.name}
+                            </text>
                         </g>
-                        <text
-                            x={zone.x + off.x}
-                            y={zone.y + off.y}
-                            fill="#f5f5f7"
-                            fontSize={Math.max(8, Math.min(16, zone.size / 5))}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            pointerEvents="none"
-                            style={{textShadow: "0 1px 3px rgba(0,0,0,0.8)"}}
-                        >
-                            {zone.name}
-                        </text>
-                    </g>
-                );
-            })}
-        </svg>
+                    );
+                })}
+            </svg>
+
+            <Box
+                position="absolute"
+                bottom={3}
+                right={3}
+                bg="#46464b"
+                borderRadius="md"
+                px={3}
+                py={2}
+                pointerEvents="none"
+                userSelect="none"
+            >
+                <Flex direction="column" gap={1.5}>
+                    {legendItems.map(item => (
+                        <Flex key={item.color} align="center" gap={2}>
+                            <Circle size={3} bg={item.color} />
+                            <Text fontSize="xs" color="#f5f5f7" lineHeight="1">
+                                {item.label}
+                            </Text>
+                        </Flex>
+                    ))}
+                </Flex>
+            </Box>
+        </Box>
     );
 }
