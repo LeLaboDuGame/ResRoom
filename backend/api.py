@@ -152,6 +152,14 @@ def create_a_reservation(room_name: str, reservation: Reservation):
             detail="Invalid date format"
         )
 
+    # Prevent reservation in the past
+    now = datetime.now()
+    if start_dt < now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot create a reservation in the past"
+        )
+
     # Check for any overlapping reservations in the same room
     for r in room_res["reservations"]:
         r_start_dt = datetime.strptime(r["start"], DATE_FORMAT)
