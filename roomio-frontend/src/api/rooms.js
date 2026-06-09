@@ -30,3 +30,13 @@ export async function deleteReservation(roomName, reservationUid) {
   if (!res.ok) throw new Error("Failed to delete reservation");
   return res.json();
 }
+
+export async function updateRoom(name, data) {
+  const res = await fetch(`${API_URL}/api/room/update/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update room");
+  return res.json();
+}
