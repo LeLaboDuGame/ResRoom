@@ -244,14 +244,7 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
                         <g
                             transform={`translate(${zone.x}, ${zone.y}) rotate(${zone.rot || 0}) scale(${zone.size})`}
                         >
-                            <g
-                                style={{
-                                    transition: "transform 0.15s ease",
-                                    transformBox: "fill-box",
-                                    transformOrigin: "center",
-                                    transform: hovered === zone.name && !isDimmed ? "scale(1.08)" : "scale(1)",
-                                }}
-                            >
+                            <g>
                                 <polygon
                                     points={shapePointsToAttr(points)}
                                     fill={fill}
@@ -263,7 +256,6 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
                                     vectorEffect="non-scaling-stroke"
                                     cursor="pointer"
                                     role="button"
-                                    tabIndex={0}
                                     aria-label={zone.name}
                                     onClick={() => onRoomClick?.(zone.name)}
                                     onKeyDown={e => {
