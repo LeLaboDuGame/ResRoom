@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException
+import os
+from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 from pydantic import BaseModel
 from rich import status
 
-from config import DB_FILE, LOG_FILE, STARTING_SOON_STATUS_BEFORE, FINISHING_SOON_STATUS_BEFORE, DATE_FORMAT
+from config import DB_FILE, LOG_FILE, DATE_FORMAT
 from db import Database
 
 
@@ -41,6 +42,16 @@ database = Database(DB_FILE)
 database.load()  # Load database
 
 
+def get_settings() -> dict:
+    """Return the current application settings from the database."""
+    return database.data.get("settings", {
+        "dayStart": 8,
+        "dayEnd": 20,
+        "startingSoonBefore": 15,
+        "finishingSoonBefore": 15,
+    })
+
+
 @app.get("/api")
 def root():
     """
@@ -71,7 +82,7 @@ def get_room_by_name(room_name: str):
 
     - Room: dict[
     - -    name: str
-    - -    room_type: str[small, medium, large]
+    - -    elements: dict
     - -    status: str[FREE, STARTING_SOON, OCCUPIED, FINISHING_SOON]
     - -     reservations: list[dict[
                 id: int,
@@ -101,7 +112,16 @@ class Reservation(BaseModel):
     reserved_by: str
 
 
-from fastapi import HTTPException, status
+class RoomUpdate(BaseModel):
+    """Payload for updating a room's metadata."""
+    name: str | None = None
+    capacity: int | None = None
+    tv: bool | None = None
+    whiteboard: bool | None = None
+    computer: bool | None = None
+
+
+from fastapi import status
 
 
 @app.post("/api/reservation/create/{room_name}", status_code=status.HTTP_201_CREATED)
@@ -206,6 +226,143 @@ def remove_a_reservation(room_name: str, reservation_uid: str):
     logging.info(f"Reservation {reservation_uid} removed from room: {room_name}!")
     database.save()
     return {"message": "Reservation removed successfully!"}
+
+
+@app.put("/api/room/update/{room_name}")
+def update_room(room_name: str, update: RoomUpdate):
+    """
+    Update a room's metadata (name, capacity, equipment).
+
+    :param room_name: Current name of the room to update.
+    :param update: Fields to update (name, capacity, tv, whiteboard, computer).
+    :return: The updated room object.
+    """
+    room_res = get_room(room_name)
+
+    if not room_res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room doesn't exist"
+        )
+
+    if update.name is not None:
+        # Check that the new name does not already exist
+        existing = get_room(update.name)
+        if existing and existing is not room_res:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A room with this name already exists"
+            )
+        room_res["name"] = update.name
+
+    if update.capacity is not None:
+        room_res.setdefault("elements", {})["capacity"] = update.capacity
+
+    if update.tv is not None:
+        room_res.setdefault("elements", {})["tv"] = update.tv
+
+    if update.whiteboard is not None:
+        room_res.setdefault("elements", {})["whiteboard"] = update.whiteboard
+
+    if update.computer is not None:
+        room_res.setdefault("elements", {})["computer"] = update.computer
+
+    logging.info(f"Room updated: {room_name} -> {room_res}")
+    database.save()
+    return {"message": "Room updated!", "room": room_res}
+
+
+@app.get("/api/reservations/history")
+def get_reservations_history(room: str | None = None):
+    """
+    Return all reservations across all rooms, sorted by start date (descending).
+
+    :param room: Optional room name filter.
+    :return: List of all reservations with room name attached.
+    """
+    all_reservations = []
+    for r in database.data["rooms"]:
+        if room and r["name"] != room:
+            continue
+        for res in r["reservations"]:
+            all_reservations.append({
+                **res,
+                "room": r["name"],
+            })
+
+    all_reservations.sort(
+        key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
+        reverse=True
+    )
+
+    return {"reservations": all_reservations}
+
+
+@app.get("/api/settings")
+def get_app_settings():
+    """Return the current application settings."""
+    return {"settings": get_settings()}
+
+
+@app.post("/api/settings")
+def update_app_settings(settings: dict):
+    """
+    Update application settings.
+
+    Body expects one or more of: dayStart, dayEnd, startingSoonBefore, finishingSoonBefore.
+    :param settings: Dict with setting fields to update.
+    :return: The updated settings object.
+    """
+    current = get_settings()
+    allowed_keys = {"dayStart", "dayEnd", "startingSoonBefore", "finishingSoonBefore"}
+
+    for key, value in settings.items():
+        if key in allowed_keys:
+            current[key] = value
+
+    database.data["settings"] = current
+    logging.info(f"Settings updated: {current}")
+    database.save()
+    return {"message": "Settings updated!", "settings": current}
+
+
+@app.post("/api/room/upload-photo/{room_name}")
+async def upload_room_photo(room_name: str, file: UploadFile = File(...)):
+    """
+    Upload a photo for a specific room.
+
+    :param room_name: The name of the room.
+    :param file: The image file to upload (JPEG or PNG).
+    :return: Success message with the photo filename.
+    """
+    room_res = get_room(room_name)
+
+    if not room_res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room doesn't exist"
+        )
+
+    # Validate file type
+    if file.content_type not in {"image/jpeg", "image/png"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPEG and PNG files are allowed"
+        )
+
+    # Save to assets/rooms/{name}.jpeg (or .png)
+    ext = "jpeg" if file.content_type == "image/jpeg" else "png"
+    filename = f"{room_name}.{ext}"
+    assets_dir = os.path.join(os.path.dirname(__file__), "..", "roomio-frontend", "src", "assets", "rooms")
+    os.makedirs(assets_dir, exist_ok=True)
+    filepath = os.path.join(assets_dir, filename)
+
+    content = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    logging.info(f"Photo uploaded for room {room_name}: {filename}")
+    return {"message": "Photo uploaded!", "filename": filename}
 
 
 database.save()
