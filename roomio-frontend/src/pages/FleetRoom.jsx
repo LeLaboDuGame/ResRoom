@@ -3,7 +3,6 @@ import { Box, Flex, Text, IconButton } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useRoom, useRooms } from "../hooks/useRooms";
-import { usePlan } from "../hooks/usePlan";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { ReservationList } from "../components/room/ReservationList";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
@@ -18,7 +17,6 @@ export default function FleetRoom() {
   const navigate = useNavigate();
   const { room, loading, error } = useRoom(roomName);
   const { rooms } = useRooms();
-  const { walls, roomPolygons } = usePlan();
 
   const [view, setView] = useState("room");
   const [selectedRoomName, setSelectedRoomName] = useState(roomName);
@@ -181,8 +179,7 @@ export default function FleetRoom() {
         {/* Right 65%: Floor plan */}
         <Box w="65%" h="100%" position="relative">
           <FloorPlan
-            walls={walls}
-            roomPolygons={roomPolygons}
+            rooms={rooms}
             selectedRoom={currentRoom.name}
             dimmedRooms={filteredRoomNames}
             onRoomClick={(name) => setSelectedRoomName(name)}
