@@ -1,3 +1,12 @@
+/**
+ * Application entry point.
+ *
+ * Renders the React app inside a BrowserRouter and ChakraProvider
+ * using the custom dark theme defined in config/theme.
+ *
+ * @module main
+ */
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";

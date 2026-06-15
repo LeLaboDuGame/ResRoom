@@ -19,6 +19,11 @@ const STATUS_COLORS = {
     "Finishing Soon": {fill: FINISHING_SOON_COLOR, stroke: FINISHING_SOON_COLOR},
 };
 
+/**
+ * Determines the occupancy status of a room from its reservations.
+ * @param {Array} reservations List of reservation objects with start/end
+ * @returns {"Free"|"Starting Soon"|"Meeting"|"Finishing Soon"} Status string
+ */
 function getRoomStatus(reservations) {
     const now = new Date();
     if (!reservations?.length) return "Free";
@@ -38,6 +43,11 @@ function getRoomStatus(reservations) {
     return "Free";
 }
 
+/**
+ * Computes the centroid offset for a zone after applying rotation and scale.
+ * @param {Object} zone Zone object with shape, rot, size
+ * @returns {{x: number, y: number}} Offset coordinates for label placement
+ */
 function centroidOffset(zone) {
     const {centroid} = getShapePolygon(zone.shape);
     const rad = (zone.rot || 0) * Math.PI / 180;
@@ -47,6 +57,14 @@ function centroidOffset(zone) {
     };
 }
 
+/**
+ * Interactive SVG floor plan with pan, zoom, room selection, and status-based coloring.
+ * @param {Array} rooms Room data with reservations
+ * @param {string|null} selectedRoom Currently selected room name
+ * @param {string[]} dimmedRooms Rooms to keep lit; others are dimmed
+ * @param {Function} onRoomClick Click/Enter handler with room name
+ * @returns {JSX.Element} FloorPlan component
+ */
 export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     const [vb, setVb] = useState({x: 0, y: 0, w: VB_SIZE, h: VB_SIZE});
     const [hovered, setHovered] = useState(null);
@@ -119,6 +137,10 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     }, [selectedRoom, sorted]);
 
     // Pointer panning (mouse + touch) with 5 px movement threshold
+    /**
+     * Starts tracking a pan gesture on primary pointer down.
+     * @param {React.PointerEvent} e Pointer event
+     */
     const handlePointerDown = useCallback(e => {
         if (!e.isPrimary) return;
         panRef.current = {
@@ -128,6 +150,10 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         };
     }, [vb]);
 
+    /**
+     * Updates the viewBox offset while panning after a 5px movement threshold.
+     * @param {React.PointerEvent} e Pointer event
+     */
     const handlePointerMove = useCallback(e => {
         if (!panRef.current || !e.isPrimary) return;
         const dx = Math.abs(e.clientX - panRef.current.mx);
@@ -152,12 +178,19 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         }));
     }, [vb]);
 
+    /**
+     * Ends a pan gesture on primary pointer up or cancel.
+     * @param {React.PointerEvent} e Pointer event
+     */
     const handlePointerUp = useCallback(e => {
         if (!e.isPrimary) return;
         panRef.current = null;
         setIsPanning(false);
     }, []);
 
+    /**
+     * Resets the viewBox to the full floor plan on double-click.
+     */
     const handleDblClick = useCallback(() => {
         setVb({x: 0, y: 0, w: VB_SIZE, h: VB_SIZE});
     }, []);
@@ -171,6 +204,11 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         {color: "#ff6b9d", label: "Termine / Finishing Soon"},
     ];
 
+    /**
+     * Determines fill/stroke colors and opacity for a zone based on its status and selection state.
+     * @param {Object} zone Zone object with name
+     * @returns {{fill: string, stroke: string, fillOpacity: number, strokeOpacity: number, strokeWidth: number, isDimmed: boolean}} Style values
+     */
     function getZoneColors(zone) {
         const room = roomMap[zone.name];
         const status = room ? getRoomStatus(room.reservations) : "Free";

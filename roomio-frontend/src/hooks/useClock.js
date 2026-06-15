@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 
+/**
+ * Hook that returns the current local time as a formatted string (HH:MM:SS).
+ * Updates every second.
+ *
+ * @returns {string} Current time formatted for fr-FR locale (e.g. "14:05:32")
+ */
 export function useClock() {
   const [time, setTime] = useState("");
 

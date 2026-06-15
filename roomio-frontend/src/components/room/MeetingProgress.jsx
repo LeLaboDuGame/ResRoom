@@ -1,10 +1,10 @@
 /**
- * SVG circle showing elapsed meeting time proportionally.
- * Displays remaining time in the center.
+ * SVG circular progress indicator showing elapsed meeting time proportionally.
+ * Displays remaining time (in min or h+min) at the center.
  * @param {string} start Reservation start datetime ("YYYY-MM-DD HH:mm")
  * @param {string} end Reservation end datetime ("YYYY-MM-DD HH:mm")
  * @param {number} [size=120] Circle diameter in pixels
- * @return {JSX.Element} MeetingProgress component
+ * @returns {JSX.Element} The rendered meeting progress circle
  */
 export function MeetingProgress({ start, end, size = 120 }) {
   const now = new Date();
@@ -22,7 +22,7 @@ export function MeetingProgress({ start, end, size = 120 }) {
 
   const r = 45;
   const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - ratio);
+  const offset = circ * (1 - ratio)
 
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">

@@ -8,9 +8,9 @@ const variants = {
 };
 
 /**
- * Loading skeleton with pulse animation.
- * @param {string} [variant="text"] Skeleton shape variant
- * @return {JSX.Element} Skeleton element
+ * Animated skeleton placeholder for loading states.
+ * @param {string} [variant] Skeleton shape: "text", "circle", or "card"
+ * @returns {JSX.Element} The loading skeleton
  */
 export function LoadingSkeleton({ variant = "text", ...props }) {
   useEffect(() => {

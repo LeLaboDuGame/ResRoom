@@ -14,6 +14,15 @@ import { ResRoomLogo } from "../components/ui/ResRoomLogo";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { SETTINGS } from "../config/settings";
 
+/**
+ * Fleet/kiosk room page at route "/fleet/:roomName".
+ * Displays a full-screen room status view with a split layout:
+ * left side shows the room status card, right side shows
+ * today's reservations. Includes a booking flow with a floor
+ * plan, filter bar, and booking form. Resets to room view
+ * after a configurable inactivity timeout.
+ * @returns {JSX.Element} The fleet room layout
+ */
 export default function FleetRoom() {
   const { roomName } = useParams();
   const navigate = useNavigate();

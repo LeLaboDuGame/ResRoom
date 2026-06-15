@@ -3,6 +3,10 @@ import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
 import { Trash2 } from "lucide-react";
 import * as api from "../../api/rooms";
 
+/**
+ * Admin tab for viewing and filtering past reservations with delete capability.
+ * @returns {JSX.Element} HistoryTab component
+ */
 export function HistoryTab() {
   const [reservations, setReservations] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -46,6 +50,11 @@ export function HistoryTab() {
     });
   }, [reservations, filterRoom, filterDate, filterText]);
 
+  /**
+   * Deletes a single reservation and removes it from the list.
+   * @param {Object} reservation Reservation object with uid, room
+   * @returns {Promise<void>}
+   */
   async function handleDelete(reservation) {
     if (deleting) return;
     setDeleting(reservation.uid);

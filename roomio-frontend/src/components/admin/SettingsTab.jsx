@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
 import * as api from "../../api/rooms";
 
+/**
+ * Admin tab for editing global settings: day start/end times and notification thresholds.
+ * @returns {JSX.Element} SettingsTab component
+ */
 export function SettingsTab() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,12 +26,21 @@ export function SettingsTab() {
     load();
   }, []);
 
+  /**
+   * Updates a single settings field and clears success/error states.
+   * @param {string} field Settings field name
+   * @param {*} value New value
+   */
   function update(field, value) {
     setSettings((prev) => ({ ...prev, [field]: value }));
     setSuccess(false);
     setError("");
   }
 
+  /**
+   * Validates settings and persists them via the API.
+   * @returns {Promise<void>}
+   */
   async function handleSave() {
     if (settings.dayStart >= settings.dayEnd) {
       setError("Le début de journée doit être avant la fin de journée");

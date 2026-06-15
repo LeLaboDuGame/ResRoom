@@ -2,9 +2,9 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { Monitor, ClipboardList, Computer, Users, MapPin } from "lucide-react";
 
 /**
- * Room metadata panel: name, capacity, equipment with Lucide icons.
- * @param {Object} room Room object with elements
- * @return {JSX.Element} RoomInfoPanel component
+ * Info panel for a selected room showing its status and details.
+ * @param {Object} room Room data with name and elements
+ * @returns {JSX.Element} The room info panel
  */
 export function RoomInfoPanel({ room }) {
   const el = room?.elements || {};

@@ -3,6 +3,13 @@ import { Link } from "react-router-dom";
 import { AdminTabs } from "../components/admin/AdminTabs";
 import { ResRoomLogo } from "../components/ui/ResRoomLogo";
 
+/**
+ * Admin page at route "/admin".
+ * Renders the ResRoom logo, an "Administration" heading,
+ * and the AdminTabs component. Provides navigation links
+ * to the Debug page and the Dashboard.
+ * @returns {JSX.Element} The admin layout
+ */
 export default function Admin() {
   return (
     <Box minH="100vh" bg="#0a0a0b" color="text.primary" p={6}>

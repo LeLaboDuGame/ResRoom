@@ -1,3 +1,12 @@
+/**
+ * Chakra UI v3 theme configuration for the Roomio application.
+ *
+ * Defines a custom dark colour palette, border radii, shadows,
+ * semantic colour tokens, and responsive breakpoints.
+ *
+ * @module config/theme
+ */
+
 import { createSystem, defaultConfig, mergeConfigs } from "@chakra-ui/react";
 
 const customConfig = {

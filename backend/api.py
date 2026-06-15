@@ -1,3 +1,9 @@
+"""REST API for the RoomIO room-reservation application.
+
+Provides endpoints for managing rooms, reservations, settings, and room
+photos.  All persistent data is delegated to the :mod:`db` module.
+"""
+
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
@@ -53,15 +59,20 @@ def get_settings() -> dict:
 
 
 @app.get("/api")
-def root():
-    """
-    root
-    :return: simple message
+def root() -> dict:
+    """Return a simple welcome message for the API root.
+
+    :return: A greeting message.
     """
     return {"msg": "Welcome to the api of RoomIO!"}
 
 
-def get_room(room_name: str):
+def get_room(room_name: str) -> dict | None:
+    """Look up a room by its name.
+
+    :param room_name: The name of the room to find.
+    :return: The room dictionary if found, otherwise ``None``.
+    """
     room_res: dict | None = None
     for room in database.data["rooms"]:
         if room["name"] == room_name:
@@ -71,12 +82,16 @@ def get_room(room_name: str):
 
 
 @app.get("/api/room/fetch/all")
-def get_all_rooms():
+def get_all_rooms() -> dict:
+    """Return all rooms stored in the database.
+
+    :return: A dictionary containing the list of all rooms.
+    """
     return {"rooms": database.data["rooms"]}
 
 
 @app.get("/api/room/fetch/name/{room_name}")
-def get_room_by_name(room_name: str):
+def get_room_by_name(room_name: str) -> dict:
     """
     Fetch a room information.
 
@@ -125,7 +140,7 @@ from fastapi import status
 
 
 @app.post("/api/reservation/create/{room_name}", status_code=status.HTTP_201_CREATED)
-def create_a_reservation(room_name: str, reservation: Reservation):
+def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     """
     Create a reservation for a specific room.
 
@@ -201,7 +216,7 @@ def create_a_reservation(room_name: str, reservation: Reservation):
 
 
 @app.post("/api/reservation/remove/{room_name}/{reservation_uid}")
-def remove_a_reservation(room_name: str, reservation_uid: str):
+def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
     """
     Remove a reservation from a specific room using its unique identifier (UID).
 
@@ -256,7 +271,7 @@ def remove_a_reservation(room_name: str, reservation_uid: str):
 
 
 @app.put("/api/room/update/{room_name}")
-def update_room(room_name: str, update: RoomUpdate):
+def update_room(room_name: str, update: RoomUpdate) -> dict:
     """
     Update a room's metadata (name, capacity, equipment).
 
@@ -300,7 +315,7 @@ def update_room(room_name: str, update: RoomUpdate):
 
 
 @app.post("/api/room/create/{room_name}")
-def create_room(room_name: str):
+def create_room(room_name: str) -> dict:
     """
     Create a new room with default equipment.
 
@@ -327,7 +342,7 @@ def create_room(room_name: str):
 
 
 @app.delete("/api/room/delete/{room_name}")
-def delete_room(room_name: str):
+def delete_room(room_name: str) -> dict:
     """
     Delete a room by name.
 
@@ -348,7 +363,7 @@ def delete_room(room_name: str):
 
 
 @app.get("/api/reservations/history")
-def get_reservations_history(room: str | None = None):
+def get_reservations_history(room: str | None = None) -> dict:
     """
     Return all reservations across all rooms, sorted by start date (descending).
 
@@ -374,13 +389,13 @@ def get_reservations_history(room: str | None = None):
 
 
 @app.get("/api/settings")
-def get_app_settings():
+def get_app_settings() -> dict:
     """Return the current application settings."""
     return {"settings": get_settings()}
 
 
 @app.post("/api/settings")
-def update_app_settings(settings: dict):
+def update_app_settings(settings: dict) -> dict:
     """
     Update application settings.
 
@@ -402,7 +417,7 @@ def update_app_settings(settings: dict):
 
 
 @app.post("/api/room/upload-photo/{room_name}")
-async def upload_room_photo(room_name: str, file: UploadFile = File(...)):
+async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict:
     """
     Upload a photo for a specific room.
 

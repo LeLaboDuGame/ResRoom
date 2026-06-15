@@ -22,22 +22,24 @@ const bgColors = {
 };
 
 /**
- * Compact pill badge showing room status.
- * @param {string} [status="free"] Room status key
- * @return {JSX.Element} Status badge
+ * Compact pill badge showing room status with a colored dot and label.
+ * @param {string} [status="free"] Room status key ("free", "startingSoon", "meeting", "finishingSoon")
+ * @param {boolean} [big=false] Switching between the big and the small version
+ * @returns {JSX.Element} The rendered status badge
  */
-export function StatusBadge({ status = "free" }) {
+export function StatusBadge({ status = "free", big = false}) {
   return (
     <Flex
       align="center"
       gap={1.5}
-      px={2.5}
-      py={0.5}
+      px={big ? 10: 2.5}
+      py={big ? 7 : 0.5}
       borderRadius="full"
       bg={bgColors[status]}
     >
       <Box w={2} h={2} borderRadius="full" bg={dotColors[status]} />
-      <Text fontSize="sm" fontWeight="medium" color={dotColors[status]}>
+      <Text fontSize={big ? "" +
+          "sm" : "sm"} fontWeight="medium" color={dotColors[status]}>
         {labels[status]}
       </Text>
     </Flex>

@@ -1,11 +1,11 @@
 import { Flex, Text } from "@chakra-ui/react";
 
 /**
- * Centered empty state with icon, title and description.
- * @param {string} [icon="📭"] Emoji or SVG icon
- * @param {string} [title] Heading text
- * @param {string} [description] Body text
- * @return {JSX.Element} Empty state
+ * Empty state placeholder with icon, title and description.
+ * @param {string} [icon] Icon name to display
+ * @param {string} [title] Empty state title
+ * @param {string} [description] Empty state description
+ * @returns {JSX.Element} The empty state component
  */
 export function EmptyState({ icon = "📭", title, description }) {
   return (
