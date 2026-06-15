@@ -1,8 +1,7 @@
 import {useState, useMemo, useRef, useCallback, useEffect} from "react";
 import {Box, Flex, Circle, Text} from "@chakra-ui/react";
-import {getShapePolygon, shapePointsToAttr} from "../../utils/shapes";
-import bureauShapeSvg from "../../assets/BureauShape.svg";
 import planData from "../../assets/plan/plan.json";
+import bureauShapeSvg from "../../assets/BureauShape.svg";
 const VB_SIZE = 2048;
 const MIN_ZOOM = 300;
 const MAX_ZOOM = 4096;
@@ -44,17 +43,53 @@ function getRoomStatus(reservations) {
 }
 
 /**
- * Computes the centroid offset for a zone after applying rotation and scale.
- * @param {Object} zone Zone object with shape, rot, size
- * @returns {{x: number, y: number}} Offset coordinates for label placement
+ * Traces a closed polygon from an ordered list of wall segments.
+ * Walls are connected end-to-end by matching coordinates.
+ * @param {Array} walls Wall objects with start/end coordinates
+ * @returns {Array<{x: number, y: number}>} Polygon vertices in order
  */
-function centroidOffset(zone) {
-    const {centroid} = getShapePolygon(zone.shape);
-    const rad = (zone.rot || 0) * Math.PI / 180;
-    return {
-        x: (centroid.x * Math.cos(rad) - centroid.y * Math.sin(rad)) * zone.size,
-        y: (centroid.x * Math.sin(rad) + centroid.y * Math.cos(rad)) * zone.size,
-    };
+function traceRoomPolygon(walls) {
+    if (walls.length < 3) return [];
+    const key = p => `${+p.x.toFixed(4)},${+p.y.toFixed(4)}`;
+    const result = [{x: walls[0].start.x, y: walls[0].start.y}];
+    const resultSet = new Set([key(result[0])]);
+    let current = {x: walls[0].end.x, y: walls[0].end.y};
+    result.push(current);
+    resultSet.add(key(current));
+    const used = new Set([0]);
+    while (used.size < walls.length) {
+        let found = false;
+        for (let i = 0; i < walls.length; i++) {
+            if (used.has(i)) continue;
+            const w = walls[i];
+            if (key(w.start) === key(current)) {
+                current = {x: w.end.x, y: w.end.y};
+            } else if (key(w.end) === key(current)) {
+                current = {x: w.start.x, y: w.start.y};
+            } else continue;
+            const k = key(current);
+            if (!resultSet.has(k)) {
+                result.push(current);
+                resultSet.add(k);
+            }
+            used.add(i);
+            found = true;
+            break;
+        }
+        if (!found) break;
+    }
+    return result;
+}
+
+/**
+ * Computes the centroid of a polygon.
+ * @param {Array<{x: number, y: number}>} points Polygon vertices
+ * @returns {{x: number, y: number}} Centroid coordinates
+ */
+function getPolygonCentroid(points) {
+    if (!points.length) return {x: 0, y: 0};
+    const sum = points.reduce((a, p) => ({x: a.x + p.x, y: a.y + p.y}), {x: 0, y: 0});
+    return {x: sum.x / points.length, y: sum.y / points.length};
 }
 
 /**
@@ -66,13 +101,41 @@ function centroidOffset(zone) {
  * @returns {JSX.Element} FloorPlan component
  */
 export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
-    const [vb, setVb] = useState({x: 0, y: 0, w: VB_SIZE, h: VB_SIZE});
     const [hovered, setHovered] = useState(null);
     const [isPanning, setIsPanning] = useState(false);
     const svgRef = useRef(null);
     const panRef = useRef(null);
+
+    const floor = planData.floors?.[0];
+    const allWalls = floor?.walls || [];
+
+    const defaultVb = useMemo(() => {
+        if (!allWalls.length) return {x: 0, y: 0, w: VB_SIZE, h: VB_SIZE};
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        allWalls.forEach(w => {
+            minX = Math.min(minX, w.start.x, w.end.x);
+            maxX = Math.max(maxX, w.start.x, w.end.x);
+            minY = Math.min(minY, w.start.y, w.end.y);
+            maxY = Math.max(maxY, w.start.y, w.end.y);
+        });
+        const pad = 100;
+        return {
+            x: minX - pad,
+            y: minY - pad,
+            w: maxX - minX + 2 * pad,
+            h: maxY - minY + 2 * pad,
+        };
+    }, [allWalls]);
+
+    const [vb, setVb] = useState(defaultVb);
     const vbRef = useRef(vb);
     vbRef.current = vb;
+
+    const wallMap = useMemo(() => {
+        const m = {};
+        allWalls.forEach(w => m[w.id] = w);
+        return m;
+    }, [allWalls]);
 
     const roomMap = useMemo(() => {
         const m = {};
@@ -81,21 +144,19 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     }, [rooms]);
 
     const sorted = useMemo(() => {
-        const floor = planData.floors?.[0];
         if (!floor) return [];
         return (floor.rooms || [])
-            .filter(r => r.zone)
             .map(r => ({
                 name: r.name,
-                shape: r.zone.shape,
-                x: r.zone.x,
-                y: r.zone.y,
-                size: r.zone.size,
-                rot: r.zone.rot || 0,
-                z: r.zone.z || 0,
+                walls: r.walls.map(id => wallMap[id]).filter(Boolean),
             }))
-            .sort((a, b) => (a.z || 0) - (b.z || 0));
-    }, []);
+            .filter(r => r.walls.length >= 3)
+            .map(r => ({
+                name: r.name,
+                points: traceRoomPolygon(r.walls),
+            }))
+            .filter(r => r.points.length >= 3);
+    }, [floor, wallMap]);
 
     // Wheel zoom via raw addEventListener with { passive: false }
     useEffect(() => {
@@ -121,20 +182,27 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     // Zoom to selected room
     useEffect(() => {
         if (!selectedRoom) {
-            setVb({x: 0, y: 0, w: VB_SIZE, h: VB_SIZE});
+            setVb(defaultVb);
             return;
         }
-        const zone = sorted.find(z => z.name === selectedRoom);
-        if (!zone) return;
-        const zw = zone.size * 3.5;
-        const zh = zone.size * 3.5;
+        const room = sorted.find(z => z.name === selectedRoom);
+        if (!room || room.points.length < 3) return;
+        const xs = room.points.map(p => p.x);
+        const ys = room.points.map(p => p.y);
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        const rw = maxX - minX || 1;
+        const rh = maxY - minY || 1;
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const size = Math.max(rw, rh) * 3.5;
         setVb({
-            x: zone.x - zw / 2,
-            y: zone.y - zh / 2,
-            w: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zw)),
-            h: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zh)),
+            x: cx - size / 2,
+            y: cy - size / 2,
+            w: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, size)),
+            h: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, size)),
         });
-    }, [selectedRoom, sorted]);
+    }, [selectedRoom, sorted, defaultVb]);
 
     // Pointer panning (mouse + touch) with 5 px movement threshold
     /**
@@ -192,8 +260,8 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
      * Resets the viewBox to the full floor plan on double-click.
      */
     const handleDblClick = useCallback(() => {
-        setVb({x: 0, y: 0, w: VB_SIZE, h: VB_SIZE});
-    }, []);
+        setVb(defaultVb);
+    }, [defaultVb]);
 
     const vbStr = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
 
@@ -204,24 +272,30 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         {color: "#ff6b9d", label: "Termine / Finishing Soon"},
     ];
 
+    const WALL_COLOR = "#555";
+    const WALL_STROKE_WIDTH = 15;
+    const BG_SCALE = planData.floors?.[0]?.backgroundImage?.scale || 1.95;
+    const BG_CENTER = 1024;
+    const BG_LEFT = -BG_CENTER * BG_SCALE;
+    const BG_TOP = -BG_CENTER * BG_SCALE;
+
     /**
-     * Determines fill/stroke colors and opacity for a zone based on its status and selection state.
-     * @param {Object} zone Zone object with name
+     * Determines fill/stroke colors and opacity for a room based on its status and selection state.
+     * @param {Object} room Room object with name
      * @returns {{fill: string, stroke: string, fillOpacity: number, strokeOpacity: number, strokeWidth: number, isDimmed: boolean}} Style values
      */
-    function getZoneColors(zone) {
-        const room = roomMap[zone.name];
-        const status = room ? getRoomStatus(room.reservations) : "Free";
+    function getRoomColors(room) {
+        const roomData = roomMap[room.name];
+        const status = roomData ? getRoomStatus(roomData.reservations) : "Free";
         const colors = STATUS_COLORS[status] || STATUS_COLORS.Free;
-        const isSelected = selectedRoom && zone.name === selectedRoom;
-        const isDimmed = dimmedRooms?.length > 0 && !dimmedRooms.includes(zone.name);
-        const isHovered = hovered === zone.name;
+        const isSelected = selectedRoom && room.name === selectedRoom;
+        const isDimmed = dimmedRooms?.length > 0 && !dimmedRooms.includes(room.name);
 
         let fill = colors.fill;
         let stroke = colors.stroke;
-        let fillOpacity = 0.3;
+        let fillOpacity = 0.25;
         let strokeOpacity = 0.5;
-        let strokeWidth = 1;
+        let strokeWidth = 1.5;
 
         if (isDimmed) {
             fillOpacity = 0.04;
@@ -260,77 +334,81 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
                 onDoubleClick={handleDblClick}
             >
                 <rect
-                    x="0"
-                    y="0"
-                    width={VB_SIZE}
-                    height={VB_SIZE}
+                    x={Math.min(defaultVb.x, BG_LEFT)}
+                    y={Math.min(defaultVb.y, BG_TOP)}
+                    width={Math.max(defaultVb.w, -BG_LEFT * 2)}
+                    height={Math.max(defaultVb.h, -BG_TOP * 2)}
                     fill="#151518"
-                    rx="4"
                 />
 
-                <image
-                    href={bureauShapeSvg}
-                    x="0"
-                    y="0"
-                    width={VB_SIZE}
-                    height={VB_SIZE}
-                    preserveAspectRatio="xMidYMid meet"
-                    draggable={false}
-                    style={{
-                        filter: "invert(0.92)",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                        WebkitUserSelect: "none",
-                    }}
-                />
+                <g transform={`translate(${BG_LEFT}, ${BG_TOP}) scale(${BG_SCALE})`}>
+                    <image
+                        href={bureauShapeSvg}
+                        x="0" y="0" width="2048" height="2048"
+                        preserveAspectRatio="xMidYMid meet"
+                        draggable={false}
+                        style={{
+                            filter: "invert(0.92)",
+                            pointerEvents: "none",
+                            userSelect: "none",
+                            WebkitUserSelect: "none",
+                        }}
+                    />
+                </g>
 
-                {sorted.map(zone => {
-                    const {points} = getShapePolygon(zone.shape);
-                    if (points.length === 0) return null;
-                    const {fill, stroke, fillOpacity, strokeOpacity, strokeWidth, isDimmed} = getZoneColors(zone);
-                    const off = centroidOffset(zone);
+                {allWalls.map(w => (
+                    <line
+                        key={w.id}
+                        x1={w.start.x}
+                        y1={w.start.y}
+                        x2={w.end.x}
+                        y2={w.end.y}
+                        stroke={w.color || WALL_COLOR}
+                        strokeWidth={w.thickness || WALL_STROKE_WIDTH}
+                        strokeLinecap="round"
+                        pointerEvents="none"
+                    />
+                ))}
+
+                {sorted.map(room => {
+                    const {fill, stroke, fillOpacity, strokeOpacity, strokeWidth, isDimmed} = getRoomColors(room);
+                    const centroid = getPolygonCentroid(room.points);
+                    const pts = room.points.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(" ");
 
                     return (
-                        <g key={zone.name}>
-                            <g
-                                transform={`translate(${zone.x}, ${zone.y}) rotate(${zone.rot || 0}) scale(${zone.size})`}
-                            >
-                                <g>
-                                    <polygon
-                                        points={shapePointsToAttr(points)}
-                                        fill={fill}
-                                        fillOpacity={fillOpacity}
-                                        stroke={stroke}
-                                        strokeWidth={strokeWidth}
-                                        strokeOpacity={strokeOpacity}
-                                        strokeLinejoin="round"
-                                        vectorEffect="non-scaling-stroke"
-                                        cursor="pointer"
-                                        role="button"
-                                        aria-label={zone.name}
-                                        onClick={() => onRoomClick?.(zone.name)}
-                                        onKeyDown={e => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
-                                                onRoomClick?.(zone.name);
-                                            }
-                                        }}
-                                        onMouseEnter={() => setHovered(zone.name)}
-                                        onMouseLeave={() => setHovered(null)}
-                                    />
-                                </g>
-                            </g>
+                        <g key={room.name}>
+                            <polygon
+                                points={pts}
+                                fill={fill}
+                                fillOpacity={fillOpacity}
+                                stroke={stroke}
+                                strokeWidth={strokeWidth}
+                                strokeOpacity={strokeOpacity}
+                                strokeLinejoin="round"
+                                cursor="pointer"
+                                role="button"
+                                aria-label={room.name}
+                                onClick={() => onRoomClick?.(room.name)}
+                                onKeyDown={e => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        onRoomClick?.(room.name);
+                                    }
+                                }}
+                                onMouseEnter={() => setHovered(room.name)}
+                                onMouseLeave={() => setHovered(null)}
+                            />
                             <text
-                                x={zone.x + off.x}
-                                y={zone.y + off.y}
+                                x={centroid.x}
+                                y={centroid.y}
                                 fill="#f5f5f7"
-                                fontSize={Math.max(8, Math.min(16, zone.size / 5))}
+                                fontSize={Math.max(8, Math.min(16, (defaultVb.w + defaultVb.h) / 60))}
                                 textAnchor="middle"
                                 dominantBaseline="central"
                                 pointerEvents="none"
                                 style={{textShadow: "0 1px 3px rgba(0,0,0,0.8)"}}
                             >
-                                {zone.name}
+                                {room.name}
                             </text>
                         </g>
                     );
