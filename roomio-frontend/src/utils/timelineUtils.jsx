@@ -2,9 +2,23 @@ import { Badge, Box, HStack, Text, VStack, Flex } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import colors from "../config/colorTheme";
 
+/**
+ * The starting hour of the timeline display (8:00).
+ * @type {number}
+ */
 export const dayStart = 8;
+
+/**
+ * The ending hour of the timeline display (20:00).
+ * @type {number}
+ */
 export const dayEnd = 20;
 
+/**
+ * Array of time labels in "HH:MM" format from dayStart to dayEnd,
+ * with 30-minute intervals. Used as column headers in the timeline grid.
+ * @type {string[]}
+ */
 export const slots = [];
 for (let h = dayStart; h <= dayEnd; h++) {
     slots.push(`${h}:00`);
@@ -160,6 +174,17 @@ const DEFAULT_COLOR_PALETTE = [[colors.RESERVATION_PALETTE[0].border, colors.RES
 
 /**
  * RoomTimeline Component
+ * Renders a horizontal timeline view for all rooms, showing reservations as
+ * positioned blocks along a time axis from dayStart to dayEnd. Includes
+ * a current-time indicator line, clickable room names, and clickable
+ * reservation blocks with hover preview.
+ * @param {Object} props
+ * @param {Array} rooms - List of room objects with reservations
+ * @param {string} [currentTime] - Override current time in HH:MM format
+ * @param {Date} [selectedDate] - Filter date; defaults to today
+ * @param {Function} [onReservationClick] - Callback when a reservation block is clicked
+ * @param {Array<[string, string]>} [colorPalette] - Array of [border, bg] color pairs per room
+ * @returns {JSX.Element} The timeline layout
  */
 export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationClick, colorPalette = DEFAULT_COLOR_PALETTE }) {
     const navigate = useNavigate();
@@ -405,6 +430,13 @@ export function RoomTimeline({ rooms, currentTime, selectedDate, onReservationCl
 
 /**
  * Compatibility wrapper function to render the RoomTimeline component.
+ * Accepts the same data as RoomTimeline but as positional arguments.
+ * @param {Array} rooms - List of room objects with reservations
+ * @param {string} currentTime - Current time in HH:MM format
+ * @param {Date} [selectedDate=null] - Filter date
+ * @param {Function} [onReservationClick=null] - Callback when a reservation is clicked
+ * @param {Array<[string, string>]} [colorPalette] - Array of [border, bg] color pairs per room
+ * @returns {JSX.Element} The RoomTimeline component
  */
 export function renderRoomTimeline(rooms, currentTime, selectedDate = null, onReservationClick = null, colorPalette) {
     return (

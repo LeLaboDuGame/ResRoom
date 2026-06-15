@@ -2,9 +2,9 @@ import { Text } from "@chakra-ui/react";
 import { useClock } from "../../hooks/useClock";
 
 /**
- * Real-time clock displaying HH:MM:SS.
- * Uses useClock hook updating every second.
- * @return {JSX.Element} Clock text element
+ * Real-time digital clock displaying HH:MM:SS.
+ * Uses the useClock hook which updates every second.
+ * @returns {JSX.Element} The rendered clock text
  */
 export function Clock() {
   const time = useClock();

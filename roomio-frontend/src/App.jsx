@@ -4,6 +4,17 @@ import FleetRoom from "./pages/FleetRoom";
 import Admin from "./pages/Admin";
 import Debug from "./pages/Debug";
 
+/**
+ * Root application component.
+ *
+ * Defines the route structure:
+ * - `/` renders the Dashboard
+ * - `/debug` renders the Debug page
+ * - `/fleet/:roomName` renders the FleetRoom page for a specific room
+ * - `/admin` renders the Admin page
+ *
+ * @returns {JSX.Element} A Routes element wrapping all application pages
+ */
 export default function App() {
   return (
     <Routes>

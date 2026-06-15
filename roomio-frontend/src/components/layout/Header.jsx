@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import { Clock } from "../ui/Clock";
 import { ResRoomLogo } from "../ui/ResRoomLogo";
 
+/**
+ * Application header with logo, navigation links, and a live clock.
+ * @returns {JSX.Element} Header component
+ */
 export function Header() {
   return (
     <Box

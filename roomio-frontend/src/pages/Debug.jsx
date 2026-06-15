@@ -21,6 +21,14 @@ import { RoomsTab } from "../components/admin/RoomsTab";
 import { SettingsTab } from "../components/admin/SettingsTab";
 import { HistoryTab } from "../components/admin/HistoryTab";
 
+/**
+ * Helper component that wraps content in a titled section
+ * with a bottom border separator.
+ * @param {Object} props
+ * @param {string} title - Section heading text
+ * @param {React.ReactNode} children - Content inside the section
+ * @returns {JSX.Element} A styled section box
+ */
 function Section({ title, children }) {
   return (
     <Box mb={6}>
@@ -32,6 +40,16 @@ function Section({ title, children }) {
   );
 }
 
+/**
+ * Helper component that renders a button which calls an async
+ * API function and passes the result to a callback.
+ * Shows a loading spinner while the request is in-flight.
+ * @param {Object} props
+ * @param {string} label - Button text
+ * @param {Function} action - Async function to call on click
+ * @param {Function} onResult - Callback invoked with the result or error
+ * @returns {JSX.Element} A loading-enabled action button
+ */
 function ApiButton({ label, action, onResult }) {
   const [loading, setLoading] = useState(false);
   return (
@@ -59,6 +77,14 @@ function ApiButton({ label, action, onResult }) {
   );
 }
 
+/**
+ * Debug page at route "/debug".
+ * Provides three tabs for development and testing:
+ * "UI Components" — renders isolated instances of every UI component,
+ * "API Tests" — buttons to call each backend endpoint and view JSON results,
+ * "Floor Plan" — renders the FloorPlan SVG with optional selection/dimming.
+ * @returns {JSX.Element} The debug page layout
+ */
 export default function Debug() {
   const [rooms, setRooms] = useState([]);
   const [activeTab, setActiveTab] = useState("ui");
@@ -90,7 +116,7 @@ export default function Debug() {
   };
 
   const sampleRoom2 = {
-    name: "Youri Gargarine",
+    name: "Youri Gagarine",
     elements: { capacity: 10, tv: true, whiteboard: false, computer: true },
     status: "free",
     reservations: [

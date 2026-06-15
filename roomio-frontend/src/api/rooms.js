@@ -50,6 +50,8 @@ export async function deleteReservation(roomName, reservationUid) {
   );
   if (!res.ok) throw new Error("Failed to delete reservation");
   return res.json();
+
+
 }
 
 /**

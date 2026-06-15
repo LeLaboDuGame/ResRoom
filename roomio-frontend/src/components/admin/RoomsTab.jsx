@@ -3,6 +3,11 @@ import { Box, Flex, Input, Button, Text, Switch, IconButton } from "@chakra-ui/r
 import { Upload, Plus, Trash2 } from "lucide-react";
 import * as api from "../../api/rooms";
 
+/**
+ * Checks whether a room's fields have been modified from their original values.
+ * @param {Object} room Room object with `_orig` snapshot
+ * @returns {boolean} True if any field differs from the original
+ */
 function isDirty(room) {
   const o = room._orig;
   if (!o) return false;
@@ -17,6 +22,10 @@ function isDirty(room) {
 
 let _nextRoomUid = 0;
 
+/**
+ * Admin tab for managing rooms: create, edit fields, upload photos, and delete.
+ * @returns {JSX.Element} RoomsTab component
+ */
 export function RoomsTab() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +35,10 @@ export function RoomsTab() {
   const [newRoomName, setNewRoomName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  /**
+   * Fetches all rooms from the API and stores them with original snapshots.
+   * @returns {Promise<void>}
+   */
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -49,6 +62,12 @@ export function RoomsTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  /**
+   * Updates a single field of a room at the given index.
+   * @param {number} index Room index in the rooms array
+   * @param {string} field Field name (name, capacity, tv, whiteboard, computer)
+   * @param {*} value New value for the field
+   */
   function updateRoom(index, field, value) {
     setRooms((prev) => {
       const next = [...prev];
@@ -63,6 +82,11 @@ export function RoomsTab() {
     });
   }
 
+  /**
+   * Saves room changes to the API and updates the original snapshot.
+   * @param {Object} room Room object to save
+   * @returns {Promise<void>}
+   */
   async function handleSave(room) {
     const dup = rooms.find((r) => r._orig.name !== room._orig.name && r.name === room.name);
     if (dup) {
@@ -93,6 +117,12 @@ export function RoomsTab() {
     setSaving((prev) => ({ ...prev, [room._orig.name]: false }));
   }
 
+  /**
+   * Uploads a photo for the given room.
+   * @param {string} roomName Room name
+   * @param {File} file Image file to upload
+   * @returns {Promise<void>}
+   */
   async function handlePhoto(roomName, file) {
     setUploading((prev) => ({ ...prev, [roomName]: true }));
     try {
@@ -103,6 +133,11 @@ export function RoomsTab() {
     setUploading((prev) => ({ ...prev, [roomName]: false }));
   }
 
+  /**
+   * Deletes a room after confirmation.
+   * @param {Object} room Room object to delete
+   * @returns {Promise<void>}
+   */
   async function handleDelete(room) {
     try {
       await api.deleteRoom(room._orig.name);
@@ -113,6 +148,10 @@ export function RoomsTab() {
     setConfirmDelete(null);
   }
 
+  /**
+   * Creates a new room with the entered name, then reloads the list.
+   * @returns {Promise<void>}
+   */
   async function handleCreate() {
     const name = newRoomName.trim();
     if (!name) return;

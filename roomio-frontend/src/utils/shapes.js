@@ -1,5 +1,18 @@
 /* Calcule les coordonnées normalisées d'une forme géométrique et son centroïde.
    La forme est centrée sur l'origine et mise à l'échelle pour tenir dans [-0.5, 0.5]. */
+/**
+ * Computes normalized polygon points and centroid coordinates for a
+ * given geometric shape (square, rectangle, or triangle).
+ * The shape is centered on the origin and scaled to fit within [-0.5, 0.5].
+ * @param {Object} shape - Shape descriptor with a `type` property
+ * @param {string} shape.type - Shape type: "square", "rectangle", or "triangle"
+ * @param {number} [shape.taille] - Side length for "square" (default 10)
+ * @param {number} [shape.L1] - First dimension for "rectangle" or "triangle" (default 10)
+ * @param {number} [shape.L2] - Second dimension for "rectangle" or "triangle" (default 10)
+ * @param {number} [shape.angle] - Angle in degrees for "triangle" (default 60)
+ * @returns {{ points: Array<{x: number, y: number}>, centroid: {x: number, y: number} }}
+ *   Normalized polygon vertices and centroid
+ */
 export function getShapePolygon(shape) {
     if (!shape || typeof shape !== "object") return { points: [], centroid: { x: 0, y: 0 } };
 
@@ -75,6 +88,11 @@ export function getShapePolygon(shape) {
 }
 
 /* Convertit un tableau de points en chaîne pour l'attribut SVG points */
+/**
+ * Converts an array of point objects to an SVG points attribute string.
+ * @param {Array<{x: number, y: number}>} points - Array of coordinate objects
+ * @returns {string} Space-separated "x,y" pairs with 3 decimal precision
+ */
 export function shapePointsToAttr(points) {
     return points.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(" ");
 }

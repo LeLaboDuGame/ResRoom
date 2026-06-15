@@ -6,10 +6,10 @@ import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
  * Requires typing "oui" to enable the delete button.
  * Implements focus trap and keyboard handling (Escape to close, Enter to confirm).
  * @param {Object} props
- * @param {boolean} props.isOpen Whether the modal is visible
- * @param {Function} props.onClose Callback to close the modal
- * @param {Object|null} props.reservation Reservation object with title, start, end, uid
- * @param {Function} props.onConfirm Callback with reservation uid when confirmed
+ * @param {boolean} isOpen Whether the modal is visible
+ * @param {Function} onClose Callback to close the modal
+ * @param {Object|null} reservation Reservation object with title, start, end, uid
+ * @param {Function} onConfirm Callback with reservation uid when confirmed
  * @return {JSX.Element|null} DeleteModal component
  */
 export function DeleteModal({ isOpen, onClose, reservation, onConfirm }) {

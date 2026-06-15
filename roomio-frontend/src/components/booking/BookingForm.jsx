@@ -7,10 +7,10 @@ import { createReservation } from "../../api/rooms";
  * Computes end datetime from start + duration, validates client-side,
  * checks for overlaps, and calls createReservation API.
  * @param {Object} props
- * @param {string} props.roomName Target room name
- * @param {Array} props.existingReservations Existing reservations for overlap check
- * @param {Function} props.onSuccess Called with new reservation on success
- * @param {Function} props.onCancel Called when user cancels
+ * @param {string} roomName Target room name
+ * @param {Array} existingReservations Existing reservations for overlap check
+ * @param {Function} onSuccess Called with new reservation on success
+ * @param {Function} onCancel Called when user cancels
  * @return {JSX.Element} BookingForm component
  */
 export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel }) {
@@ -29,10 +29,23 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  /**
+   * Formats a date and time string into a single datetime string.
+   * @param {string} dateStr Date in YYYY-MM-DD format
+   * @param {string} timeStr Time in HH:mm format
+   * @returns {string} Combined datetime string
+   */
   function formatDatetime(dateStr, timeStr) {
     return `${dateStr} ${timeStr}`;
   }
 
+  /**
+   * Computes the end datetime given a start date, time, and duration.
+   * @param {string} dateStr Date in YYYY-MM-DD format
+   * @param {string} timeStr Start time in HH:mm format
+   * @param {number} dur Duration in minutes
+   * @returns {string} End datetime string
+   */
   function computeEnd(dateStr, timeStr, dur) {
     const [h, m] = timeStr.split(":");
     const startDt = new Date(dateStr);
@@ -43,6 +56,12 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
     return formatDatetime(endDate, endTime);
   }
 
+  /**
+   * Checks whether the given time range overlaps any existing reservation.
+   * @param {string} start Start datetime string
+   * @param {string} end End datetime string
+   * @returns {boolean} True if overlapping
+   */
   function hasOverlap(start, end) {
     const s = new Date(start.replace(" ", "T"));
     const e = new Date(end.replace(" ", "T"));
@@ -53,10 +72,19 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
     });
   }
 
+  /**
+   * Checks whether the given start datetime is in the past.
+   * @param {string} start Start datetime string
+   * @returns {boolean} True if the start time is in the past
+   */
   function isInPast(start) {
     return new Date(start.replace(" ", "T")) < new Date();
   }
 
+  /**
+   * Validates form fields, checks for overlaps and past dates, then calls the API.
+   * @returns {Promise<void>}
+   */
   async function handleSubmit() {
     setError("");
 
@@ -103,6 +131,10 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
     setLoading(false);
   }
 
+  /**
+   * Submits the form when the Enter key is pressed.
+   * @param {React.KeyboardEvent} e Keyboard event
+   */
   function handleKeyDown(e) {
     if (e.key === "Enter") {
       e.preventDefault();

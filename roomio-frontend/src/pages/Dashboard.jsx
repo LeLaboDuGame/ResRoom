@@ -9,6 +9,13 @@ import { BookingForm } from "../components/booking/BookingForm";
 import { AppShell } from "../components/layout/AppShell";
 import { X, LayoutDashboard, Settings } from "lucide-react";
 
+/**
+ * Main dashboard page at route "/".
+ * Displays an interactive floor plan, a side panel with room info,
+ * daily reservations, and a booking form when a room is selected.
+ * Includes a mobile bottom tab bar for navigation.
+ * @returns {JSX.Element} The dashboard layout
+ */
 export default function Dashboard() {
   const { rooms, loading: roomsLoading } = useRooms();
   const [selectedRoomName, setSelectedRoomName] = useState(null);

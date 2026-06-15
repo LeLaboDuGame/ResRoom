@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Input, Checkbox, Text, Flex } from "@chakra-ui/react";
 
 /**
- * Filter bar: minimum capacity + equipment checkboxes.
- * @param {Function} [onChange] Callback receiving {capacity, tv, whiteboard, computer}
- * @return {JSX.Element} Filter bar
+ * Filter bar with capacity slider and equipment checkboxes.
+ * @param {Function} [onChange] Callback with current filter state
+ * @returns {JSX.Element} The filter bar component
  */
 export function FilterBar({ onChange }) {
   const [filters, setFilters] = useState({
