@@ -1,1 +1,134 @@
-{"rooms": [{"name": "Howard Hughes", "elements": {"capacity": 8, "tv": true, "whiteboard": true, "computer": true}, "reservations": [{"start": "2026-06-15 10:35", "end": "2026-06-15 11:05", "title": "Test", "reserved_by": "Adrien", "uid": "0dbe98b4-1ad4-4fea-8475-e9022eb5c856"}, {"start": "2026-06-12 10:50", "end": "2026-06-12 11:20", "title": "tuezau", "reserved_by": "zerzre", "uid": "fa5a900b-668e-4f75-ac76-5dc28f95cc92"}, {"start": "2026-06-10 17:40", "end": "2026-06-10 18:10", "title": "test 4", "reserved_by": "adrien", "uid": "526615f2-3bee-4550-83af-04438cfb26c5"}, {"start": "2026-06-08 17:19", "end": "2026-06-08 18:19", "title": "test 2", "reserved_by": "Adrien", "uid": "4544500d-eecb-42e8-a007-d7adad93e79a"}, {"start": "2026-06-08 16:35", "end": "2026-06-08 17:05", "title": "Hello", "reserved_by": "test", "uid": "738279dc-4dca-43b9-86c2-79eb6f6f0222"}]}, {"name": "Ken Miles", "elements": {"capacity": 5, "tv": false, "whiteboard": true, "computer": false}, "reservations": []}, {"name": "Youri Gagarine", "elements": {"capacity": 10, "tv": true, "whiteboard": true, "computer": true}, "reservations": [{"start": "2026-06-08 18:35", "end": "2026-06-08 19:05", "title": "test", "reserved_by": "Adrien", "uid": "0d7e3f0c-3199-4f0e-964b-b31a43e2c6ad"}]}, {"name": "NoName 1", "elements": {"capacity": 3, "tv": false, "whiteboard": false, "computer": true}, "reservations": []}, {"name": "NoName 2", "elements": {"capacity": 3, "tv": false, "whiteboard": false, "computer": false}, "reservations": []}, {"name": "NoName 3", "elements": {"capacity": 3, "tv": false, "whiteboard": false, "computer": true}, "reservations": []}, {"name": "NoName 4", "elements": {"capacity": 6, "tv": false, "whiteboard": false, "computer": false}, "reservations": []}, {"name": "NoName 5", "elements": {"capacity": 6, "tv": false, "whiteboard": true, "computer": false}, "reservations": []}], "settings": {"dayStart": 7, "dayEnd": 22, "startingSoonBefore": 15, "finishingSoonBefore": 15}}
+{
+  "rooms": [
+    {
+      "name": "Howard Hughes",
+      "elements": {
+        "capacity": 8,
+        "tv": true,
+        "whiteboard": true,
+        "computer": true
+      },
+      "reservations": [
+        {
+          "start": "2026-06-15 10:35",
+          "end": "2026-06-15 11:05",
+          "title": "Test",
+          "reserved_by": "Adrien",
+          "uid": "0dbe98b4-1ad4-4fea-8475-e9022eb5c856"
+        },
+        {
+          "start": "2026-06-12 10:50",
+          "end": "2026-06-12 11:20",
+          "title": "tuezau",
+          "reserved_by": "zerzre",
+          "uid": "fa5a900b-668e-4f75-ac76-5dc28f95cc92"
+        },
+        {
+          "start": "2026-06-10 17:40",
+          "end": "2026-06-10 18:10",
+          "title": "test 4",
+          "reserved_by": "adrien",
+          "uid": "526615f2-3bee-4550-83af-04438cfb26c5"
+        },
+        {
+          "start": "2026-06-08 17:19",
+          "end": "2026-06-08 18:19",
+          "title": "test 2",
+          "reserved_by": "Adrien",
+          "uid": "4544500d-eecb-42e8-a007-d7adad93e79a"
+        },
+        {
+          "start": "2026-06-08 16:35",
+          "end": "2026-06-08 17:05",
+          "title": "Hello",
+          "reserved_by": "test",
+          "uid": "738279dc-4dca-43b9-86c2-79eb6f6f0222"
+        }
+      ]
+    },
+    {
+      "name": "Ken Miles",
+      "elements": {
+        "capacity": 5,
+        "tv": false,
+        "whiteboard": true,
+        "computer": false
+      },
+      "reservations": []
+    },
+    {
+      "name": "Youri Gagarine",
+      "elements": {
+        "capacity": 10,
+        "tv": true,
+        "whiteboard": true,
+        "computer": true
+      },
+      "reservations": [
+        {
+          "start": "2026-06-08 18:35",
+          "end": "2026-06-08 19:05",
+          "title": "test",
+          "reserved_by": "Adrien",
+          "uid": "0d7e3f0c-3199-4f0e-964b-b31a43e2c6ad"
+        }
+      ]
+    },
+    {
+      "name": "NoName 1",
+      "elements": {
+        "capacity": 3,
+        "tv": false,
+        "whiteboard": false,
+        "computer": true
+      },
+      "reservations": []
+    },
+    {
+      "name": "NoName 2",
+      "elements": {
+        "capacity": 3,
+        "tv": false,
+        "whiteboard": false,
+        "computer": false
+      },
+      "reservations": []
+    },
+    {
+      "name": "NoName 3",
+      "elements": {
+        "capacity": 3,
+        "tv": false,
+        "whiteboard": false,
+        "computer": true
+      },
+      "reservations": []
+    },
+    {
+      "name": "NoName 4",
+      "elements": {
+        "capacity": 6,
+        "tv": false,
+        "whiteboard": false,
+        "computer": false
+      },
+      "reservations": []
+    },
+    {
+      "name": "NoName 5",
+      "elements": {
+        "capacity": 6,
+        "tv": false,
+        "whiteboard": true,
+        "computer": false
+      },
+      "reservations": []
+    }
+  ],
+  "settings": {
+    "dayStart": 7,
+    "dayEnd": 22,
+    "startingSoonBefore": 15,
+    "finishingSoonBefore": 15
+  }
+}
