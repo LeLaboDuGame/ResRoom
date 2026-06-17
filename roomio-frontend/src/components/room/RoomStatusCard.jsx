@@ -5,6 +5,15 @@ import {Clock} from "../ui/Clock";
 import {StatusBadge} from "../ui/StatusBadge";
 import {MeetingProgress} from "./MeetingProgress";
 
+
+const statusColors = {
+  free: "status.free",
+  startingSoon: "status.startingSoon",
+  meeting: "status.meeting",
+  finishingSoon: "status.finishingSoon",
+};
+
+
 /**
  * Room status card with photo, status overlay, booking button and meeting progress.
  * @param {Object} room Room object with name, elements and reservations
@@ -53,6 +62,8 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
             display="flex"
             flexDirection="column"
             minH="280px"
+            shadow={"0 0 25px  5px var(--shadow-color)"}
+            shadowColor={statusColors[derivedStatus]}
         >
             {/* Photo 3/4 of card height */}
             <Box position="relative" flex={3} bg="bg.elevated" overflow="hidden" minH="0">
@@ -81,7 +92,7 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                 {/* Top row: clock + status */}
                 <Flex align="center" justify="space-between">
                     <Clock/>
-                    <StatusBadge status={derivedStatus} big={false}/>
+                    <StatusBadge status={derivedStatus} isDot={false}/>
                 </Flex>
 
                 {/* Room name */}
