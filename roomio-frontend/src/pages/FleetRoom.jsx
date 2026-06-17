@@ -3,7 +3,7 @@ import { Box, Flex, Text, IconButton, Spinner } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useRoom, useRooms } from "../hooks/useRooms";
-import { deleteReservation } from "../api/rooms";
+import { deleteReservation } from "../api/apiCall.js";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { ReservationList } from "../components/room/ReservationList";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Flex, Text, Button, Input, Tabs } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import * as api from "../api/rooms";
+import * as api from "../api/apiCall.js";
 import { Clock } from "../components/ui/Clock";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { FilterBar } from "../components/ui/FilterBar";

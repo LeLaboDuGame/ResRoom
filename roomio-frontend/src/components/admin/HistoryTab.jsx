@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
 import { Trash2 } from "lucide-react";
-import * as api from "../../api/rooms";
+import * as api from "../../api/apiCall.js";
 
 /**
  * Admin tab for viewing and filtering past reservations with delete capability.

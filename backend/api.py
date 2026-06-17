@@ -387,13 +387,6 @@ def get_reservations_history(room: str | None = None) -> dict:
 
     return {"reservations": all_reservations}
 
-
-@app.get("/api/settings")
-def get_app_settings() -> dict:
-    """Return the current application settings."""
-    return {"settings": get_settings()}
-
-
 @app.post("/api/settings")
 def update_app_settings(settings: dict) -> dict:
     """
@@ -415,6 +408,14 @@ def update_app_settings(settings: dict) -> dict:
     database.save()
     return {"message": "Settings updated!", "settings": current}
 
+@app.get("/api/fetch/settings")
+def fetch_app_settings() -> dict:
+    """
+    Fetch application settings.
+
+    :return: The settings object.
+    """
+    return {"settings": get_settings()}
 
 @app.post("/api/room/upload-photo/{room_name}")
 async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict:

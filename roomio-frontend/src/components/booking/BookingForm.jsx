@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
-import { createReservation } from "../../api/rooms";
+import { createReservation } from "../../api/apiCall.js";
 
 /**
  * Booking form with date, time, duration, title, and name fields.

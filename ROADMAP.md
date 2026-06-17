@@ -116,7 +116,7 @@ Cette roadmap détaille la refonte complète de l'interface utilisateur pour att
 
 ### 3.1 API Client
 
-- [x] Créer `src/api/rooms.js` avec les fonctions :
+- [x] Créer `src/api/apiCall.js` avec les fonctions :
   - `fetchRooms()`
   - `fetchRoom(name)`
   - `createReservation(roomName, data)`

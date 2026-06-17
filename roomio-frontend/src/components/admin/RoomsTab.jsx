@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Box, Flex, Input, Button, Text, Switch, IconButton } from "@chakra-ui/react";
 import { Upload, Plus, Trash2 } from "lucide-react";
-import * as api from "../../api/rooms";
+import * as api from "../../api/apiCall.js";
 
 /**
  * Checks whether a room's fields have been modified from their original values.

@@ -35,7 +35,7 @@ RoomIO/
     ├── public/rooms/           # Photos des salles (JPEG)
     ├── src/
     │   ├── api/
-    │   │   └── rooms.js        # 11 fonctions API (fetch, CRUD réservations/salles)
+    │   │   └── apiCall.js        # 11 fonctions API (fetch, CRUD réservations/salles)
     │   │
     │   ├── assets/
     │   │   ├── BureauShape.svg # Plan d'étage complet (2048×2048, noir sur transparent)
@@ -141,7 +141,7 @@ DATE_FORMAT = '%Y-%m-%d %H:%M'  # Format obligatoire pour toutes les dates
 
 ## 4. COMPOSANTS FRONTEND — DÉTAIL COMPLET
 
-### 4.1. `api/rooms.js` — 11 fonctions API
+### 4.1. `api/apiCall.js` — 11 fonctions API
 
 Toutes utilisent `import.meta.env.VITE_API_URL` comme base.
 Aucun état, pas de React — juste des fetchs.
