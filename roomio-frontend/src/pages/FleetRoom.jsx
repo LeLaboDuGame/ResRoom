@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRoom, useRooms } from "../hooks/useRooms";
 import { deleteReservation } from "../api/apiCall.js";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
-import { ReservationList } from "../components/room/ReservationList";
+import { Calendar } from "../components/room/Calendar.jsx";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { BookingForm } from "../components/booking/BookingForm";
 import { BookingButton } from "../components/booking/BookingButton";
@@ -153,7 +153,7 @@ export default function FleetRoom() {
               Réservations du jour
             </Text>
             <Box flex={1} bg="bg.secondary" borderRadius="xl" overflow="hidden">
-              <ReservationList
+              <Calendar
                 reservations={room?.reservations || []}
                 onDelete={async (uid) => {
                   try {

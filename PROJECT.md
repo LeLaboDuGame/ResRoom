@@ -76,7 +76,7 @@ ResRoom/
 │       ├── components/
 │       │   ├── layout/               # AppShell, FleetShell, MobileShell, Header
 │       │   ├── floorplan/            # FloorPlan SVG, WallLayer, RoomShape
-│       │   ├── room/                 # RoomStatusCard, MeetingProgress, ReservationList
+│       │   ├── room/                 # RoomStatusCard, MeetingProgress, Calendar
 │       │   ├── booking/              # BookingForm, BookingButton, DeleteModal
 │       │   ├── admin/                # AdminTabs, RoomsTab, SettingsTab, HistoryTab
 │       │   └── ui/                   # Clock, StatusBadge, FilterBar, Skeleton, EmptyState

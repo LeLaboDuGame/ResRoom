@@ -215,7 +215,7 @@ Cette roadmap détaille la refonte complète de l'interface utilisateur pour att
 - [x] Créer `src/components/room/MeetingProgress.jsx` :
   - Cercle SVG proportionnel au temps écoulé
   - Texte au centre : temps restant
-- [x] Créer `src/components/room/ReservationList.jsx` :
+- [x] Créer `src/components/room/Calendar.jsx` :
   - Liste verticale des réservations du jour
   - Bouton × pour supprimer (via DeleteModal)
   - `overflow-y` contenu, pas de scroll page
@@ -262,7 +262,7 @@ Cette roadmap détaille la refonte complète de l'interface utilisateur pour att
 ### 7.1 Dashboard
 
 - [x] Desktop : plan SVG occupant tout l'écran + panel coulissant droit
-- [x] Click salle → panel avec RoomInfoPanel + ReservationList + BookingForm
+- [x] Click salle → panel avec RoomInfoPanel + Calendar + BookingForm
 - [x] Mobile : bottom tabs (Plan, Admin)
 - [x] Tab Plan : FloorPlan plein écran + bottom sheet au click salle
 
@@ -271,7 +271,7 @@ Cette roadmap détaille la refonte complète de l'interface utilisateur pour att
 - [x] **Vue RoomView** (défaut) :
   - Split gauche/droite 50/50
   - Gauche : RoomStatusCard (photo + statut + heure/date)
-  - Droite : ReservationList de la salle
+  - Droite : Calendar de la salle
   - Bouton Réserver en bas à droite
 - [x] **Vue BookingFlow** (après [+]) :
   - Split gauche (35%) / droite (65%)

@@ -210,7 +210,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 - **Texte central** : `text.primary`, `sm` Bold — temps restant
 - **Label en dessous** : `text.muted`, `xs` — "restantes"
 
-### 5. ReservationList
+### 5. Calendar
 
 ```
 ┌─────────────────────────────────┐
@@ -364,7 +364,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 │   (SVG, occupe l'espace)    │  - slide depuis    │
 │                             │    la droite       │
 │   Click salle ─────────────>│  - RoomInfoPanel   │
-│                             │  - ReservationList │
+│                             │  - Calendar │
 │                             │  - BookingForm     │
 │                             │                    │
 │                             │  [×] pour fermer   │
@@ -386,7 +386,7 @@ La tablette dédiée a **deux vues** qui s'échangent sans navigation.
 ```
 ┌───────────────────────┬──────────────────────────┐
 │                       │                          │
-│  RoomStatusCard       │  ReservationList         │
+│  RoomStatusCard       │  Calendar         │
 │  (photo + overlay     │  (réservations du jour)  │
 │   + statut)           │                          │
 │                       │  Liste verticale sans    │
@@ -545,7 +545,7 @@ Utilisation de **Lucide React** (déjà dans les dépendances).
 - **Card** : rectange arrondi `bg.secondary` avec pulse
 - **Text** : ligne grise animée
 - **Circle** : cercle `bg.secondary` animé
-- Applicable sur : RoomStatusCard, ReservationList, FloorPlan
+- Applicable sur : RoomStatusCard, Calendar, FloorPlan
 
 ### EmptyState
 

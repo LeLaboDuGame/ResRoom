@@ -8,7 +8,7 @@ import { FilterBar } from "../components/ui/FilterBar";
 import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MeetingProgress } from "../components/room/MeetingProgress";
-import { ReservationList } from "../components/room/ReservationList";
+import { Calendar } from "../components/room/Calendar.jsx";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
@@ -244,15 +244,15 @@ export default function Debug() {
             </Flex>
           </Section>
 
-          <Section title="ReservationList">
+          <Section title="Calendar">
             <Box maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
-              <ReservationList
+              <Calendar
                 reservations={sampleRoom1.reservations}
                 onDelete={(uid) => console.log("Delete:", uid)}
               />
             </Box>
             <Box mt={2} maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
-              <ReservationList reservations={[]} />
+              <Calendar reservations={[]} />
             </Box>
           </Section>
 
