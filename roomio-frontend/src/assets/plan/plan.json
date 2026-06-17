@@ -531,24 +531,6 @@
           }
         },
         {
-          "id": "room-2-1781534178082",
-          "name": "Room 2",
-          "walls": [
-            "km-wall-1",
-            "c6a1k0o4",
-            "h0lsqvqf",
-            "p30yn4i1",
-            "km-wall-2",
-            "km-wall-3"
-          ],
-          "floorTexture": "hardwood",
-          "area": 16.76,
-          "labelOffset": {
-            "x": 0,
-            "y": 0
-          }
-        },
-        {
           "id": "room-7-1781535922298",
           "name": "NoName 3",
           "walls": [
