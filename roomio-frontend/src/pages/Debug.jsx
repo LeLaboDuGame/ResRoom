@@ -16,6 +16,7 @@ import { BookingButton } from "../components/booking/BookingButton";
 import { BookingForm } from "../components/booking/BookingForm";
 import { DeleteModal } from "../components/booking/DeleteModal";
 import { ResRoomLogo } from "../components/ui/ResRoomLogo";
+import { ScrollDownSlider } from "../components/ui/ScrollDownSlider.jsx";
 import { AdminTabs } from "../components/admin/AdminTabs";
 import { RoomsTab } from "../components/admin/RoomsTab";
 import { SettingsTab } from "../components/admin/SettingsTab";
@@ -101,6 +102,8 @@ export default function Debug() {
   const [updateSettingsRes, setUpdateSettingsRes] = useState(null);
   const [roomNameInput, setRoomNameInput] = useState("Howard Hughes");
 
+  const [scrollHour, setScrollHour] = useState(10);
+  const [scrollMin, setScrollMin] = useState(30);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bookingFormKey, setBookingFormKey] = useState(0);
@@ -223,6 +226,33 @@ export default function Debug() {
               </Box>
               <Box w="250px" bg="bg.secondary" borderRadius="lg" p={4}>
                 <EmptyState icon="🔧" title="Under construction" description="This section is not ready yet." />
+              </Box>
+            </Flex>
+          </Section>
+
+          <Section title="ScrollDownSlider">
+            <Flex gap={6} align="end" wrap="wrap">
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Heures</Text>
+                <ScrollDownSlider
+                  items={Array.from({length: 13}, (_, i) => String(i + 8).padStart(2, "0"))}
+                  value={scrollHour}
+                  onChange={setScrollHour}
+                />
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Minutes</Text>
+                <ScrollDownSlider
+                  items={Array.from({length: 12}, (_, i) => String(i * 5).padStart(2, "0"))}
+                  value={scrollMin}
+                  onChange={setScrollMin}
+                />
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Sélectionné</Text>
+                <Text color="text.primary" fontSize="lg" fontWeight="bold">
+                  {scrollHour}h{scrollMin}
+                </Text>
               </Box>
             </Flex>
           </Section>
