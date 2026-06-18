@@ -1,4 +1,4 @@
-import {useState, createContext, useContext, useRef, useCallback} from "react";
+import {useState, createContext, useContext, useRef, useCallback, useMemo} from "react";
 import {
     Box, Flex, Text, ScrollArea, Stack, Collapsible
 } from "@chakra-ui/react";
@@ -169,40 +169,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown
     );
 }
 
-/**
- * Returns the day label in French (Aujourd'hui, Demain, Après-demain, or full date).
- * @param {string} dateStr ISO date string
- * @returns {string} Formatted day label
- */
-const getDayLabel = (dateStr) => {
-    const d = new Date(dateStr.replace(" ", "T"));
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const diffDays = Math.round((d - todayStart) / 86400000);
 
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return "Demain";
-    if (diffDays === 2) return "Après-demain";
-
-    return d.toLocaleDateString("fr-FR", {weekday: "long", day: "numeric", month: "long"});
-};
-
-/**
- * Extracts the "YYYY-MM-DD" date key from an ISO datetime string.
- * @param {string} dateStr ISO date string
- * @returns {string} Date key
- */
-const getDateKey = (dateStr) => dateStr?.slice(0, 10);
-
-/**
- * Formats an ISO datetime to "HH:mm" in French locale.
- * @param {string} dateStr ISO date string
- * @returns {string} Formatted time
- */
-const fmtHm = (dateStr) => {
-    const d = new Date(dateStr.replace(" ", "T"));
-    return d.toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"});
-};
 
 /**
  * Main calendar component with reservation display, long-press provisional creation,
@@ -218,11 +185,46 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const {dayStart, dayEnd} = useSettings();
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    });
 
     const longTimer = useRef(null);
     const dragRef = useRef(false);
     const gridRef = useRef(null);
     const pointerStart = useRef(null);
+
+    /** Next 7 days starting from today */
+    const dayItems = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Array.from({length: 7}, (_, i) => {
+            const d = new Date(today);
+            d.setDate(today.getDate() + i);
+            return d;
+        });
+    }, []);
+
+    /** Formats a Date into "YYYY-MM-DD" */
+    const fmtDateKey = useCallback((d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }, []);
+
+    /** Day label: Aujourd'hui, Demain, Après-demain, or short weekday */
+    const getDayLabel = useCallback((d) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diff = Math.round((d - today) / 86400000);
+        if (diff === 0) return "Aujourd'hui";
+        if (diff === 1) return "Demain";
+        if (diff === 2) return "Après-demain";
+        return d.toLocaleDateString("fr-FR", {weekday: "short"});
+    }, []);
 
     /**
      * Starts a 500ms timer on pointer down. If the timer fires (no significant movement),
@@ -281,36 +283,61 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         }
 
         if (dragRef.current && provisional) {
-            const today = new Date();
-            const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            const dateStr = fmtDateKey(selectedDate);
             const endDec = provisional.startDec + 1;
             const startHour = fmtHHMM(provisional.startDec);
             const endHour = fmtHHMM(endDec);
 
-            setPendingReservation({date: today, dateStr, startHour, endHour});
+            setPendingReservation({date: selectedDate, dateStr, startHour, endHour});
             onNewReservation?.(dateStr, startHour, endHour);
 
             dragRef.current = false;
             setProvisional(null);
         }
-    }, [provisional, onNewReservation]);
+    }, [provisional, onNewReservation, selectedDate, fmtDateKey]);
 
-    /* Filter today's reservations within operating hours, sorted by start time */
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dayStart, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dayEnd, 0, 0);
-    const upcoming = reservations.filter((r) => new Date(r.end) > todayStart && new Date(r.start) < todayEnd);
-    const sorted = [...upcoming].sort((a, b) => a.start.localeCompare(b.start));
-
-    const grouped = {};
-    for (const r of sorted) {
-        const key = getDateKey(r.start);
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(r);
-    }
+    /* Filter reservations for the selected date, within operating hours, sorted */
+    const dayStartDate = useMemo(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), dayStart, 0, 0), [selectedDate, dayStart]);
+    const dayEndDate = useMemo(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), dayEnd, 0, 0), [selectedDate, dayEnd]);
+    const sorted = useMemo(() => {
+        const upcoming = reservations.filter((r) => new Date(r.end) > dayStartDate && new Date(r.start) < dayEndDate);
+        return upcoming.sort((a, b) => a.start.localeCompare(b.start));
+    }, [reservations, dayStartDate, dayEndDate]);
 
     return (
         <Box h="90%" w="100%" bg="bg.secondary">
+            {/* Day selector */}
+            <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200">
+                {dayItems.map((d) => {
+                    const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
+                    const isToday = fmtDateKey(d) === fmtDateKey(new Date());
+                    return (
+                        <Box
+                            key={fmtDateKey(d)}
+                            as="button"
+                            onClick={() => { setSelectedDate(d); setPendingReservation(null); }}
+                            display="flex"
+                            flexDir="column"
+                            align="center"
+                            justify="center"
+                            w="90px"
+                            py={2}
+                            borderRadius="md"
+                            cursor="pointer"
+                            bg={isSelected ? "accent.default" : "transparent"}
+                            color={isSelected ? "white" : isToday ? "accent.default" : "text.secondary"}
+                            fontWeight={isSelected ? "bold" : "medium"}
+                            fontSize="sm"
+                            transition="all 0.15s"
+                            _hover={!isSelected ? {bg: "whiteAlpha.100"} : undefined}
+                        >
+                            <Text fontSize="xs" lineHeight={1.2}>{getDayLabel(d)}</Text>
+                            <Text fontSize="2xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
+                        </Box>
+                    );
+                })}
+            </Flex>
+
             <BgCalendar
                 dayStart={dayStart}
                 dayEnd={dayEnd}
@@ -378,8 +405,9 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 {/* Collapsible booking form directly below the purple block */}
                 {pendingReservation && roomName && (() => {
                     const startDec = toDec(pendingReservation.startHour);
+                    const endDec = toDec(pendingReservation.endHour);
                     const blockTop = PAD_T + (startDec - dayStart) * ROW_H + ROW_H / 2;
-                    const blockH = ROW_H; // 1h default duration
+                    const blockH = (endDec - startDec) * ROW_H;
                     const formTop = blockTop + blockH + 4;
 
                     return (
@@ -403,6 +431,11 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                                         defaultDate={pendingReservation.date}
                                         defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
                                         defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                        onTimeChange={(h, m, eh, em) => {
+                                            const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                            const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                            setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                        }}
                                         onSuccess={(reservation) => {
                                             setPendingReservation(null);
                                             onBookingSuccess?.(reservation);

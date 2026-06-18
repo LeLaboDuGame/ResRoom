@@ -1,16 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box, Flex, Input, Button, Text,
   DatePicker,
-  SliderRoot,
-  SliderTrack,
-  SliderRange,
-  SliderThumb,
-  SliderValueText,
 } from "@chakra-ui/react";
 import { parseDate } from "@ark-ui/react/date-picker";
 import { createReservation } from "../../api/apiCall.js";
 import { useSettings } from "../../hooks/useSettings";
+import { ScrollDownSlider } from "../ui/ScrollDownSlider";
 
 /**
  * Booking form with inline date picker calendar, hour/minute sliders,
@@ -24,9 +20,10 @@ import { useSettings } from "../../hooks/useSettings";
  * @param {Date} [defaultDate] Pre-filled date (defaults to today)
  * @param {number} [defaultHour] Pre-filled hour (defaults to current rounded hour)
  * @param {number} [defaultMinute] Pre-filled minute (defaults to current rounded minute)
+ * @param {Function} [onTimeChange] Called with (hour, minute, endHour, endMinute) when time wheels change
  * @return {JSX.Element} BookingForm component
  */
-export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel, defaultDate: defaultDateProp, defaultHour: defaultHourProp, defaultMinute: defaultMinuteProp }) {
+export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel, defaultDate: defaultDateProp, defaultHour: defaultHourProp, defaultMinute: defaultMinuteProp, onTimeChange }) {
   const { dayStart, dayEnd } = useSettings();
 
   const now = new Date();
@@ -36,11 +33,35 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   const fallbackHour = Math.max(dayStart, Math.min(dayEnd - 1, now.getHours()));
   const fallbackMin = now.getMinutes();
 
+  const hourItems = useMemo(() =>
+    Array.from({length: dayEnd - dayStart}, (_, i) => String(i + dayStart).padStart(2, "0")),
+    [dayStart, dayEnd]
+  );
+  const minItems = useMemo(() =>
+    Array.from({length: 12}, (_, i) => String(i * 5).padStart(2, "0")),
+    []
+  );
+
+  const fallbackEndHour = Math.min(dayEnd - 1, fallbackHour + 1);
+
   const [dateValue, setDateValue] = useState(defaultDateProp ? [parseDate(defaultDateProp)] : [parseDate(new Date())]);
   const [hour, setHour] = useState(defaultHourProp ?? fallbackHour);
   const [minute, setMinute] = useState(defaultMinuteProp ?? fallbackMin);
-  const [duration, setDuration] = useState(30);
+  const [endHour, setEndHour] = useState(defaultHourProp !== undefined ? Math.min(dayEnd - 1, defaultHourProp + 1) : fallbackEndHour);
+  const [endMinute, setEndMinute] = useState(defaultMinuteProp ?? fallbackMin);
+
+  const prevTime = useRef({hour, minute, endHour, endMinute});
+  useEffect(() => {
+    const {hour: pH, minute: pM, endHour: pEH, endMinute: pEM} = prevTime.current;
+    if (hour !== pH || minute !== pM || endHour !== pEH || endMinute !== pEM) {
+      onTimeChange?.(hour, minute, endHour, endMinute);
+      prevTime.current = {hour, minute, endHour, endMinute};
+    }
+  }, [hour, minute, endHour, endMinute, onTimeChange]);
   const [title, setTitle] = useState("");
+  const [reservedBy, setReservedBy] = useState("");
+  const [debutOpen, setDebutOpen] = useState(false);
+  const [finOpen, setFinOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,19 +75,15 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   }
 
   /**
-   * Computes the end datetime given start and duration.
+   * Computes the end datetime from the date and endHour/endMinute.
    * @returns {string} End datetime string
    */
   function computeEnd() {
-    const start = formatDatetime();
-    if (!start) return "";
-    const [h, m] = start.slice(11, 16).split(":").map(Number);
-    const startDt = new Date(start.slice(0, 10));
-    startDt.setHours(h, m, 0, 0);
-    const endDt = new Date(startDt.getTime() + duration * 60000);
-    const endDate = endDt.toISOString().slice(0, 10);
-    const endTime = `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`;
-    return `${endDate} ${endTime}`;
+    const d = dateValue[0];
+    if (!d) return "";
+    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+    const timeStr = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
+    return `${dateStr} ${timeStr}`;
   }
 
   /**
@@ -106,11 +123,6 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
       return;
     }
 
-    if (duration < 5) {
-      setError("La durée minimum est de 5 minutes.");
-      return;
-    }
-
     const start = formatDatetime();
     const end = computeEnd();
 
@@ -135,7 +147,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
         start,
         end,
         title,
-        reserved_by: "",
+        reserved_by: reservedBy,
       });
       onSuccess?.(result.reservation);
     } catch (err) {
@@ -180,8 +192,28 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
           />
         </Box>
 
-        {/* Date picker + sliders side by side */}
-        <Flex gap={6} align="flex-start" wrap="wrap">
+        {/* Réservé par */}
+        <Box>
+          <Input
+            size="md"
+            value={reservedBy}
+            onChange={(e) => setReservedBy(e.target.value)}
+            placeholder="Réservé par"
+            bg="bg.primary"
+            border="none"
+            borderBottom="2px solid"
+            borderColor="border.default"
+            color="text.primary"
+            fontSize="md"
+            px={0}
+            borderRadius={0}
+            _focus={{ borderColor: "accent.default", outline: "none" }}
+            _placeholder={{ color: "text.muted" }}
+          />
+        </Box>
+
+        {/* Date picker + time wheels */}
+        <Flex gap={6} align="center" wrap="wrap" justify="center">
           {/* Inline date picker calendar */}
           <Box bg="gray.300" borderRadius="lg" p={3} borderWidth="1px" borderColor="border.default">
             <DatePicker.Root
@@ -206,69 +238,54 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
             </DatePicker.Root>
           </Box>
 
-          {/* Hour & Minute sliders */}
-          <Flex direction="column" gap={5} minW="160px" flex={1} bg="white" borderRadius="lg" p={4} borderWidth="1px" borderColor="border.default">
-            <Box>
-              <Text fontSize="sm" color="text.secondary" mb={2}>Heure</Text>
-              <SliderRoot
-                min={dayStart}
-                max={dayEnd - 1}
-                step={1}
-                value={[hour]}
-                onValueChange={(e) => setHour(e.value[0])}
-              >
-                <SliderTrack bg="bg.secondary">
-                  <SliderRange bg="accent.default" />
-                </SliderTrack>
-                <SliderThumb bg="accent.default" _hover={{ bg: "accent.hover" }}>
-                  <SliderValueText color="white" fontSize="xs" />
-                </SliderThumb>
-              </SliderRoot>
-              <Text fontSize="sm" color="text.primary" mt={1} textAlign="center" fontWeight="medium">
-                {String(hour).padStart(2, "0")}h
-              </Text>
+          {/* Time columns */}
+          <Flex gap={8} align="flex-start">
+            {/* Heure de début */}
+            <Box textAlign="center">
+              <Text fontSize="sm" color="text.secondary" mb={2} fontWeight="medium">Début</Text>
+              <Flex gap={2}>
+                <ScrollDownSlider
+                  items={hourItems}
+                  value={String(hour).padStart(2, "0")}
+                  onChange={(v) => setHour(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={debutOpen}
+                  onOpenChange={setDebutOpen}
+                />
+                <ScrollDownSlider
+                  items={minItems}
+                  value={String(minute).padStart(2, "0")}
+                  onChange={(v) => setMinute(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={debutOpen}
+                  onOpenChange={setDebutOpen}
+                />
+              </Flex>
             </Box>
 
-            <Box>
-              <Text fontSize="sm" color="text.secondary" mb={2}>Minutes</Text>
-              <SliderRoot
-                min={0}
-                max={55}
-                step={5}
-                value={[minute]}
-                onValueChange={(e) => setMinute(e.value[0])}
-              >
-                <SliderTrack bg="bg.secondary">
-                  <SliderRange bg="accent.default" />
-                </SliderTrack>
-                <SliderThumb bg="accent.default" _hover={{ bg: "accent.hover" }}>
-                  <SliderValueText color="white" fontSize="xs" />
-                </SliderThumb>
-              </SliderRoot>
-              <Text fontSize="sm" color="text.primary" mt={1} textAlign="center" fontWeight="medium">
-                {String(minute).padStart(2, "0")}
-              </Text>
+            {/* Heure de fin */}
+            <Box textAlign="center">
+              <Text fontSize="sm" color="text.secondary" mb={2} fontWeight="medium">Fin</Text>
+              <Flex gap={2}>
+                <ScrollDownSlider
+                  items={hourItems}
+                  value={String(endHour).padStart(2, "0")}
+                  onChange={(v) => setEndHour(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={finOpen}
+                  onOpenChange={setFinOpen}
+                />
+                <ScrollDownSlider
+                  items={minItems}
+                  value={String(endMinute).padStart(2, "0")}
+                  onChange={(v) => setEndMinute(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={finOpen}
+                  onOpenChange={setFinOpen}
+                />
+              </Flex>
             </Box>
           </Flex>
-        </Flex>
-
-        {/* Duration */}
-        <Flex align="center" gap={2}>
-          <Text fontSize="sm" color="text.secondary" whiteSpace="nowrap">Durée</Text>
-          <Input
-            type="number"
-            size="sm"
-            w="80px"
-            value={duration}
-            onChange={(e) => setDuration(Math.max(5, parseInt(e.target.value, 10) || 5))}
-            bg="bg.primary"
-            borderColor="border.default"
-            color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
-            min={5}
-            step={5}
-          />
-          <Text fontSize="sm" color="text.muted">min</Text>
         </Flex>
 
         {/* Error */}

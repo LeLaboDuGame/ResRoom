@@ -7,22 +7,37 @@ const VISIBLE = 5;
 /**
  * A vertical scroll wheel picker. Collapsed shows the selected value;
  * expanded shows a scrollable list that snaps to center on the closest item.
+ * The arrow ▸ on the right of the centered item shows the snap position.
  * @param {Object} props
  * @param {Array} props.items List of values (strings/numbers)
  * @param {*} [props.value] Currently selected value
  * @param {Function} [props.onChange] Called with the new value on selection
  * @param {number|string} [props.w] Width of the component
  * @param {number} [props.h] Height of the expanded scroll area in pixels
+ * @param {string} [props.fontSize] Font size for items and collapsed value ("lg", "md", etc.)
+ * @param {boolean} [props.open] Controlled open state
+ * @param {Function} [props.onOpenChange] Called with the new open state
  * @returns {JSX.Element} ScrollDownSlider component
  */
-export function ScrollDownSlider({ items = [], value, onChange, w, h }) {
-  const [open, setOpen] = useState(false);
+export function ScrollDownSlider({ items = [], value, onChange, w, h, fontSize = { base: "sm", md: "lg" }, open: controlledOpen, onOpenChange }) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
   const tickingRef = useRef(false);
 
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const safeValue = items.includes(value) ? value : items[0];
   const selectedIndex = items.indexOf(safeValue);
+
+  const tryOpen = useCallback(() => {
+    if (controlledOpen === undefined) setInternalOpen(true);
+    onOpenChange?.(true);
+  }, [controlledOpen, onOpenChange]);
+
+  const tryClose = useCallback(() => {
+    if (controlledOpen === undefined) setInternalOpen(false);
+    onOpenChange?.(false);
+  }, [controlledOpen, onOpenChange]);
 
   useEffect(() => {
     if (open && scrollRef.current && selectedIndex >= 0) {
@@ -34,12 +49,12 @@ export function ScrollDownSlider({ items = [], value, onChange, w, h }) {
     if (!open) return;
     function handleClick(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
+        tryClose();
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  }, [open, tryClose]);
 
   const handleScroll = useCallback(() => {
     if (tickingRef.current) return;
@@ -61,19 +76,19 @@ export function ScrollDownSlider({ items = [], value, onChange, w, h }) {
       {!open ? (
         <Box
           as="button"
-          onClick={() => setOpen(true)}
+          onClick={tryOpen}
           cursor="pointer"
           bg="bg.primary"
           borderRadius="md"
-          px={5}
+          px={{ base: 3, md: 5 }}
           py={2}
           border="1px solid"
           borderColor="border.default"
           color="text.primary"
-          fontSize="lg"
+          fontSize={fontSize}
           fontWeight="medium"
           w={w}
-          minW="80px"
+          minW={{ base: "50px", md: "80px" }}
           textAlign="center"
           _hover={{ borderColor: "accent.default" }}
         >
@@ -112,13 +127,13 @@ export function ScrollDownSlider({ items = [], value, onChange, w, h }) {
                 css={{ scrollSnapAlign: "center" }}
                 bg={item === safeValue ? "accent.default" : "transparent"}
                 color={item === safeValue ? "white" : "text.primary"}
-                fontSize="lg"
+                fontSize={fontSize}
                 fontWeight="medium"
                 cursor="pointer"
                 _hover={{ bg: item === safeValue ? "accent.default" : "whiteAlpha.200" }}
                 onClick={() => {
                   onChange?.(item);
-                  setOpen(false);
+                  tryClose();
                 }}
               >
                 {String(item)}
@@ -126,6 +141,20 @@ export function ScrollDownSlider({ items = [], value, onChange, w, h }) {
             ))}
 
             <Box h={`${padItems * ITEM_H}px`} pointerEvents="none" />
+          </Box>
+
+          <Box
+            position="absolute"
+            top="50%"
+            right={0}
+            transform="translateY(-50%)"
+            pointerEvents="none"
+            zIndex={5}
+            color="gray.400"
+            fontSize="md"
+            lineHeight={1}
+          >
+            ◂
           </Box>
 
           <Box
