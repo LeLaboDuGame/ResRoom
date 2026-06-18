@@ -1,11 +1,9 @@
 import {useState, createContext, useContext, useRef, useCallback} from "react";
 import {
-    Box, Flex, IconButton, Text, Input,
-    Button, ScrollArea, Stack
+    Box, Flex, Text, ScrollArea, Stack
 } from "@chakra-ui/react";
-import {X} from "lucide-react";
 import {useSettings} from "../../hooks/useSettings";
-import { keyframes } from "@emotion/react";
+import {keyframes} from "@emotion/react";
 
 /** Row height in pixels for each hour slot */
 const ROW_H = 70;
@@ -20,10 +18,18 @@ const CalendarCtx = createContext({dayStart: 7});
  * Starts small, overshoots past full size, then settles.
  */
 const bumpIn = keyframes`
-  0%   { transform: scale(0.85, 0.5); }
-  60%  { transform: scale(1.06, 1.06); }
-  80%  { transform: scale(0.9, 0.9); }
-  100% { transform: scale(1, 1); }
+    0% {
+        transform: scale(0.85, 0.5);
+    }
+    60% {
+        transform: scale(1.06, 1.06);
+    }
+    80% {
+        transform: scale(0.9, 0.9);
+    }
+    100% {
+        transform: scale(1, 1);
+    }
 `;
 
 /**
@@ -201,14 +207,11 @@ const fmtHm = (dateStr) => {
  * Main calendar component with reservation display, long-press provisional creation,
  * and drag of the provisional block before validation via onNewReservation.
  * @param {Array} [reservations=[]] List of reservation objects
- * @param {Function} [onDelete] Delete handler
  * @param {Function} [onNewReservation] Called with (date, start, end) on provisional release
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onDelete, onNewReservation}) {
+export function Calendar({reservations = [], onNewReservation}) {
     const {dayStart, dayEnd} = useSettings();
-    const [confirmUid, setConfirmUid] = useState(null);
-    const [confirmInput, setConfirmInput] = useState("");
     const [provisional, setProvisional] = useState(null);
 
     const longTimer = useRef(null);
@@ -301,55 +304,53 @@ export function Calendar({reservations = [], onDelete, onNewReservation}) {
         grouped[key].push(r);
     }
 
-    if (sorted.length || provisional) {
-        return (
-            <Box h="90%" w="100%" bg="bg.secondary">
-                <BgCalendar
-                    dayStart={dayStart}
-                    dayEnd={dayEnd}
-                    gridRef={gridRef}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                >
-                    {/* Existing reservation blocks */}
-                    {sorted.map(r => {
-                        const s = r.start.slice(11, 16);
-                        const e = r.end.slice(11, 16);
-                        return (
-                            <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500">
-                                <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                    {r.title}
-                                </Text>
-                                <Text fontSize="xs" color="whiteAlpha.800">
-                                    {s} – {e} · {r.reserved_by}
-                                </Text>
-                            </Reservation>
-                        );
-                    })}
+    return (
+        <Box h="90%" w="100%" bg="bg.secondary">
+            <BgCalendar
+                dayStart={dayStart}
+                dayEnd={dayEnd}
+                gridRef={gridRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+            >
+                {/* Existing reservation blocks */}
+                {sorted.map(r => {
+                    const s = r.start.slice(11, 16);
+                    const e = r.end.slice(11, 16);
+                    return (
+                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500">
+                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
+                                {r.title}
+                            </Text>
+                            <Text fontSize="xs" color="whiteAlpha.800">
+                                {s} – {e} · {r.reserved_by}
+                            </Text>
+                        </Reservation>
+                    );
+                })}
 
-                    {/* Provisional block (long-press drag preview) */}
-                    {provisional && (() => {
-                        const endDec = provisional.startDec + 1;
-                        const sh = fmtHHMM(provisional.startDec);
-                        const eh = fmtHHMM(endDec);
-                        return (
-                            <Reservation key="__provisional" startHour={sh} endHour={eh} color="purple.500"
-                                         animation={`${bumpIn} 0.2s ease-out`}
-                                         transformOrigin="top center"
+                {/* Provisional block (long-press drag preview) */}
+                {provisional && (() => {
+                    const endDec = provisional.startDec + 1;
+                    const sh = fmtHHMM(provisional.startDec);
+                    const eh = fmtHHMM(endDec);
+                    return (
+                        <Reservation key="__provisional" startHour={sh} endHour={eh} color="purple.500"
+                                     animation={`${bumpIn} 0.2s ease-out`}
+                                     transformOrigin="top center"
 
-                            >
-                                <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                    Nouvelle réservation
-                                </Text>
-                                <Text fontSize="xs" color="whiteAlpha.800">
-                                    {sh} – {eh}
-                                </Text>
-                            </Reservation>
-                        );
-                    })()}
-                </BgCalendar>
-            </Box>
-        );
-    }
+                        >
+                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
+                                Nouvelle réservation
+                            </Text>
+                            <Text fontSize="xs" color="whiteAlpha.800">
+                                {sh} – {eh}
+                            </Text>
+                        </Reservation>
+                    );
+                })()}
+            </BgCalendar>
+        </Box>
+    );
 }

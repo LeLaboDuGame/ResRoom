@@ -100,7 +100,6 @@ export default function Dashboard() {
               <Box px={{ base: 4, md: 5 }} py={3}>
                 <Calendar
                   reservations={selectedRoom.reservations || []}
-                  onDelete={(uid) => console.log("Delete:", uid)}
                 />
               </Box>
               <Box px={{ base: 4, md: 5 }} py={4} borderTop="1px solid" borderColor="border.default" mt={2}>

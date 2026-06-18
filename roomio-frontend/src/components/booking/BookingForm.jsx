@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
+import {
+  Box, Flex, Input, Button, Text,
+  DatePicker,
+  SliderRoot,
+  SliderTrack,
+  SliderRange,
+  SliderThumb,
+  SliderValueText,
+} from "@chakra-ui/react";
+import { parseDate } from "@ark-ui/react/date-picker";
 import { createReservation } from "../../api/apiCall.js";
+import { useSettings } from "../../hooks/useSettings";
 
 /**
- * Booking form with date, time, duration, title, and name fields.
- * Computes end datetime from start + duration, validates client-side,
- * checks for overlaps, and calls createReservation API.
+ * Booking form with inline date picker calendar, hour/minute sliders,
+ * title and duration fields. Calls createReservation API on submit
+ * with overlap and past-date validation.
  * @param {Object} props
  * @param {string} roomName Target room name
  * @param {Array} existingReservations Existing reservations for overlap check
@@ -14,46 +24,47 @@ import { createReservation } from "../../api/apiCall.js";
  * @return {JSX.Element} BookingForm component
  */
 export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const { dayStart, dayEnd } = useSettings();
+  const today = new Date();
 
   const now = new Date();
   const roundedMin = Math.ceil(now.getMinutes() / 5) * 5;
   now.setMinutes(roundedMin, 0, 0);
-  const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const [date, setDate] = useState(today);
-  const [startTime, setStartTime] = useState(defaultTime);
+  const defaultHour = Math.max(dayStart, Math.min(dayEnd - 1, now.getHours()));
+  const defaultMin = now.getMinutes();
+
+  const [dateValue, setDateValue] = useState([parseDate(today)]);
+  const [hour, setHour] = useState(defaultHour);
+  const [minute, setMinute] = useState(defaultMin);
   const [duration, setDuration] = useState(30);
   const [title, setTitle] = useState("");
-  const [reservedBy, setReservedBy] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /**
-   * Formats a date and time string into a single datetime string.
-   * @param {string} dateStr Date in YYYY-MM-DD format
-   * @param {string} timeStr Time in HH:mm format
-   * @returns {string} Combined datetime string
-   */
-  function formatDatetime(dateStr, timeStr) {
+  /** Formats date from DatePicker value + hour/minute into "YYYY-MM-DD HH:mm" */
+  function formatDatetime() {
+    const d = dateValue[0];
+    if (!d) return "";
+    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+    const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     return `${dateStr} ${timeStr}`;
   }
 
   /**
-   * Computes the end datetime given a start date, time, and duration.
-   * @param {string} dateStr Date in YYYY-MM-DD format
-   * @param {string} timeStr Start time in HH:mm format
-   * @param {number} dur Duration in minutes
+   * Computes the end datetime given start and duration.
    * @returns {string} End datetime string
    */
-  function computeEnd(dateStr, timeStr, dur) {
-    const [h, m] = timeStr.split(":");
-    const startDt = new Date(dateStr);
-    startDt.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
-    const endDt = new Date(startDt.getTime() + dur * 60000);
+  function computeEnd() {
+    const start = formatDatetime();
+    if (!start) return "";
+    const [h, m] = start.slice(11, 16).split(":").map(Number);
+    const startDt = new Date(start.slice(0, 10));
+    startDt.setHours(h, m, 0, 0);
+    const endDt = new Date(startDt.getTime() + duration * 60000);
     const endDate = endDt.toISOString().slice(0, 10);
     const endTime = `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`;
-    return formatDatetime(endDate, endTime);
+    return `${endDate} ${endTime}`;
   }
 
   /**
@@ -88,8 +99,8 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   async function handleSubmit() {
     setError("");
 
-    if (!date || !startTime || !title || !reservedBy) {
-      setError("Tous les champs sont requis.");
+    if (!title) {
+      setError("Veuillez entrer un titre.");
       return;
     }
 
@@ -98,10 +109,10 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
       return;
     }
 
-    const start = formatDatetime(date, startTime);
-    const end = computeEnd(date, startTime, duration);
+    const start = formatDatetime();
+    const end = computeEnd();
 
-    if (end <= start) {
+    if (!start || !end || end <= start) {
       setError("L'heure de fin doit être après l'heure de début.");
       return;
     }
@@ -122,7 +133,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
         start,
         end,
         title,
-        reserved_by: reservedBy,
+        reserved_by: "",
       });
       onSuccess?.(result.reservation);
     } catch (err) {
@@ -136,7 +147,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
    * @param {React.KeyboardEvent} e Keyboard event
    */
   function handleKeyDown(e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && title) {
       e.preventDefault();
       handleSubmit();
     }
@@ -144,93 +155,129 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
 
   return (
     <Box onKeyDown={handleKeyDown}>
-      <Flex direction="column" gap={3}>
-        <Text fontSize="sm" fontWeight="medium" color="text.primary">
-          Nouvelle réservation · {roomName}
-        </Text>
-
+      <Flex direction="column" gap={4}>
+        {/* Title — auto-focused, invites entry */}
         <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Date</Text>
           <Input
-            type="date"
-            size="sm"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            bg="bg.primary"
-            borderColor="border.default"
-            color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
-            min={today}
-          />
-        </Box>
-
-        <Flex gap={2}>
-          <Box flex={1}>
-            <Text fontSize="xs" color="text.muted" mb={1}>Début</Text>
-            <Input
-              type="time"
-              size="sm"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              bg="bg.primary"
-              borderColor="border.default"
-              color="text.primary"
-              _focus={{ borderColor: "accent.default" }}
-            />
-          </Box>
-          <Box flex={1}>
-            <Text fontSize="xs" color="text.muted" mb={1}>Durée (min)</Text>
-            <Input
-              type="number"
-              size="sm"
-              value={duration}
-              onChange={(e) => setDuration(Math.max(5, parseInt(e.target.value, 10) || 5))}
-              bg="bg.primary"
-              borderColor="border.default"
-              color="text.primary"
-              _focus={{ borderColor: "accent.default" }}
-              min={5}
-              step={5}
-            />
-          </Box>
-        </Flex>
-
-        <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Titre</Text>
-          <Input
-            size="sm"
+            size="lg"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Stand-up"
+            placeholder="Titre de la réunion"
             bg="bg.primary"
+            border="none"
+            borderBottom="2px solid"
             borderColor="border.default"
             color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
+            fontSize="xl"
+            fontWeight="semibold"
+            px={0}
+            borderRadius={0}
+            _focus={{ borderColor: "accent.default", outline: "none" }}
+            _placeholder={{ color: "text.muted" }}
             autoFocus
           />
         </Box>
 
-        <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Réservé par</Text>
+        {/* Date picker + sliders side by side */}
+        <Flex gap={6} align="flex-start" wrap="wrap">
+          {/* Inline date picker calendar */}
+          <Box bg="gray.300" borderRadius="lg" p={3} borderWidth="1px" borderColor="border.default">
+            <DatePicker.Root
+              inline
+              selectionMode="single"
+              value={dateValue}
+              onValueChange={(details) => setDateValue(details.value)}
+              startOfWeek={1}
+            >
+              <DatePicker.View view="day">
+                <DatePicker.Header />
+                <DatePicker.DayTable />
+              </DatePicker.View>
+              <DatePicker.View view="month">
+                <DatePicker.Header />
+                <DatePicker.MonthTable />
+              </DatePicker.View>
+              <DatePicker.View view="year">
+                <DatePicker.Header />
+                <DatePicker.YearTable />
+              </DatePicker.View>
+            </DatePicker.Root>
+          </Box>
+
+          {/* Hour & Minute sliders */}
+          <Flex direction="column" gap={5} minW="160px" flex={1} bg="white" borderRadius="lg" p={4} borderWidth="1px" borderColor="border.default">
+            <Box>
+              <Text fontSize="sm" color="text.secondary" mb={2}>Heure</Text>
+              <SliderRoot
+                min={dayStart}
+                max={dayEnd - 1}
+                step={1}
+                value={[hour]}
+                onValueChange={(e) => setHour(e.value[0])}
+              >
+                <SliderTrack bg="bg.secondary">
+                  <SliderRange bg="accent.default" />
+                </SliderTrack>
+                <SliderThumb bg="accent.default" _hover={{ bg: "accent.hover" }}>
+                  <SliderValueText color="white" fontSize="xs" />
+                </SliderThumb>
+              </SliderRoot>
+              <Text fontSize="sm" color="text.primary" mt={1} textAlign="center" fontWeight="medium">
+                {String(hour).padStart(2, "0")}h
+              </Text>
+            </Box>
+
+            <Box>
+              <Text fontSize="sm" color="text.secondary" mb={2}>Minutes</Text>
+              <SliderRoot
+                min={0}
+                max={55}
+                step={5}
+                value={[minute]}
+                onValueChange={(e) => setMinute(e.value[0])}
+              >
+                <SliderTrack bg="bg.secondary">
+                  <SliderRange bg="accent.default" />
+                </SliderTrack>
+                <SliderThumb bg="accent.default" _hover={{ bg: "accent.hover" }}>
+                  <SliderValueText color="white" fontSize="xs" />
+                </SliderThumb>
+              </SliderRoot>
+              <Text fontSize="sm" color="text.primary" mt={1} textAlign="center" fontWeight="medium">
+                {String(minute).padStart(2, "0")}
+              </Text>
+            </Box>
+          </Flex>
+        </Flex>
+
+        {/* Duration */}
+        <Flex align="center" gap={2}>
+          <Text fontSize="sm" color="text.secondary" whiteSpace="nowrap">Durée</Text>
           <Input
+            type="number"
             size="sm"
-            value={reservedBy}
-            onChange={(e) => setReservedBy(e.target.value)}
-            placeholder="Votre nom"
+            w="80px"
+            value={duration}
+            onChange={(e) => setDuration(Math.max(5, parseInt(e.target.value, 10) || 5))}
             bg="bg.primary"
             borderColor="border.default"
             color="text.primary"
             _focus={{ borderColor: "accent.default" }}
+            min={5}
+            step={5}
           />
-        </Box>
+          <Text fontSize="sm" color="text.muted">min</Text>
+        </Flex>
 
+        {/* Error */}
         {error && (
           <Text fontSize="sm" color="#f87171">
             {error}
           </Text>
         )}
 
-        <Flex gap={2} mt={1}>
+        {/* Actions */}
+        <Flex gap={2} justify="flex-end">
           <Button
             size="sm"
             variant="ghost"

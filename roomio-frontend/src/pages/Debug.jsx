@@ -248,7 +248,6 @@ export default function Debug() {
             <Box maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
               <Calendar
                 reservations={sampleRoom1.reservations}
-                onDelete={(uid) => console.log("Delete:", uid)}
               />
             </Box>
             <Box mt={2} maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
