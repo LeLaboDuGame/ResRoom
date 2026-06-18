@@ -21,22 +21,24 @@ import { useSettings } from "../../hooks/useSettings";
  * @param {Array} existingReservations Existing reservations for overlap check
  * @param {Function} onSuccess Called with new reservation on success
  * @param {Function} onCancel Called when user cancels
+ * @param {Date} [defaultDate] Pre-filled date (defaults to today)
+ * @param {number} [defaultHour] Pre-filled hour (defaults to current rounded hour)
+ * @param {number} [defaultMinute] Pre-filled minute (defaults to current rounded minute)
  * @return {JSX.Element} BookingForm component
  */
-export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel }) {
+export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel, defaultDate: defaultDateProp, defaultHour: defaultHourProp, defaultMinute: defaultMinuteProp }) {
   const { dayStart, dayEnd } = useSettings();
-  const today = new Date();
 
   const now = new Date();
   const roundedMin = Math.ceil(now.getMinutes() / 5) * 5;
   now.setMinutes(roundedMin, 0, 0);
 
-  const defaultHour = Math.max(dayStart, Math.min(dayEnd - 1, now.getHours()));
-  const defaultMin = now.getMinutes();
+  const fallbackHour = Math.max(dayStart, Math.min(dayEnd - 1, now.getHours()));
+  const fallbackMin = now.getMinutes();
 
-  const [dateValue, setDateValue] = useState([parseDate(today)]);
-  const [hour, setHour] = useState(defaultHour);
-  const [minute, setMinute] = useState(defaultMin);
+  const [dateValue, setDateValue] = useState(defaultDateProp ? [parseDate(defaultDateProp)] : [parseDate(new Date())]);
+  const [hour, setHour] = useState(defaultHourProp ?? fallbackHour);
+  const [minute, setMinute] = useState(defaultMinuteProp ?? fallbackMin);
   const [duration, setDuration] = useState(30);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);

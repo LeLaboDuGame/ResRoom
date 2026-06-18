@@ -156,6 +156,9 @@ export default function FleetRoom() {
                         <Box flex={1} bg="bg.secondary" borderRadius="xl" overflow="hidden">
                             <Calendar
                                 reservations={room?.reservations || []}
+                                roomName={room?.name}
+                                existingReservations={room?.reservations || []}
+                                onBookingSuccess={handleBookingSuccess}
                             />
                         </Box>
                     </Box>
@@ -199,6 +202,9 @@ export default function FleetRoom() {
                     <Box flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
                         <Calendar
                             reservations={currentRoom?.reservations || []}
+                            roomName={currentRoom?.name}
+                            existingReservations={currentRoom?.reservations || []}
+                            onBookingSuccess={handleBookingSuccess}
                         />
                     </Box>
                 </Box>
