@@ -1,7 +1,7 @@
-import {useState, useEffect, useMemo, useCallback} from "react";
+import {useState, useEffect, useMemo, useCallback, useRef} from "react";
 import {Box, Flex, Text, IconButton, Spinner, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
 import {useParams, useNavigate} from "react-router-dom";
-import {ArrowLeft} from "lucide-react";
+import {ArrowLeft, ChevronLeft} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
 import {deleteReservation} from "../api/apiCall.js";
 import {RoomStatusCard} from "../components/room/RoomStatusCard";
@@ -87,6 +87,48 @@ export default function FleetRoom() {
         goToRoom();
     }
 
+    const swipeRef = useRef(null);
+
+    function handleSwipeStart(e) {
+        if (e.clientX > window.innerWidth - 40) {
+            swipeRef.current = {startX: e.clientX, startY: e.clientY};
+        }
+    }
+
+    function handleSwipeMove(e) {
+        if (!swipeRef.current) return;
+        const dx = e.clientX - swipeRef.current.startX;
+        const dy = Math.abs(e.clientY - swipeRef.current.startY);
+        if (dx < -50 && dy < 100) {
+            swipeRef.current = null;
+            goToBooking();
+        }
+    }
+
+    function handleSwipeEnd() {
+        swipeRef.current = null;
+    }
+
+    function handleBookingSwipeStart(e) {
+        if (e.clientX < 40) {
+            swipeRef.current = {startX: e.clientX, startY: e.clientY};
+        }
+    }
+
+    function handleBookingSwipeMove(e) {
+        if (!swipeRef.current) return;
+        const dx = e.clientX - swipeRef.current.startX;
+        const dy = Math.abs(e.clientY - swipeRef.current.startY);
+        if (dx > 50 && dy < 100) {
+            swipeRef.current = null;
+            goToRoom();
+        }
+    }
+
+    function handleBookingSwipeEnd() {
+        swipeRef.current = null;
+    }
+
     function goToBooking() {
         setView("booking");
         setSelectedRoomName(roomName);
@@ -120,7 +162,8 @@ export default function FleetRoom() {
     // === ROOM VIEW (default) ===
     if (view === "room") {
         return (
-            <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
+            <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative" style={{touchAction: "pan-y"}}
+                 onPointerDown={handleSwipeStart} onPointerMove={handleSwipeMove} onPointerUp={handleSwipeEnd}>
                 {/* Floating logo badge */}
                 <Flex
                     position="absolute"
@@ -180,6 +223,28 @@ export default function FleetRoom() {
                 <Box position="absolute" bottom={8} right={8} zIndex={10}>
                     <BookingButton variant="plus" onClick={goToBooking} ariaLabel="Réserver une salle"/>
                 </Box>
+
+                {/* Swipe indicator */}
+                <Flex
+                    position="absolute"
+                    right={0}
+                    top="50%"
+                    transform="translateY(-50%)"
+                    zIndex={5}
+                    align="center"
+                    justify="center"
+                    pointerEvents="none"
+                    userSelect="none"
+                    w={5}
+                    h={12}
+                    bg="rgba(255,255,255,0.06)"
+                    borderLeft="1px solid rgba(255,255,255,0.1)"
+                    borderRight="1px solid rgba(255,255,255,0.1)"
+                    borderLeftRadius="md"
+                    style={{borderTopRightRadius: 0, borderBottomRightRadius: 0}}
+                >
+                    <ChevronLeft size={20} color="rgba(255,255,255,0.35)" strokeWidth={2.5}/>
+                </Flex>
             </Box>
         );
     }
@@ -188,7 +253,8 @@ export default function FleetRoom() {
     const currentRoom = selectedRoomData || room;
 
     return (
-        <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
+        <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative"
+             onPointerDown={handleBookingSwipeStart} onPointerMove={handleBookingSwipeMove} onPointerUp={handleBookingSwipeEnd}>
 
             <SplitterRoot defaultSize={[35, 65]} panels={[{id: "left"}, {id: "right"}]} style={{height: "100%", width: "100%"}}>
                 <SplitterPanel id="left" style={{padding: 24, display: "flex", flexDirection: "column", gap: 16, overflow: "hidden"}}>
