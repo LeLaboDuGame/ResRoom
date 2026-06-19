@@ -10,6 +10,48 @@
       },
       "reservations": [
         {
+          "start": "2026-06-18 16:00",
+          "end": "2026-06-18 17:00",
+          "title": "test",
+          "reserved_by": "",
+          "uid": "6369c63e-3b2d-4734-ac49-bb3f226ecb67"
+        },
+        {
+          "start": "2026-06-18 14:30",
+          "end": "2026-06-18 15:55",
+          "title": "Test",
+          "reserved_by": "Adrien",
+          "uid": "0749d5bf-4ff4-47ef-8d72-c9b31e334a5f"
+        },
+        {
+          "start": "2026-06-18 11:35",
+          "end": "2026-06-18 12:05",
+          "title": "zd",
+          "reserved_by": "",
+          "uid": "bf793e29-b42d-4693-8046-13a50c26852e"
+        },
+        {
+          "start": "2026-06-17 17:10",
+          "end": "2026-06-17 18:10",
+          "title": "Test",
+          "reserved_by": "Adrien",
+          "uid": "a6773d06-23b4-4b36-8101-d525099159fe"
+        },
+        {
+          "start": "2026-06-17 14:01",
+          "end": "2026-06-17 14:31",
+          "title": "Test",
+          "reserved_by": "Adrien",
+          "uid": "d2d91200-79ae-4c3a-bf97-c77c07460190"
+        },
+        {
+          "start": "2026-06-17 11:36",
+          "end": "2026-06-17 12:06",
+          "title": "test",
+          "reserved_by": "test",
+          "uid": "389a2a5f-841e-4bf8-afae-dfd362c01f44"
+        },
+        {
           "start": "2026-06-15 10:35",
           "end": "2026-06-15 11:05",
           "title": "Test",
@@ -66,6 +108,20 @@
       },
       "reservations": [
         {
+          "start": "2026-06-20 20:00",
+          "end": "2026-06-20 21:00",
+          "title": "zr",
+          "reserved_by": "zr",
+          "uid": "c3d6ddb4-490d-4e90-be4a-6a9bd756b5ba"
+        },
+        {
+          "start": "2026-06-19 13:35",
+          "end": "2026-06-19 14:00",
+          "title": "zerzzr",
+          "reserved_by": "z",
+          "uid": "0e49655e-4e23-4e97-b3c7-d0fa99cbba91"
+        },
+        {
           "start": "2026-06-08 18:35",
           "end": "2026-06-08 19:05",
           "title": "test",
@@ -75,7 +131,7 @@
       ]
     },
     {
-      "name": "NoName 1",
+      "name": "Michael Faraday",
       "elements": {
         "capacity": 3,
         "tv": false,
@@ -85,7 +141,7 @@
       "reservations": []
     },
     {
-      "name": "NoName 2",
+      "name": "James Watt",
       "elements": {
         "capacity": 3,
         "tv": false,
@@ -95,7 +151,7 @@
       "reservations": []
     },
     {
-      "name": "NoName 3",
+      "name": "Rudolf Diesel",
       "elements": {
         "capacity": 3,
         "tv": false,
@@ -105,17 +161,25 @@
       "reservations": []
     },
     {
-      "name": "NoName 4",
+      "name": "Grace Hopper",
       "elements": {
         "capacity": 6,
         "tv": false,
         "whiteboard": false,
         "computer": false
       },
-      "reservations": []
+      "reservations": [
+        {
+          "start": "2026-06-17 12:05",
+          "end": "2026-06-17 12:35",
+          "title": "ze",
+          "reserved_by": "aze",
+          "uid": "b1c45588-eb0a-404e-af8e-3bf537dc6036"
+        }
+      ]
     },
     {
-      "name": "NoName 5",
+      "name": "Alan Turing",
       "elements": {
         "capacity": 6,
         "tv": false,

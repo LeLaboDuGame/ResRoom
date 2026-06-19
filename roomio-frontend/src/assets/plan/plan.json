@@ -517,7 +517,7 @@
         },
         {
           "id": "room-4-1781534171125",
-          "name": "NoName 1",
+          "name": "Michael Faraday",
           "walls": [
             "c6a1k0o4",
             "p30yn4i1",
@@ -532,7 +532,7 @@
         },
         {
           "id": "room-7-1781535922298",
-          "name": "NoName 3",
+          "name": "Rudolf Diesel",
           "walls": [
             "5r9icr6e",
             "hh56wbxo",
@@ -548,7 +548,7 @@
         },
         {
           "id": "room-5-1781535946202",
-          "name": "NoName 2",
+          "name": "James Watt",
           "walls": [
             "2jo5xbbc",
             "xyv5f1y9",
@@ -564,7 +564,7 @@
         },
         {
           "id": "room-8-1781536089840",
-          "name": "NoName 4",
+          "name": "Grace Hopper",
           "walls": [
             "nhl7c3na",
             "mmqbi306",
@@ -596,7 +596,7 @@
         },
         {
           "id": "room-9-1781536183754",
-          "name": "NoName 5",
+          "name": "Alan Turing",
           "walls": [
             "ayfckyb8",
             "buu5eij8",
