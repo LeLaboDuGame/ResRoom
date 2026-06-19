@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Input, Checkbox, Text, Flex } from "@chakra-ui/react";
+import { Checkbox, Text, Flex } from "@chakra-ui/react";
 
 /**
  * Filter bar with capacity slider and equipment checkboxes.
@@ -8,7 +8,7 @@ import { Input, Checkbox, Text, Flex } from "@chakra-ui/react";
  */
 export function FilterBar({ onChange }) {
   const [filters, setFilters] = useState({
-    capacity: 0,
+    capacity: "",
     tv: false,
     whiteboard: false,
     computer: false,
@@ -32,19 +32,26 @@ export function FilterBar({ onChange }) {
     >
       <Flex align="center" gap={2}>
         <Text fontSize="sm" color="text.secondary" whiteSpace="nowrap">
-          Capacité min.
+          Capacité
         </Text>
-        <Input
-          type="number"
-          min={0}
+        <select
           value={filters.capacity}
-          onChange={(e) => update({ capacity: Number(e.target.value) })}
-          w="80px"
-          size="sm"
-          bg="bg.primary"
-          borderColor="border.default"
-          color="text.primary"
-        />
+          onChange={(e) => update({ capacity: e.target.value })}
+          style={{
+            background: "var(--chakra-colors-bg-primary)",
+            color: "var(--chakra-colors-text-primary)",
+            border: "1px solid var(--chakra-colors-border-default)",
+            borderRadius: "var(--chakra-radii-md)",
+            padding: "2px 8px",
+            fontSize: "var(--chakra-font-sizes-sm)",
+            width: "120px",
+          }}
+        >
+          <option value="">Toutes</option>
+          <option value="petite">Petite (≤ 3)</option>
+          <option value="moyenne">Moyenne (4–6)</option>
+          <option value="grande">Grande (&gt; 6)</option>
+        </select>
       </Flex>
 
       <Checkbox.Root

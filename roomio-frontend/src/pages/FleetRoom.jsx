@@ -72,7 +72,10 @@ export default function FleetRoom() {
         const activeEq = Object.entries(filters).filter(([k, v]) => k !== "capacity" && v).map(([k]) => k);
         return rooms
             .filter((r) => {
-                if (filters.capacity && (r.elements.capacity || 0) < filters.capacity) return false;
+                const cap = r.elements.capacity || 0;
+                if (filters.capacity === "petite" && (cap < 1 || cap > 3)) return false;
+                if (filters.capacity === "moyenne" && (cap < 4 || cap > 6)) return false;
+                if (filters.capacity === "grande" && cap < 7) return false;
                 for (const eq of activeEq) {
                     if (!r.elements[eq]) return false;
                 }
