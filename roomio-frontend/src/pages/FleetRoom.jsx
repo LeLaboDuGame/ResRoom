@@ -1,5 +1,5 @@
 import {useState, useEffect, useMemo, useCallback, useRef} from "react";
-import {Box, Flex, Text, IconButton, Spinner, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
+import {Box, Flex, Text, IconButton, Spinner, Button, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
 import {useParams, useNavigate} from "react-router-dom";
 import {ArrowLeft, ChevronLeft} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
@@ -33,6 +33,7 @@ export default function FleetRoom() {
     const [selectedRoomName, setSelectedRoomName] = useState(roomName);
     const [bookingKey, setBookingKey] = useState(0);
     const [filters, setFilters] = useState({capacity: 0, tv: false, whiteboard: false, computer: false});
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     // Reset selected room when current room changes
     useEffect(() => {
@@ -85,6 +86,17 @@ export default function FleetRoom() {
         refetchRoom();
         refetchRooms();
         goToRoom();
+    }
+
+    async function handleDeleteReservation(uid) {
+        try {
+            await deleteReservation(roomName, uid);
+            setDeleteTarget(null);
+            refetchRoom();
+            refetchRooms();
+        } catch {
+            setDeleteTarget(null);
+        }
     }
 
     const swipeRef = useRef(null);
@@ -201,8 +213,9 @@ export default function FleetRoom() {
                                 reservations={room?.reservations || []}
                                 roomName={room?.name}
                                 existingReservations={room?.reservations || []}
-                                onBookingSuccess={handleBookingSuccess}
-                                collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
+                            onBookingSuccess={handleBookingSuccess}
+                            onDeleteReservation={setDeleteTarget}
+                            collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
                                     <BookingForm
                                         roomName={room?.name}
                                         existingReservations={room?.reservations || []}
@@ -245,6 +258,32 @@ export default function FleetRoom() {
                 >
                     <ChevronLeft size={20} color="rgba(255,255,255,0.35)" strokeWidth={2.5}/>
                 </Flex>
+
+                {deleteTarget && (
+                    <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
+                         justifyContent="center" zIndex={9999} onClick={() => setDeleteTarget(null)}>
+                        <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
+                             p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
+                            <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
+                                Supprimer la réservation
+                            </Text>
+                            <Text fontSize="sm" color="text.secondary" mb={6}>
+                                "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
+                            </Text>
+                            <Flex gap={2} justify="flex-end">
+                                <Button size="sm" variant="ghost" color="text.secondary"
+                                        _hover={{color: "text.primary", bg: "bg.secondary"}}
+                                        onClick={() => setDeleteTarget(null)}>
+                                    Non
+                                </Button>
+                                <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
+                                        onClick={() => handleDeleteReservation(deleteTarget.uid)}>
+                                    Oui
+                                </Button>
+                            </Flex>
+                        </Box>
+                    </Box>
+                )}
             </Box>
         );
     }
@@ -386,6 +425,32 @@ export default function FleetRoom() {
 
                 </SplitterPanel>
             </SplitterRoot>
+
+            {deleteTarget && (
+                <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
+                     justifyContent="center" zIndex={9999} onClick={() => setDeleteTarget(null)}>
+                    <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
+                         p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
+                        <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
+                            Supprimer la réservation
+                        </Text>
+                        <Text fontSize="sm" color="text.secondary" mb={6}>
+                            "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
+                        </Text>
+                        <Flex gap={2} justify="flex-end">
+                            <Button size="sm" variant="ghost" color="text.secondary"
+                                    _hover={{color: "text.primary", bg: "bg.secondary"}}
+                                    onClick={() => setDeleteTarget(null)}>
+                                Non
+                            </Button>
+                            <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
+                                    onClick={() => handleDeleteReservation(deleteTarget.uid)}>
+                                Oui
+                            </Button>
+                        </Flex>
+                    </Box>
+                </Box>
+            )}
         </Box>
     );
 }

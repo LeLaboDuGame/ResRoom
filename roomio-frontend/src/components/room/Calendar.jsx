@@ -12,6 +12,8 @@ const ROW_H = 70;
 const PAD_T = 8;
 /** Snap interval in hours (0.25 = 15 minutes) */
 const SNAP = 0.25;
+/** Max time (ms) between clicks to consider it a double-click */
+const DBL_CLICK_DELAY = 300;
 
 const CalendarCtx = createContext({dayStart: 7});
 /**
@@ -178,10 +180,11 @@ function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown
  * @param {Function} [onNewReservation] Called with (date, start, end) on provisional release
  * @param {string} [roomName] Room name (enables collapsible booking form)
  * @param {Array} [existingReservations] Existing reservations for overlap check
+ * @param {Function} [onDeleteReservation] Called with reservation object on double-click
  * @param {Function} [onBookingSuccess] Called with new reservation after successful booking
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onBookingSuccess, collapsibleContent}) {
+export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent}) {
     const {dayStart, dayEnd} = useSettings();
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
@@ -195,6 +198,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const dragRef = useRef(false);
     const gridRef = useRef(null);
     const pointerStart = useRef(null);
+    const lastClickRef = useRef({time: 0, uid: null});
 
     /** Next 7 days starting from today */
     const dayItems = useMemo(() => {
@@ -351,7 +355,19 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                     const s = r.start.slice(11, 16);
                     const e = r.end.slice(11, 16);
                     return (
-                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500">
+                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
+                                     style={{cursor: onDeleteReservation ? "pointer" : undefined}}
+                                     onClick={() => {
+                                         if (!onDeleteReservation) return;
+                                         const now = Date.now();
+                                         const prev = lastClickRef.current;
+                                         if (prev.uid === r.uid && now - prev.time < DBL_CLICK_DELAY) {
+                                             lastClickRef.current = {time: 0, uid: null};
+                                             onDeleteReservation(r);
+                                         } else {
+                                             lastClickRef.current = {time: now, uid: r.uid};
+                                         }
+                                     }}>
                             <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
                                 {r.title}
                             </Text>
