@@ -1,5 +1,5 @@
 import {useState, useEffect, useMemo, useCallback} from "react";
-import {Box, Flex, Text, IconButton, Spinner} from "@chakra-ui/react";
+import {Box, Flex, Text, IconButton, Spinner, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
 import {useParams, useNavigate} from "react-router-dom";
 import {ArrowLeft} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
@@ -190,9 +190,8 @@ export default function FleetRoom() {
     return (
         <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative">
 
-            <Flex h="100%" w="100%">
-                {/* Left 35%: calendar + form */}
-                <Box w="35%" h="100%" p={6} display="flex" flexDirection="column" gap={4} overflow="hidden">
+            <SplitterRoot defaultSize={[35, 65]} panels={[{id: "left"}, {id: "right"}]} style={{height: "100%", width: "100%"}}>
+                <SplitterPanel id="left" style={{padding: 24, display: "flex", flexDirection: "column", gap: 16, overflow: "hidden"}}>
                     {/* Back button */}
                     <Flex align="center" gap={3}>
                         <IconButton
@@ -231,10 +230,56 @@ export default function FleetRoom() {
                             )}
                         />
                     </Box>
-                </Box>
+                </SplitterPanel>
 
-                {/* Right 65%: Floor plan */}
-                <Box w="65%" h="100%" position="relative">
+                <SplitterResizeTrigger
+                    id="left:right"
+                    style={{
+                        width: 16,
+                        cursor: "col-resize",
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        outline: "none",
+                        position: "relative",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <div
+                        style={{
+                            width: 2,
+                            height: "100%",
+                            background: "#2a2a2d",
+                            borderRadius: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: 6,
+                                height: 32,
+                                background: "#1a1a1d",
+                                border: "1px solid #333",
+                                borderRadius: 4,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 3,
+                            }}
+                        >
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
+                        </div>
+                    </div>
+                </SplitterResizeTrigger>
+
+                <SplitterPanel id="right" style={{position: "relative"}}>
                     <Box
                         position="absolute"
                         top={{base: "64px", md: 3}}
@@ -273,8 +318,8 @@ export default function FleetRoom() {
                         onRoomClick={(name) => setSelectedRoomName(name)}
                     />
 
-                </Box>
-            </Flex>
+                </SplitterPanel>
+            </SplitterRoot>
         </Box>
     );
 }

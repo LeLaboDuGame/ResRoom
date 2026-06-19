@@ -19,7 +19,7 @@ const VISIBLE = 5;
  * @param {Function} [props.onOpenChange] Called with the new open state
  * @returns {JSX.Element} ScrollDownSlider component
  */
-export function dansScrollDownSlider({ items = [], value, onChange, w, h, fontSize = { base: "sm", md: "lg" }, open: controlledOpen, onOpenChange }) {
+export function ScrollDownSlider({ items = [], value, onChange, w, h, fontSize = { base: "sm", md: "lg" }, open: controlledOpen, onOpenChange }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
