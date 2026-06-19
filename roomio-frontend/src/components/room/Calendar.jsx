@@ -181,7 +181,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown
  * @param {Function} [onBookingSuccess] Called with new reservation after successful booking
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onBookingSuccess}) {
+export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onBookingSuccess, collapsibleContent}) {
     const {dayStart, dayEnd} = useSettings();
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
@@ -425,23 +425,41 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                         >
                             <Collapsible.Root open={true} unmountOnExit>
                                 <Collapsible.Content>
-                                    <BookingForm
-                                        roomName={roomName}
-                                        existingReservations={existingReservations}
-                                        defaultDate={pendingReservation.date}
-                                        defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
-                                        defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
-                                        onTimeChange={(h, m, eh, em) => {
-                                            const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                            const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
-                                            setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
-                                        }}
-                                        onSuccess={(reservation) => {
-                                            setPendingReservation(null);
-                                            onBookingSuccess?.(reservation);
-                                        }}
-                                        onCancel={() => setPendingReservation(null)}
-                                    />
+                                    {collapsibleContent
+                                        ? (typeof collapsibleContent === "function"
+                                            ? collapsibleContent({
+                                                pendingReservation,
+                                                onTimeChange: (h, m, eh, em) => {
+                                                    const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                                    const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                                    setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                                },
+                                                onSuccess: (reservation) => {
+                                                    setPendingReservation(null);
+                                                    onBookingSuccess?.(reservation);
+                                                },
+                                                onCancel: () => setPendingReservation(null),
+                                              })
+                                            : collapsibleContent)
+                                        : (
+                                            <BookingForm
+                                                roomName={roomName}
+                                                existingReservations={existingReservations}
+                                                defaultDate={pendingReservation.date}
+                                                defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
+                                                defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                                onTimeChange={(h, m, eh, em) => {
+                                                    const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                                    const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                                    setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                                }}
+                                                onSuccess={(reservation) => {
+                                                    setPendingReservation(null);
+                                                    onBookingSuccess?.(reservation);
+                                                }}
+                                                onCancel={() => setPendingReservation(null)}
+                                            />
+                                        )}
                                 </Collapsible.Content>
                             </Collapsible.Root>
                         </Box>

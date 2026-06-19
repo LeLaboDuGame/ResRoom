@@ -149,7 +149,7 @@ export default function FleetRoom() {
                     </Box>
 
                     {/* Right 50%: Reservation list */}
-                    <Box w="50%" h="100%" p={6} display="flex" flexDirection="column">
+                    <Box w="50%" h="100%" p={6} pb="100px" display="flex" flexDirection="column">
                         <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={4}>
                             Réservations du jour
                         </Text>
@@ -159,6 +159,18 @@ export default function FleetRoom() {
                                 roomName={room?.name}
                                 existingReservations={room?.reservations || []}
                                 onBookingSuccess={handleBookingSuccess}
+                                collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
+                                    <BookingForm
+                                        roomName={room?.name}
+                                        existingReservations={room?.reservations || []}
+                                        defaultDate={pendingReservation.date}
+                                        defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
+                                        defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                        onTimeChange={onTimeChange}
+                                        onSuccess={onSuccess}
+                                        onCancel={onCancel}
+                                    />
+                                )}
                             />
                         </Box>
                     </Box>
@@ -205,6 +217,18 @@ export default function FleetRoom() {
                             roomName={currentRoom?.name}
                             existingReservations={currentRoom?.reservations || []}
                             onBookingSuccess={handleBookingSuccess}
+                            collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
+                                <BookingForm
+                                    roomName={currentRoom?.name}
+                                    existingReservations={currentRoom?.reservations || []}
+                                    defaultDate={pendingReservation.date}
+                                    defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
+                                    defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                    onTimeChange={onTimeChange}
+                                    onSuccess={onSuccess}
+                                    onCancel={onCancel}
+                                />
+                            )}
                         />
                     </Box>
                 </Box>
