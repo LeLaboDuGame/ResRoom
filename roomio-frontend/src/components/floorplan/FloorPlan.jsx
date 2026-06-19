@@ -179,30 +179,7 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         return () => el.removeEventListener("wheel", handler, {passive: false});
     }, []);
 
-    // Zoom to selected room
-    useEffect(() => {
-        if (!selectedRoom) {
-            setVb(defaultVb);
-            return;
-        }
-        const room = sorted.find(z => z.name === selectedRoom);
-        if (!room || room.points.length < 3) return;
-        const xs = room.points.map(p => p.x);
-        const ys = room.points.map(p => p.y);
-        const minX = Math.min(...xs), maxX = Math.max(...xs);
-        const minY = Math.min(...ys), maxY = Math.max(...ys);
-        const rw = maxX - minX || 1;
-        const rh = maxY - minY || 1;
-        const cx = (minX + maxX) / 2;
-        const cy = (minY + maxY) / 2;
-        const size = Math.max(rw, rh) * 3.5;
-        setVb({
-            x: cx - size / 2,
-            y: cy - size / 2,
-            w: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, size)),
-            h: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, size)),
-        });
-    }, [selectedRoom, sorted, defaultVb]);
+
 
     // Pointer panning (mouse + touch) with 5 px movement threshold
     /**
