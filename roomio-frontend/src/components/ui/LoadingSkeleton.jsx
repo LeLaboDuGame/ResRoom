@@ -1,17 +1,7 @@
-import { useEffect } from "react";
-import { Box } from "@chakra-ui/react";
-
-const variants = {
-  text: { h: 4, w: "full", borderRadius: "sm" },
-  circle: { w: 10, h: 10, borderRadius: "full" },
-  card: { h: 32, w: "full", borderRadius: "lg" },
-};
-
-/**
- * Animated skeleton placeholder for loading states.
- * @param {string} [variant] Skeleton shape: "text", "circle", or "card"
- * @returns {JSX.Element} The loading skeleton
- */
+/** Animated skeleton placeholder for loading states.
+* @param {string} [variant] Skeleton shape: "text", "circle", or "card"
+* @returns {JSX.Element} The loading skeleton
+*/
 export function LoadingSkeleton({ variant = "text", ...props }) {
   useEffect(() => {
     const id = "skeleton-keyframes";

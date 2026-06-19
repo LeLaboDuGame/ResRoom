@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useRooms } from "../hooks/useRooms";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
-import { ReservationList } from "../components/room/ReservationList";
+import { Calendar } from "../components/room/Calendar.jsx";
 import { BookingForm } from "../components/booking/BookingForm";
 import { AppShell } from "../components/layout/AppShell";
 import { X, LayoutDashboard, Settings } from "lucide-react";
@@ -98,9 +98,8 @@ export default function Dashboard() {
                 Réservations du jour
               </Text>
               <Box px={{ base: 4, md: 5 }} py={3}>
-                <ReservationList
+                <Calendar
                   reservations={selectedRoom.reservations || []}
-                  onDelete={(uid) => console.log("Delete:", uid)}
                 />
               </Box>
               <Box px={{ base: 4, md: 5 }} py={4} borderTop="1px solid" borderColor="border.default" mt={2}>

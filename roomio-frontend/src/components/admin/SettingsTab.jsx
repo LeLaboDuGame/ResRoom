@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
-import * as api from "../../api/rooms";
+import * as api from "../../api/apiCall.js";
 
 /**
  * Admin tab for editing global settings: day start/end times and notification thresholds.

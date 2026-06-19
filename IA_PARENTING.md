@@ -35,7 +35,7 @@ RoomIO/
     ├── public/rooms/           # Photos des salles (JPEG)
     ├── src/
     │   ├── api/
-    │   │   └── rooms.js        # 11 fonctions API (fetch, CRUD réservations/salles)
+    │   │   └── apiCall.js        # 11 fonctions API (fetch, CRUD réservations/salles)
     │   │
     │   ├── assets/
     │   │   ├── BureauShape.svg # Plan d'étage complet (2048×2048, noir sur transparent)
@@ -46,7 +46,7 @@ RoomIO/
     │   │   ├── admin/          # AdminTabs, RoomsTab, SettingsTab, HistoryTab
     │   │   ├── booking/        # BookingButton, BookingForm, DeleteModal
     │   │   ├── floorplan/      # FloorPlan (SEUL composant — plus de usePlan)
-    │   │   ├── room/           # MeetingProgress, ReservationList, RoomInfoPanel, RoomStatusCard
+    │   │   ├── room/           # MeetingProgress, Calendar, RoomInfoPanel, RoomStatusCard
     │   │   └── ui/             # Clock, StatusBadge, FilterBar, LoadingSkeleton, EmptyState
     │   │
     │   ├── config/
@@ -61,7 +61,7 @@ RoomIO/
     │   │
     │   ├── pages/
     │   │   ├── Admin.jsx       # AdminTabs
-    │   │   ├── Dashboard.jsx   # Plan + panel latéral (RoomInfo + ReservationList)
+    │   │   ├── Dashboard.jsx   # Plan + panel latéral (RoomInfo + Calendar)
     │   │   ├── Debug.jsx       # Tests UI/API/FloorPlan
     │   │   ├── FleetRoom.jsx   # Mode tablette (RoomView + BookingFlow)
     │   │   └── old/            # Pages obsolètes (à ignorer)
@@ -141,7 +141,7 @@ DATE_FORMAT = '%Y-%m-%d %H:%M'  # Format obligatoire pour toutes les dates
 
 ## 4. COMPOSANTS FRONTEND — DÉTAIL COMPLET
 
-### 4.1. `api/rooms.js` — 11 fonctions API
+### 4.1. `api/apiCall.js` — 11 fonctions API
 
 Toutes utilisent `import.meta.env.VITE_API_URL` comme base.
 Aucun état, pas de React — juste des fetchs.
@@ -223,7 +223,7 @@ planData.floors[0].rooms.filter(r => r.zone).map(r => ({
 
 **RoomInfoPanel** : Nom + capacité + TV/Whiteboard/PC (icônes Lucide) dans un `bg.elevated`.
 
-**ReservationList** : Liste des réservations du jour (future ou en cours), format `HH:MM - HH:MM`.
+**Calendar** : Liste des réservations du jour (future ou en cours), format `HH:MM - HH:MM`.
 
 **MeetingProgress** : Barre de progression pour la réunion en cours. Utilise `timeToPercent` de timelineUtils (⚠️ timelineUtils importe `colorTheme` qui n'existe pas — mais n'est plus importé par les composants actifs).
 
@@ -256,13 +256,13 @@ planData.floors[0].rooms.filter(r => r.zone).map(r => ({
 
 ### 5.1. Dashboard (`/`)
 
-- FloorPlan plein écran + panel droit 420px (RoomInfoPanel + ReservationList dans `bg.elevated`, BookingForm transparent en dessous)
+- FloorPlan plein écran + panel droit 420px (RoomInfoPanel + Calendar dans `bg.elevated`, BookingForm transparent en dessous)
 - Clique sur salle → ouvre panel, reclique → ferme
 - Mobile : bottom tabs (Plan/Admin) + bottom sheet 70% + backdrop
 
 ### 5.2. FleetRoom (`/fleet/:roomName`) — Mode tablette
 
-**RoomView** (défaut) : 50/50 — RoomStatusCard gauche, ReservationList droite, BookingButton en bas à droite.
+**RoomView** (défaut) : 50/50 — RoomStatusCard gauche, Calendar droite, BookingButton en bas à droite.
 **BookingFlow** : 35/65 — FilterBar + RoomInfoPanel + BookingForm gauche, FloorPlan interactif droit (salles filtrées dimmées).
 **Inactivité** : 15min (click/touch) → navigue vers `/`.
 

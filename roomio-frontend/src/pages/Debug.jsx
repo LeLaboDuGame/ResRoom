@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Box, Flex, Text, Button, Input, Tabs } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import * as api from "../api/rooms";
+import * as api from "../api/apiCall.js";
 import { Clock } from "../components/ui/Clock";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { FilterBar } from "../components/ui/FilterBar";
 import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MeetingProgress } from "../components/room/MeetingProgress";
-import { ReservationList } from "../components/room/ReservationList";
+import { Calendar } from "../components/room/Calendar.jsx";
 import { RoomInfoPanel } from "../components/room/RoomInfoPanel";
 import { RoomStatusCard } from "../components/room/RoomStatusCard";
 import { FloorPlan } from "../components/floorplan/FloorPlan";
@@ -16,6 +16,7 @@ import { BookingButton } from "../components/booking/BookingButton";
 import { BookingForm } from "../components/booking/BookingForm";
 import { DeleteModal } from "../components/booking/DeleteModal";
 import { ResRoomLogo } from "../components/ui/ResRoomLogo";
+import { ScrollDownSlider } from "../components/ui/ScrollDownSlider.jsx";
 import { AdminTabs } from "../components/admin/AdminTabs";
 import { RoomsTab } from "../components/admin/RoomsTab";
 import { SettingsTab } from "../components/admin/SettingsTab";
@@ -101,6 +102,8 @@ export default function Debug() {
   const [updateSettingsRes, setUpdateSettingsRes] = useState(null);
   const [roomNameInput, setRoomNameInput] = useState("Howard Hughes");
 
+  const [scrollHour, setScrollHour] = useState(10);
+  const [scrollMin, setScrollMin] = useState(30);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bookingFormKey, setBookingFormKey] = useState(0);
@@ -227,6 +230,33 @@ export default function Debug() {
             </Flex>
           </Section>
 
+          <Section title="ScrollDownSlider">
+            <Flex gap={6} align="end" wrap="wrap">
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Heures</Text>
+                <ScrollDownSlider
+                  items={Array.from({length: 13}, (_, i) => String(i + 8).padStart(2, "0"))}
+                  value={scrollHour}
+                  onChange={setScrollHour}
+                />
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Minutes</Text>
+                <ScrollDownSlider
+                  items={Array.from({length: 12}, (_, i) => String(i * 5).padStart(2, "0"))}
+                  value={scrollMin}
+                  onChange={setScrollMin}
+                />
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="text.muted" mb={2}>Sélectionné</Text>
+                <Text color="text.primary" fontSize="lg" fontWeight="bold">
+                  {scrollHour}h{scrollMin}
+                </Text>
+              </Box>
+            </Flex>
+          </Section>
+
           <Section title="MeetingProgress">
             <Flex gap={4} align="center">
               <Box textAlign="center">
@@ -244,15 +274,14 @@ export default function Debug() {
             </Flex>
           </Section>
 
-          <Section title="ReservationList">
+          <Section title="Calendar">
             <Box maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
-              <ReservationList
+              <Calendar
                 reservations={sampleRoom1.reservations}
-                onDelete={(uid) => console.log("Delete:", uid)}
               />
             </Box>
             <Box mt={2} maxH="200px" bg="bg.secondary" borderRadius="lg" overflow="hidden">
-              <ReservationList reservations={[]} />
+              <Calendar reservations={[]} />
             </Box>
           </Section>
 

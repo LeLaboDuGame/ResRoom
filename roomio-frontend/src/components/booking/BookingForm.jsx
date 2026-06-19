@@ -1,59 +1,89 @@
-import { useState } from "react";
-import { Box, Flex, Input, Button, Text } from "@chakra-ui/react";
-import { createReservation } from "../../api/rooms";
+import { useState, useMemo, useEffect, useRef } from "react";
+import {
+  Box, Flex, Input, Button, Text,
+  DatePicker,
+} from "@chakra-ui/react";
+import { parseDate } from "@ark-ui/react/date-picker";
+import { createReservation } from "../../api/apiCall.js";
+import { useSettings } from "../../hooks/useSettings";
+import { ScrollDownSlider } from "../ui/ScrollDownSlider";
 
 /**
- * Booking form with date, time, duration, title, and name fields.
- * Computes end datetime from start + duration, validates client-side,
- * checks for overlaps, and calls createReservation API.
+ * Booking form with inline date picker calendar, hour/minute sliders,
+ * title and duration fields. Calls createReservation API on submit
+ * with overlap and past-date validation.
  * @param {Object} props
  * @param {string} roomName Target room name
  * @param {Array} existingReservations Existing reservations for overlap check
  * @param {Function} onSuccess Called with new reservation on success
  * @param {Function} onCancel Called when user cancels
+ * @param {Date} [defaultDate] Pre-filled date (defaults to today)
+ * @param {number} [defaultHour] Pre-filled hour (defaults to current rounded hour)
+ * @param {number} [defaultMinute] Pre-filled minute (defaults to current rounded minute)
+ * @param {Function} [onTimeChange] Called with (hour, minute, endHour, endMinute) when time wheels change
  * @return {JSX.Element} BookingForm component
  */
-export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel }) {
-  const today = new Date().toISOString().slice(0, 10);
+export function BookingForm({ roomName, existingReservations = [], onSuccess, onCancel, defaultDate: defaultDateProp, defaultHour: defaultHourProp, defaultMinute: defaultMinuteProp, onTimeChange }) {
+  const { dayStart, dayEnd } = useSettings();
 
   const now = new Date();
   const roundedMin = Math.ceil(now.getMinutes() / 5) * 5;
   now.setMinutes(roundedMin, 0, 0);
-  const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const [date, setDate] = useState(today);
-  const [startTime, setStartTime] = useState(defaultTime);
-  const [duration, setDuration] = useState(30);
+  const fallbackHour = Math.max(dayStart, Math.min(dayEnd - 1, now.getHours()));
+  const fallbackMin = now.getMinutes();
+
+  const hourItems = useMemo(() =>
+    Array.from({length: dayEnd - dayStart}, (_, i) => String(i + dayStart).padStart(2, "0")),
+    [dayStart, dayEnd]
+  );
+  const minItems = useMemo(() =>
+    Array.from({length: 12}, (_, i) => String(i * 5).padStart(2, "0")),
+    []
+  );
+
+  const fallbackEndHour = Math.min(dayEnd - 1, fallbackHour + 1);
+
+  const [dateValue, setDateValue] = useState(defaultDateProp ? [parseDate(defaultDateProp)] : [parseDate(new Date())]);
+  const [hour, setHour] = useState(defaultHourProp ?? fallbackHour);
+  const [minute, setMinute] = useState(defaultMinuteProp ?? fallbackMin);
+  const [endHour, setEndHour] = useState(defaultHourProp !== undefined ? Math.min(dayEnd - 1, defaultHourProp + 1) : fallbackEndHour);
+  const [endMinute, setEndMinute] = useState(defaultMinuteProp ?? fallbackMin);
+
+  const prevTime = useRef({hour, minute, endHour, endMinute});
+  useEffect(() => {
+    const {hour: pH, minute: pM, endHour: pEH, endMinute: pEM} = prevTime.current;
+    if (hour !== pH || minute !== pM || endHour !== pEH || endMinute !== pEM) {
+      onTimeChange?.(hour, minute, endHour, endMinute);
+      prevTime.current = {hour, minute, endHour, endMinute};
+    }
+  }, [hour, minute, endHour, endMinute, onTimeChange]);
   const [title, setTitle] = useState("");
   const [reservedBy, setReservedBy] = useState("");
+  const [debutOpen, setDebutOpen] = useState(false);
+  const [finOpen, setFinOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /**
-   * Formats a date and time string into a single datetime string.
-   * @param {string} dateStr Date in YYYY-MM-DD format
-   * @param {string} timeStr Time in HH:mm format
-   * @returns {string} Combined datetime string
-   */
-  function formatDatetime(dateStr, timeStr) {
+  /** Formats date from DatePicker value + hour/minute into "YYYY-MM-DD HH:mm" */
+  function formatDatetime() {
+    const d = dateValue[0];
+    if (!d) return "";
+    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+    const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     return `${dateStr} ${timeStr}`;
   }
 
   /**
-   * Computes the end datetime given a start date, time, and duration.
-   * @param {string} dateStr Date in YYYY-MM-DD format
-   * @param {string} timeStr Start time in HH:mm format
-   * @param {number} dur Duration in minutes
+   * Computes the end datetime from the date and endHour/endMinute.
    * @returns {string} End datetime string
    */
-  function computeEnd(dateStr, timeStr, dur) {
-    const [h, m] = timeStr.split(":");
-    const startDt = new Date(dateStr);
-    startDt.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
-    const endDt = new Date(startDt.getTime() + dur * 60000);
-    const endDate = endDt.toISOString().slice(0, 10);
-    const endTime = `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`;
-    return formatDatetime(endDate, endTime);
+  function computeEnd() {
+    const d = dateValue[0];
+    if (!d) return "";
+    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+    const timeStr = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
+    return `${dateStr} ${timeStr}`;
   }
 
   /**
@@ -88,20 +118,15 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   async function handleSubmit() {
     setError("");
 
-    if (!date || !startTime || !title || !reservedBy) {
-      setError("Tous les champs sont requis.");
+    if (!title) {
+      setError("Veuillez entrer un titre.");
       return;
     }
 
-    if (duration < 5) {
-      setError("La durée minimum est de 5 minutes.");
-      return;
-    }
+    const start = formatDatetime();
+    const end = computeEnd();
 
-    const start = formatDatetime(date, startTime);
-    const end = computeEnd(date, startTime, duration);
-
-    if (end <= start) {
+    if (!start || !end || end <= start) {
       setError("L'heure de fin doit être après l'heure de début.");
       return;
     }
@@ -136,7 +161,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
    * @param {React.KeyboardEvent} e Keyboard event
    */
   function handleKeyDown(e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && title) {
       e.preventDefault();
       handleSubmit();
     }
@@ -144,93 +169,134 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
 
   return (
     <Box onKeyDown={handleKeyDown}>
-      <Flex direction="column" gap={3}>
-        <Text fontSize="sm" fontWeight="medium" color="text.primary">
-          Nouvelle réservation · {roomName}
-        </Text>
-
+      <Flex direction="column" gap={4}>
+        {/* Title — auto-focused, invites entry */}
         <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Date</Text>
           <Input
-            type="date"
-            size="sm"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            bg="bg.primary"
-            borderColor="border.default"
-            color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
-            min={today}
-          />
-        </Box>
-
-        <Flex gap={2}>
-          <Box flex={1}>
-            <Text fontSize="xs" color="text.muted" mb={1}>Début</Text>
-            <Input
-              type="time"
-              size="sm"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              bg="bg.primary"
-              borderColor="border.default"
-              color="text.primary"
-              _focus={{ borderColor: "accent.default" }}
-            />
-          </Box>
-          <Box flex={1}>
-            <Text fontSize="xs" color="text.muted" mb={1}>Durée (min)</Text>
-            <Input
-              type="number"
-              size="sm"
-              value={duration}
-              onChange={(e) => setDuration(Math.max(5, parseInt(e.target.value, 10) || 5))}
-              bg="bg.primary"
-              borderColor="border.default"
-              color="text.primary"
-              _focus={{ borderColor: "accent.default" }}
-              min={5}
-              step={5}
-            />
-          </Box>
-        </Flex>
-
-        <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Titre</Text>
-          <Input
-            size="sm"
+            size="lg"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Stand-up"
+            placeholder="Titre de la réunion"
             bg="bg.primary"
+            border="none"
+            borderBottom="2px solid"
             borderColor="border.default"
             color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
+            fontSize="xl"
+            fontWeight="semibold"
+            px={0}
+            borderRadius={0}
+            _focus={{ borderColor: "accent.default", outline: "none" }}
+            _placeholder={{ color: "text.muted" }}
             autoFocus
           />
         </Box>
 
+        {/* Réservé par */}
         <Box>
-          <Text fontSize="xs" color="text.muted" mb={1}>Réservé par</Text>
           <Input
-            size="sm"
+            size="md"
             value={reservedBy}
             onChange={(e) => setReservedBy(e.target.value)}
-            placeholder="Votre nom"
+            placeholder="Réservé par"
             bg="bg.primary"
+            border="none"
+            borderBottom="2px solid"
             borderColor="border.default"
             color="text.primary"
-            _focus={{ borderColor: "accent.default" }}
+            fontSize="md"
+            px={0}
+            borderRadius={0}
+            _focus={{ borderColor: "accent.default", outline: "none" }}
+            _placeholder={{ color: "text.muted" }}
           />
         </Box>
 
+        {/* Date picker + time wheels */}
+        <Flex gap={6} align="center" wrap="wrap" justify="center">
+          {/* Inline date picker calendar */}
+          <Box bg="gray.300" borderRadius="lg" p={3} borderWidth="1px" borderColor="border.default">
+            <DatePicker.Root
+              inline
+              selectionMode="single"
+              value={dateValue}
+              onValueChange={(details) => setDateValue(details.value)}
+              startOfWeek={1}
+            >
+              <DatePicker.View view="day">
+                <DatePicker.Header />
+                <DatePicker.DayTable />
+              </DatePicker.View>
+              <DatePicker.View view="month">
+                <DatePicker.Header />
+                <DatePicker.MonthTable />
+              </DatePicker.View>
+              <DatePicker.View view="year">
+                <DatePicker.Header />
+                <DatePicker.YearTable />
+              </DatePicker.View>
+            </DatePicker.Root>
+          </Box>
+
+          {/* Time columns */}
+          <Flex gap={8} align="flex-start">
+            {/* Heure de début */}
+            <Box textAlign="center">
+              <Text fontSize="sm" color="text.secondary" mb={2} fontWeight="medium">Début</Text>
+              <Flex gap={2}>
+                <ScrollDownSlider
+                  items={hourItems}
+                  value={String(hour).padStart(2, "0")}
+                  onChange={(v) => setHour(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={debutOpen}
+                  onOpenChange={setDebutOpen}
+                />
+                <ScrollDownSlider
+                  items={minItems}
+                  value={String(minute).padStart(2, "0")}
+                  onChange={(v) => setMinute(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={debutOpen}
+                  onOpenChange={setDebutOpen}
+                />
+              </Flex>
+            </Box>
+
+            {/* Heure de fin */}
+            <Box textAlign="center">
+              <Text fontSize="sm" color="text.secondary" mb={2} fontWeight="medium">Fin</Text>
+              <Flex gap={2}>
+                <ScrollDownSlider
+                  items={hourItems}
+                  value={String(endHour).padStart(2, "0")}
+                  onChange={(v) => setEndHour(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={finOpen}
+                  onOpenChange={setFinOpen}
+                />
+                <ScrollDownSlider
+                  items={minItems}
+                  value={String(endMinute).padStart(2, "0")}
+                  onChange={(v) => setEndMinute(parseInt(v, 10))}
+                  w={{ base: "60px", md: "80px" }}
+                  open={finOpen}
+                  onOpenChange={setFinOpen}
+                />
+              </Flex>
+            </Box>
+          </Flex>
+        </Flex>
+
+        {/* Error */}
         {error && (
           <Text fontSize="sm" color="#f87171">
             {error}
           </Text>
         )}
 
-        <Flex gap={2} mt={1}>
+        {/* Actions */}
+        <Flex gap={2} justify="flex-end">
           <Button
             size="sm"
             variant="ghost"

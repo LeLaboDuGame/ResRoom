@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchRoom, fetchRooms } from "../api/rooms";
+import { fetchRoom, fetchRooms } from "../api/apiCall.js";
 import { SETTINGS } from "../config/settings";
 
 /**

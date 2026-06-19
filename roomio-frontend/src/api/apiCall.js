@@ -102,7 +102,7 @@ export async function fetchHistory() {
  * @return {Promise<{settings: Object}>} Settings object
  */
 export async function fetchSettings() {
-  const res = await fetch(`${API_URL}/api/settings`);
+  const res = await fetch(`${API_URL}/api/fetch/settings`);
   if (!res.ok) throw new Error("Failed to fetch settings");
   return res.json();
 }

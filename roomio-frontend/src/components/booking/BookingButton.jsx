@@ -1,5 +1,5 @@
 import { Box, Button } from "@chakra-ui/react";
-import { Plus } from "lucide-react";
+import { Map } from "lucide-react";
 
 /**
  * Reusable booking button with two variants.
@@ -28,7 +28,7 @@ export function BookingButton({ variant = "default", onClick, ariaLabel }) {
         onClick={onClick}
         aria-label={ariaLabel || "Réserver"}
       >
-        <Plus size={24} />
+        <Map size={24} />
       </Box>
     );
   }

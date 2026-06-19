@@ -266,8 +266,8 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     const vbStr = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
 
     const legendItems = [
-        {color: "#ffffff", label: "Libre / Free"},
-        {color: "#4f8cff", label: "Bientôt libre / Starting Soon"},
+        {color: "#43957c", label: "Libre / Free"},
+        {color: "#cdac5f", label: "Bientôt occupée / Starting Soon"},
         {color: "#74394d", label: "En réunion / Meeting"},
         {color: "#ff6b9d", label: "Termine / Finishing Soon"},
     ];

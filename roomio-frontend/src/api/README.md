@@ -1,6 +1,6 @@
 # api
 
-`rooms.js` — API client wrapping `fetch()` calls to the backend. Exports:
+`apiCall.js` — API client wrapping `fetch()` calls to the backend. Exports:
 fetchRooms, fetchRoom, createRoom, createReservation, deleteReservation,
 updateRoom, deleteRoom, uploadPhoto, fetchHistory, fetchSettings, updateSettings.
 
