@@ -1,16 +1,16 @@
 import {useState} from "react";
-import {Box, Flex, Text} from "@chakra-ui/react";
+import {Box, Flex, Text, AbsoluteCenter} from "@chakra-ui/react";
 import {Plus} from "lucide-react";
 import {Clock} from "../ui/Clock";
 import {StatusBadge} from "../ui/StatusBadge";
 import {MeetingProgress} from "./MeetingProgress";
-
+import {RoomInfoPanel} from "./RoomInfoPanel.jsx";
 
 const statusColors = {
-  free: "status.free",
-  startingSoon: "status.startingSoon",
-  meeting: "status.meeting",
-  finishingSoon: "status.finishingSoon",
+    free: "status.free",
+    startingSoon: "status.startingSoon",
+    meeting: "status.meeting",
+    finishingSoon: "status.finishingSoon",
 };
 
 
@@ -61,14 +61,13 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
             flex={1}
             display="flex"
             flexDirection="column"
-            minH="280px"
             shadow={"0 0 25px  5px var(--shadow-color)"}
             shadowColor={statusColors[derivedStatus]}
         >
-            {/* Photo 3/4 of card height */}
-            <Box position="relative" flex={3} bg="bg.elevated" overflow="hidden" minH="0">
+            {/* Room picture */}
+            <Box position="relative" flex={2} bg="bg.elevated" overflow="hidden" minH="0">
                 {photoError ? (
-                    <Flex w="100%" h="100%" align="center" justify="center" bg="bg.secondary">
+                    <Flex w="100%" h="100%" align="center" justify="center" >
                         <Text color="text.muted" fontSize="sm">{roomName}</Text>
                     </Flex>
                 ) : (
@@ -79,6 +78,16 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                         onError={() => setPhotoError(true)}
                     />
                 )}
+                {activeRes && (
+                    <AbsoluteCenter>
+                        <Box rounded={100}
+                             zIndex={10} bg="rgba(34,38,46,0.7)">
+
+                            <MeetingProgress start={activeRes.start} end={activeRes.end} size={180}/>
+                        </Box>
+                    </AbsoluteCenter>
+                )}
+
                 <Box
                     position="absolute"
                     inset={0}
@@ -88,7 +97,7 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
             </Box>
 
             {/* Content */}
-            <Box p={4} flex={1} display="flex" flexDirection="column" gap={3}>
+            <Box p={4} flex={2} display="flex" flexDirection="column" gap={3}>
                 {/* Top row: clock + status */}
                 <Flex align="center" justify="space-between">
                     <Clock/>
@@ -96,9 +105,10 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                 </Flex>
 
                 {/* Room name */}
-                <Text fontSize="xl" fontWeight="bold" color="text.primary">
+                <Text fontSize="4xl" fontWeight="bold" color="text.primary">
                     {room?.name}
                 </Text>
+                <RoomInfoPanel room={room} horizontal={true}/>
 
                 {/* Next reservation */}
                 {nextRes && (
@@ -118,13 +128,26 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                     </Box>
                 )}
 
+                {/* Active reservation */}
+                {activeRes && (
+                    <Box>
+                        <Text color="text.primary" fontSize="sm">Réservation en cours:</Text>
+                        <Box bg="bg.elevated" borderRadius="md" px={3} py={2} mt={1}>
+                            <Flex align="center" justify="space-between">
+                                <Text fontSize="xs" color="text.muted">
+                                    {fmtTime(parseDate(activeRes.start))} - {fmtTime(parseDate(activeRes.end))}
+                                </Text>
+                                <Text fontSize="xs" color="text.muted" noOfLines={1}>{activeRes.reserved_by}</Text>
+                            </Flex>
+                            <Text fontSize="sm" color="text.primary" fontWeight="medium" noOfLines={1}>
+                                {activeRes.title}
+                            </Text>
+                        </Box>
+                    </Box>
+                )}
+
                 {/* Bottom section */}
                 <Flex align="center" justify="space-between" mt="auto">
-                    {activeRes ? (
-                        <MeetingProgress start={activeRes.start} end={activeRes.end} size={80}/>
-                    ) : (
-                        <Box/>
-                    )}
                     {activateReservationButton && (
                         <Box
                             as="button"

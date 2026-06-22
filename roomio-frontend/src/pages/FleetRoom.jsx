@@ -200,8 +200,8 @@ export default function FleetRoom() {
 
                 <Flex h="100%" w="100%">
                     {/* Left 50%: Room status card */}
-                    <Box w="50%" h="100%" p={6} display="flex" flexDirection="column">
-                        <Box w="100%" maxW="500px" flex={1} display="flex" flexDirection="column">
+                    <Box w="50%" h="100%" p={6} display="flex" >
+                        <Box w="100%" maxW="95%" flex={1} display="flex" >
                             <RoomStatusCard room={room} onBook={goToBooking} activateReservationButton={false}/>
                         </Box>
                     </Box>
