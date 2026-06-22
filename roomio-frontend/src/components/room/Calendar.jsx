@@ -309,7 +309,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     }, [reservations, dayStartDate, dayEndDate]);
 
     return (
-        <Box h="90%" w="100%" bg="bg.secondary">
+        <Box h="90%" w="100%" bg="bg.secondary" position="relative">
             {/* Day selector */}
             <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200">
                 {dayItems.map((d) => {
@@ -417,71 +417,65 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                         </Text>
                     </Reservation>
                 )}
-
-                {/* Collapsible booking form directly below the purple block */}
-                {pendingReservation && roomName && (() => {
-                    const startDec = toDec(pendingReservation.startHour);
-                    const endDec = toDec(pendingReservation.endHour);
-                    const blockTop = PAD_T + (startDec - dayStart) * ROW_H + ROW_H / 2;
-                    const blockH = (endDec - startDec) * ROW_H;
-                    const formTop = blockTop + blockH + 4;
-
-                    return (
-                        <Box
-                            position="absolute"
-                            top={`${formTop}px`}
-                            left="65px"
-                            right="5px"
-                            zIndex={20}
-                            bg="bg.elevated"
-                            borderRadius="md"
-                            boxShadow="lg"
-                            p={3}
-                            onPointerDown={(e) => e.stopPropagation()}
-                        >
-                            <Collapsible.Root open={true} unmountOnExit>
-                                <Collapsible.Content>
-                                    {collapsibleContent
-                                        ? (typeof collapsibleContent === "function"
-                                            ? collapsibleContent({
-                                                pendingReservation,
-                                                onTimeChange: (h, m, eh, em) => {
-                                                    const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                                    const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
-                                                    setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
-                                                },
-                                                onSuccess: (reservation) => {
-                                                    setPendingReservation(null);
-                                                    onBookingSuccess?.(reservation);
-                                                },
-                                                onCancel: () => setPendingReservation(null),
-                                              })
-                                            : collapsibleContent)
-                                        : (
-                                            <BookingForm
-                                                roomName={roomName}
-                                                existingReservations={existingReservations}
-                                                defaultDate={pendingReservation.date}
-                                                defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
-                                                defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
-                                                onTimeChange={(h, m, eh, em) => {
-                                                    const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                                    const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
-                                                    setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
-                                                }}
-                                                onSuccess={(reservation) => {
-                                                    setPendingReservation(null);
-                                                    onBookingSuccess?.(reservation);
-                                                }}
-                                                onCancel={() => setPendingReservation(null)}
-                                            />
-                                        )}
-                                </Collapsible.Content>
-                            </Collapsible.Root>
-                        </Box>
-                    );
-                })()}
             </BgCalendar>
+
+            {/* Booking form overlay — fixed at bottom, scrollable */}
+            {pendingReservation && roomName && (
+                <Box
+                    position="absolute"
+                    bottom="-10"
+                    left="65px"
+                    right="5px"
+                    maxH="75%"
+                    overflowY="auto"
+                    zIndex={20}
+                    bg="rgba(17, 21, 34, 0.95)"
+                    borderTopRadius="md"
+                    boxShadow="lg"
+                    p={3}
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
+                    <Collapsible.Root open={true} unmountOnExit>
+                        <Collapsible.Content>
+                            {collapsibleContent
+                                ? (typeof collapsibleContent === "function"
+                                    ? collapsibleContent({
+                                        pendingReservation,
+                                        onTimeChange: (h, m, eh, em) => {
+                                            const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                            const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                            setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                        },
+                                        onSuccess: (reservation) => {
+                                            setPendingReservation(null);
+                                            onBookingSuccess?.(reservation);
+                                        },
+                                        onCancel: () => setPendingReservation(null),
+                                      })
+                                    : collapsibleContent)
+                                : (
+                                    <BookingForm
+                                        roomName={roomName}
+                                        existingReservations={existingReservations}
+                                        defaultDate={pendingReservation.date}
+                                        defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
+                                        defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                        onTimeChange={(h, m, eh, em) => {
+                                            const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                            const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                            setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                        }}
+                                        onSuccess={(reservation) => {
+                                            setPendingReservation(null);
+                                            onBookingSuccess?.(reservation);
+                                        }}
+                                        onCancel={() => setPendingReservation(null)}
+                                    />
+                                )}
+                        </Collapsible.Content>
+                    </Collapsible.Root>
+                </Box>
+            )}
         </Box>
     );
 }
