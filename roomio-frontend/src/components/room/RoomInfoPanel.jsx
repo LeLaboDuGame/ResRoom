@@ -1,12 +1,13 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Monitor, ClipboardList, Computer, Users, MapPin } from "lucide-react";
+import { Monitor, ClipboardList, Computer, Users } from "lucide-react";
 
 /**
  * Info panel for a selected room showing its status and details.
  * @param {Object} room Room data with name and elements
+ * @param {boolean} [horizontal=false] Display items in a row instead of column
  * @returns {JSX.Element} The room info panel
  */
-export function RoomInfoPanel({ room }) {
+export function RoomInfoPanel({ room, horizontal = false }) {
   const el = room?.elements || {};
 
   const items = [
@@ -18,11 +19,12 @@ export function RoomInfoPanel({ room }) {
 
   return (
     <Box>
-      <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
-        {room?.name}
-      </Text>
-
-      <Flex direction="column" gap={2}>
+      {!horizontal && (
+        <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
+          {room?.name}
+        </Text>
+      )}
+      <Flex direction={horizontal ? "row" : "column"} gap={horizontal ? 4 : 2} wrap={horizontal ? "wrap" : undefined}>
         {items.map((item) => {
           const Icon = item.icon;
           const active = item.active;
