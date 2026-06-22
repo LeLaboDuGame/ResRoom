@@ -1,6 +1,6 @@
 import {useState, createContext, useContext, useRef, useCallback, useMemo} from "react";
 import {
-    Box, Flex, Text, ScrollArea, Stack, Collapsible
+    Box, Flex, Text, ScrollArea, Stack, Collapsible, Float, Circle
 } from "@chakra-ui/react";
 import {BookingForm} from "../booking/BookingForm";
 import {useSettings} from "../../hooks/useSettings";
@@ -315,6 +315,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 {dayItems.map((d) => {
                     const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
                     const isToday = fmtDateKey(d) === fmtDateKey(new Date());
+                    const count = reservations.filter(r => r.start.startsWith(fmtDateKey(d))).length;
                     return (
                         <Box
                             key={fmtDateKey(d)}
@@ -328,6 +329,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                             py={2}
                             borderRadius="md"
                             cursor="pointer"
+                            position="relative"
                             bg={isSelected ? "accent.default" : "transparent"}
                             color={isSelected ? "white" : isToday ? "accent.default" : "text.secondary"}
                             fontWeight={isSelected ? "bold" : "medium"}
@@ -337,6 +339,14 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                         >
                             <Text fontSize="xs" lineHeight={1.2}>{getDayLabel(d)}</Text>
                             <Text fontSize="2xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
+
+                            {count > 0 && (
+                                <Float placement="top-end">
+                                    <Circle size="5" bg="red.500" color="white" fontSize="xs" fontWeight="bold">
+                                        {count}
+                                    </Circle>
+                                </Float>
+                            )}
                         </Box>
                     );
                 })}
