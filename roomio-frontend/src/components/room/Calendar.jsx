@@ -133,7 +133,6 @@ function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown
                         onPointerDown={onPointerDown}
                         onPointerMove={onPointerMove}
                         onPointerUp={onPointerUp}
-                        style={{touchAction: "none"}}
                     >
                         {/* Hour labels and separator lines */}
                         <Stack gap={0} py={2} pointerEvents="none">
@@ -199,6 +198,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const gridRef = useRef(null);
     const pointerStart = useRef(null);
     const lastClickRef = useRef({time: 0, uid: null});
+    const scrollLockRef = useRef(null);
 
     /** Next 7 days starting from today */
     const dayItems = useMemo(() => {
@@ -232,7 +232,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
 
     /**
      * Starts a 500ms timer on pointer down. If the timer fires (no significant movement),
-     * creates the purple provisional block, clears any pending form, and activates drag mode.
+     * creates the purple provisional block and locks scroll.
      */
     const handlePointerDown = useCallback((e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -248,6 +248,17 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             dragRef.current = true;
             setProvisional({startDec});
             longTimer.current = null;
+
+            // Lock scroll by preventing touch/wheel events on the viewport
+            const viewport = gridRef.current?.parentElement;
+            if (viewport) {
+                scrollLockRef.current = {
+                    scrollTop: viewport.scrollTop,
+                    handler: (ev) => ev.preventDefault(),
+                };
+                viewport.addEventListener("touchmove", scrollLockRef.current.handler, {passive: false});
+                viewport.addEventListener("wheel", scrollLockRef.current.handler, {passive: false});
+            }
         }, 500);
     }, [dayStart, dayEnd]);
 
@@ -276,10 +287,19 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     }, [dayStart, dayEnd]);
 
     /**
-     * On pointer up: if a drag was active, stores the snapped time range as a pending
-     * reservation (keeps the purple block visible) and opens the booking form collapsible.
+     * On pointer up: if a drag was active, stores the time range and opens the booking form.
+     * If timer is active, cancels it (simple tap, not a hold).
      */
     const handlePointerUp = useCallback(() => {
+        // Unlock scroll on the viewport
+        const viewport = gridRef.current?.parentElement;
+        if (viewport && scrollLockRef.current) {
+            viewport.removeEventListener("touchmove", scrollLockRef.current.handler);
+            viewport.removeEventListener("wheel", scrollLockRef.current.handler);
+            viewport.scrollTop = scrollLockRef.current.scrollTop;
+            scrollLockRef.current = null;
+        }
+
         if (longTimer.current) {
             clearTimeout(longTimer.current);
             longTimer.current = null;
