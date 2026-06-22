@@ -34,6 +34,7 @@ export default function FleetRoom() {
     const [bookingKey, setBookingKey] = useState(0);
     const [filters, setFilters] = useState({capacity: 0, tv: false, whiteboard: false, computer: false});
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
 
     // Reset selected room when current room changes
     useEffect(() => {
@@ -92,13 +93,14 @@ export default function FleetRoom() {
     }
 
     async function handleDeleteReservation(uid) {
+        setDeleteError(null);
         try {
             await deleteReservation(roomName, uid);
             setDeleteTarget(null);
             refetchRoom();
             refetchRooms();
-        } catch {
-            setDeleteTarget(null);
+        } catch (e) {
+            setDeleteError(e?.message || "Erreur lors de la suppression");
         }
     }
 
@@ -264,7 +266,7 @@ export default function FleetRoom() {
 
                 {deleteTarget && (
                     <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                         justifyContent="center" zIndex={9999} onClick={() => setDeleteTarget(null)}>
+                         justifyContent="center" zIndex={9999} onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
                         <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
                              p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
                             <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
@@ -273,10 +275,15 @@ export default function FleetRoom() {
                             <Text fontSize="sm" color="text.secondary" mb={6}>
                                 "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
                             </Text>
+                            {deleteError && (
+                                <Text fontSize="sm" color="red.400" mb={4}>
+                                    {deleteError}
+                                </Text>
+                            )}
                             <Flex gap={2} justify="flex-end">
                                 <Button size="sm" variant="ghost" color="text.secondary"
                                         _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                        onClick={() => setDeleteTarget(null)}>
+                                        onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
                                     Non
                                 </Button>
                                 <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
@@ -431,7 +438,7 @@ export default function FleetRoom() {
 
             {deleteTarget && (
                 <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                     justifyContent="center" zIndex={9999} onClick={() => setDeleteTarget(null)}>
+                     justifyContent="center" zIndex={9999} onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
                     <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
                          p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
                         <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
@@ -440,10 +447,15 @@ export default function FleetRoom() {
                         <Text fontSize="sm" color="text.secondary" mb={6}>
                             "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
                         </Text>
+                        {deleteError && (
+                            <Text fontSize="sm" color="red.400" mb={4}>
+                                {deleteError}
+                            </Text>
+                        )}
                         <Flex gap={2} justify="flex-end">
                             <Button size="sm" variant="ghost" color="text.secondary"
                                     _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                    onClick={() => setDeleteTarget(null)}>
+                                    onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
                                 Non
                             </Button>
                             <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
