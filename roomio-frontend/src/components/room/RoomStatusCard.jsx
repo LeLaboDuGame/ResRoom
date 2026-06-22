@@ -82,7 +82,6 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                     <AbsoluteCenter>
                         <Box rounded={100}
                              zIndex={10} bg="rgba(34,38,46,0.7)">
-
                             <MeetingProgress start={activeRes.start} end={activeRes.end} size={180}/>
                         </Box>
                     </AbsoluteCenter>
@@ -117,7 +116,7 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                         <Box bg="bg.elevated" borderRadius="md" px={3} py={2} mt={1}>
                             <Flex align="center" justify="space-between">
                                 <Text fontSize="xs" color="text.muted">
-                                    {fmtTime(parseDate(nextRes.start))} - {fmtTime(parseDate(nextRes.end))}
+                                    {fmtTime(parseDate(nextRes.start))} - {fmtTime(parseDate(nextRes.end))} - {parseDate(nextRes.start).toDateString()}
                                 </Text>
                                 <Text fontSize="xs" color="text.muted" noOfLines={1}>{nextRes.reserved_by}</Text>
                             </Flex>
@@ -135,7 +134,7 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                         <Box bg="bg.elevated" borderRadius="md" px={3} py={2} mt={1}>
                             <Flex align="center" justify="space-between">
                                 <Text fontSize="xs" color="text.muted">
-                                    {fmtTime(parseDate(activeRes.start))} - {fmtTime(parseDate(activeRes.end))}
+                                    {fmtTime(parseDate(activeRes.start))} - {fmtTime(parseDate(activeRes.end))} - {parseDate(nextRes.start).toDateString()}
                                 </Text>
                                 <Text fontSize="xs" color="text.muted" noOfLines={1}>{activeRes.reserved_by}</Text>
                             </Flex>
