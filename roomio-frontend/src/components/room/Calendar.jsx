@@ -259,6 +259,9 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 viewport.addEventListener("touchmove", scrollLockRef.current.handler, {passive: false});
                 viewport.addEventListener("wheel", scrollLockRef.current.handler, {passive: false});
             }
+            // Prevent text selection while dragging
+            document.body.style.userSelect = "none";
+            document.body.style.webkitUserSelect = "none";
         }, 500);
     }, [dayStart, dayEnd]);
 
@@ -299,6 +302,9 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             viewport.scrollTop = scrollLockRef.current.scrollTop;
             scrollLockRef.current = null;
         }
+        // Restore text selection
+        document.body.style.userSelect = "";
+        document.body.style.webkitUserSelect = "";
 
         if (longTimer.current) {
             clearTimeout(longTimer.current);
