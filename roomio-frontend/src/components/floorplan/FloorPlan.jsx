@@ -131,6 +131,9 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     const vbRef = useRef(vb);
     vbRef.current = vb;
 
+    const pointersRef = useRef(new Map());
+    const pinchRef = useRef(null);
+
     const wallMap = useMemo(() => {
         const m = {};
         allWalls.forEach(w => m[w.id] = w);
@@ -181,41 +184,64 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
 
 
 
-    // Pointer panning (mouse + touch) with 5 px movement threshold
-    /**
-     * Starts tracking a pan gesture on primary pointer down.
-     * @param {React.PointerEvent} e Pointer event
-     */
+    // Pointer panning (mouse + touch) with pinch-to-zoom support
     const handlePointerDown = useCallback(e => {
-        if (!e.isPrimary) return;
-        panRef.current = {
-            mx: e.clientX, my: e.clientY,
-            vbX: vb.x, vbY: vb.y,
-            started: false,
-        };
+        pointersRef.current.set(e.pointerId, {x: e.clientX, y: e.clientY});
+        if (pointersRef.current.size === 1) {
+            panRef.current = {
+                mx: e.clientX, my: e.clientY,
+                vbX: vb.x, vbY: vb.y,
+                started: false,
+            };
+        }
+        if (pointersRef.current.size === 2) {
+            const p = Array.from(pointersRef.current.values());
+            pinchRef.current = {
+                dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y),
+                vb: {...vb},
+            };
+            panRef.current = null;
+            setIsPanning(true);
+        }
     }, [vb]);
 
-    /**
-     * Updates the viewBox offset while panning after a 5px movement threshold.
-     * @param {React.PointerEvent} e Pointer event
-     */
     const handlePointerMove = useCallback(e => {
-        if (!panRef.current || !e.isPrimary) return;
-        const dx = Math.abs(e.clientX - panRef.current.mx);
-        const dy = Math.abs(e.clientY - panRef.current.my);
+        if (!pointersRef.current.has(e.pointerId)) return;
+        pointersRef.current.set(e.pointerId, {x: e.clientX, y: e.clientY});
+        if (pinchRef.current) {
+            const p = Array.from(pointersRef.current.values());
+            if (p.length !== 2) return;
+            const rect = svgRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            const mx = ((p[0].x + p[1].x) / 2 - rect.left) / rect.width;
+            const my = ((p[0].y + p[1].y) / 2 - rect.top) / rect.height;
+            const dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+            const factor = pinchRef.current.dist / dist;
+            const cur = pinchRef.current.vb;
+            const vx = cur.x + mx * cur.w;
+            const vy = cur.y + my * cur.h;
+            const newW = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, cur.w * factor));
+            const newH = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, cur.h * factor));
+            setVb({x: vx - mx * newW, y: vy - my * newH, w: newW, h: newH});
+            return;
+        }
+        const pr = panRef.current;
+        if (!pr) return;
+        const dx = Math.abs(e.clientX - pr.mx);
+        const dy = Math.abs(e.clientY - pr.my);
         if (dx < 5 && dy < 5) return;
-        if (!panRef.current.started) {
-            panRef.current.started = true;
+        if (!pr.started) {
+            pr.started = true;
             setIsPanning(true);
-            panRef.current.mx = e.clientX;
-            panRef.current.my = e.clientY;
-            panRef.current.vbX = vb.x;
-            panRef.current.vbY = vb.y;
+            pr.mx = e.clientX;
+            pr.my = e.clientY;
+            pr.vbX = vb.x;
+            pr.vbY = vb.y;
         }
         const rect = svgRef.current?.getBoundingClientRect();
         if (!rect) return;
         const scale = vb.w / rect.width;
-        const {vbX, vbY, mx, my} = panRef.current;
+        const {vbX, vbY, mx, my} = pr;
         setVb(prev => ({
             ...prev,
             x: vbX - (e.clientX - mx) * scale,
@@ -223,14 +249,13 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         }));
     }, [vb]);
 
-    /**
-     * Ends a pan gesture on primary pointer up or cancel.
-     * @param {React.PointerEvent} e Pointer event
-     */
     const handlePointerUp = useCallback(e => {
-        if (!e.isPrimary) return;
-        panRef.current = null;
-        setIsPanning(false);
+        pointersRef.current.delete(e.pointerId);
+        if (pointersRef.current.size < 2) pinchRef.current = null;
+        if (pointersRef.current.size === 0) {
+            panRef.current = null;
+            setIsPanning(false);
+        }
     }, []);
 
     /**
