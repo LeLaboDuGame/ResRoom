@@ -134,7 +134,7 @@ export function RoomStatusCard({room, onBook, activateReservationButton = true})
                         <Box bg="bg.elevated" borderRadius="md" px={3} py={2} mt={1}>
                             <Flex align="center" justify="space-between">
                                 <Text fontSize="xs" color="text.muted">
-                                    {fmtTime(parseDate(activeRes.start))} - {fmtTime(parseDate(activeRes.end))} - {parseDate(nextRes.start).toDateString()}
+                                    {fmtTime(parseDate(activeRes.start))} - {fmtTime(parseDate(activeRes.end))} - {parseDate(activeRes.start).toDateString()}
                                 </Text>
                                 <Text fontSize="xs" color="text.muted" noOfLines={1}>{activeRes.reserved_by}</Text>
                             </Flex>
