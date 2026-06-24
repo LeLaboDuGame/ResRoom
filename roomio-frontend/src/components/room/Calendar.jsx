@@ -194,6 +194,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         d.setHours(0, 0, 0, 0);
         return d;
     });
+    const [weekOffset, setWeekOffset] = useState(0);
 
     const longTimer = useRef(null);
     const dragRef = useRef(false);
@@ -201,17 +202,23 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const pointerStart = useRef(null);
     const lastClickRef = useRef({time: 0, uid: null});
     const scrollLockRef = useRef(null);
+    const swipeDayRef = useRef(null);
 
-    /** Next 7 days starting from today */
+    /** Mon-Sat of the week at weekOffset */
     const dayItems = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return Array.from({length: 7}, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() + i);
+        const dow = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - ((dow + 6) % 7) + weekOffset * 7);
+        return Array.from({length: 6}, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
             return d;
         });
-    }, []);
+    }, [weekOffset]);
+
+    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat."];
 
     /** Formats a Date into "YYYY-MM-DD" */
     const fmtDateKey = useCallback((d) => {
@@ -219,17 +226,6 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         const m = String(d.getMonth() + 1).padStart(2, "0");
         const day = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${day}`;
-    }, []);
-
-    /** Day label: Aujourd'hui, Demain, Après-demain, or short weekday */
-    const getDayLabel = useCallback((d) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diff = Math.round((d - today) / 86400000);
-        if (diff === 0) return "Aujourd'hui";
-        if (diff === 1) return "Demain";
-        if (diff === 2) return "Après-demain";
-        return d.toLocaleDateString("fr-FR", {weekday: "short"});
     }, []);
 
     /**
@@ -337,11 +333,24 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         return upcoming.sort((a, b) => a.start.localeCompare(b.start));
     }, [reservations, dayStartDate, dayEndDate]);
 
+    const handleDaySwipeStart = useCallback((e) => {
+        swipeDayRef.current = e.clientX;
+    }, []);
+
+    const handleDaySwipeEnd = useCallback((e) => {
+        if (swipeDayRef.current === null) return;
+        const dx = e.clientX - swipeDayRef.current;
+        swipeDayRef.current = null;
+        if (dx > 40) setWeekOffset((o) => o - 1);
+        else if (dx < -40) setWeekOffset((o) => o + 1);
+    }, []);
+
     return (
         <Box h="90%" w="100%" bg="bg.secondary" position="relative">
             {/* Day selector */}
-            <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200">
-                {dayItems.map((d) => {
+            <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200"
+                  onPointerDown={handleDaySwipeStart} onPointerUp={handleDaySwipeEnd}>
+                {dayItems.map((d, i) => {
                     const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
                     const isToday = fmtDateKey(d) === fmtDateKey(new Date());
                     return (
@@ -358,15 +367,15 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                             borderRadius="md"
                             cursor="pointer"
                             position="relative"
-                            bg={isSelected ? "accent.default" : "transparent"}
-                            color={isSelected ? "white" : isToday ? "accent.default" : "text.secondary"}
+                            bg={isSelected ? (isToday ? "red.500" : "accent.default") : "transparent"}
+                            color={isSelected ? "white" : "text.secondary"}
                             fontWeight={isSelected ? "bold" : "medium"}
                             fontSize="sm"
                             transition="all 0.15s"
                             _hover={!isSelected ? {bg: "whiteAlpha.100"} : undefined}
                         >
-                            <Text fontSize="xs" lineHeight={1.2}>{getDayLabel(d)}</Text>
-                            <Text fontSize="2xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
+                            <Text fontSize="md" lineHeight={1.3} fontWeight="semibold" color={!isSelected && isToday ? "red.400" : undefined}>{dayLetters[i]}</Text>
+                            <Text fontSize="xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
                         </Box>
                     );
                 })}
@@ -462,6 +471,38 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                     </Reservation>
                 )}
             </BgCalendar>
+
+            {/* Today button */}
+            <Box
+                as="button"
+                position="absolute"
+                bottom="-10%"
+                left="10%"
+                zIndex={10}
+                bg="red.500"
+                color="white"
+                fontWeight="semibold"
+                fontSize="sm"
+                px={3}
+                py={1}
+                borderRadius="md"
+                _hover={{ bg: "red.400" }}
+                onClick={() => {
+                    setWeekOffset(0);
+                    const d = new Date();
+                    d.setHours(0, 0, 0, 0);
+                    setSelectedDate(d);
+                    // scroll to current hour
+                    const viewport = gridRef.current?.parentElement;
+                    if (viewport) {
+                        const curHour = new Date().getHours() + new Date().getMinutes() / 60;
+                        const scrollTo = PAD_T + (curHour - dayStart) * ROW_H + ROW_H / 2 - 100;
+                        viewport.scrollTop = Math.max(0, scrollTo);
+                    }
+                }}
+            >
+                Today
+            </Box>
 
             {/* Booking form overlay — modal or bottom-anchored */}
             {pendingReservation && roomName && (modalForm ? (
