@@ -202,16 +202,21 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const lastClickRef = useRef({time: 0, uid: null});
     const scrollLockRef = useRef(null);
 
-    /** Next 7 days starting from today */
+    /** Mon-Sat of the current week */
     const dayItems = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return Array.from({length: 7}, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() + i);
+        const dow = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - ((dow + 6) % 7));
+        return Array.from({length: 6}, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
             return d;
         });
     }, []);
+
+    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat."];
 
     /** Formats a Date into "YYYY-MM-DD" */
     const fmtDateKey = useCallback((d) => {
@@ -219,17 +224,6 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         const m = String(d.getMonth() + 1).padStart(2, "0");
         const day = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${day}`;
-    }, []);
-
-    /** Day label: Aujourd'hui, Demain, Après-demain, or short weekday */
-    const getDayLabel = useCallback((d) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diff = Math.round((d - today) / 86400000);
-        if (diff === 0) return "Aujourd'hui";
-        if (diff === 1) return "Demain";
-        if (diff === 2) return "Après-demain";
-        return d.toLocaleDateString("fr-FR", {weekday: "short"});
     }, []);
 
     /**
@@ -341,7 +335,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         <Box h="90%" w="100%" bg="bg.secondary" position="relative">
             {/* Day selector */}
             <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200">
-                {dayItems.map((d) => {
+                {dayItems.map((d, i) => {
                     const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
                     const isToday = fmtDateKey(d) === fmtDateKey(new Date());
                     return (
@@ -358,15 +352,15 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                             borderRadius="md"
                             cursor="pointer"
                             position="relative"
-                            bg={isSelected ? "accent.default" : "transparent"}
-                            color={isSelected ? "white" : isToday ? "accent.default" : "text.secondary"}
+                            bg={isSelected ? (isToday ? "red.500" : "accent.default") : "transparent"}
+                            color={isSelected ? "white" : "text.secondary"}
                             fontWeight={isSelected ? "bold" : "medium"}
                             fontSize="sm"
                             transition="all 0.15s"
                             _hover={!isSelected ? {bg: "whiteAlpha.100"} : undefined}
                         >
-                            <Text fontSize="xs" lineHeight={1.2}>{getDayLabel(d)}</Text>
-                            <Text fontSize="2xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
+                            <Text fontSize="md" lineHeight={1.3} fontWeight="semibold" color={!isSelected && isToday ? "red.400" : undefined}>{dayLetters[i]}</Text>
+                            <Text fontSize="xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
                         </Box>
                     );
                 })}
