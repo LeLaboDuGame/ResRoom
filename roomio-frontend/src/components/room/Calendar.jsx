@@ -131,6 +131,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
                         ref={gridRef}
                         position="relative"
                         h={`${totalH}px`}
+                        touchAction="pan-y"
                         onPointerDown={onPointerDown}
                         onPointerMove={onPointerMove}
                         onPointerUp={onPointerUp}
@@ -203,6 +204,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const lastClickRef = useRef({time: 0, uid: null});
     const scrollLockRef = useRef(null);
     const swipeDayRef = useRef(null);
+    const swipeGridRef = useRef(null);
 
     /** Mon-Sat of the week at weekOffset */
     const dayItems = useMemo(() => {
@@ -211,14 +213,14 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         const dow = today.getDay();
         const monday = new Date(today);
         monday.setDate(today.getDate() - ((dow + 6) % 7) + weekOffset * 7);
-        return Array.from({length: 6}, (_, i) => {
+        return Array.from({length: 7}, (_, i) => {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
             return d;
         });
     }, [weekOffset]);
 
-    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat."];
+    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Fry."];
 
     /** Formats a Date into "YYYY-MM-DD" */
     const fmtDateKey = useCallback((d) => {
@@ -235,6 +237,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const handlePointerDown = useCallback((e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         pointerStart.current = {x: e.clientX, y: e.clientY};
+        swipeGridRef.current = {startX: e.clientX, startY: e.clientY, handled: false};
 
         setPendingReservation(null);
         longTimer.current = setTimeout(() => {
@@ -291,7 +294,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
      * On pointer up: if a drag was active, stores the time range and opens the booking form.
      * If timer is active, cancels it (simple tap, not a hold).
      */
-    const handlePointerUp = useCallback(() => {
+    const handlePointerUp = useCallback((e) => {
         // Unlock scroll on the viewport
         const viewport = gridRef.current?.parentElement;
         if (viewport && scrollLockRef.current) {
@@ -322,7 +325,31 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
 
             dragRef.current = false;
             setProvisional(null);
+            return;
         }
+
+        // Horizontal swipe on grid → change selected day
+        const sw = swipeGridRef.current;
+        if (sw && !sw.handled) {
+            const dx = e.clientX - sw.startX;
+            const dy = e.clientY - sw.startY;
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                sw.handled = true;
+                const next = new Date(selectedDate);
+                next.setDate(selectedDate.getDate() + (dx > 0 ? -1 : 1));
+                setSelectedDate(next);
+                // sync weekOffset so day selector follows
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const refMonday = new Date(today);
+                refMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+                const nd = next.getDay();
+                const newMonday = new Date(next);
+                newMonday.setDate(next.getDate() - ((nd + 6) % 7));
+                setWeekOffset(Math.round((newMonday - refMonday) / 604800000));
+            }
+        }
+        swipeGridRef.current = null;
     }, [provisional, onNewReservation, selectedDate, fmtDateKey]);
 
     /* Filter reservations for the selected date, within operating hours, sorted */
