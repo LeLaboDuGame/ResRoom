@@ -35,6 +35,7 @@ export default function FleetRoom() {
     const [filters, setFilters] = useState({capacity: 0, tv: false, whiteboard: false, computer: false});
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
+    const [bookingFormData, setBookingFormData] = useState(null);
 
     // Reset selected room when current room changes
     useEffect(() => {
@@ -156,6 +157,11 @@ export default function FleetRoom() {
         setSelectedRoomName(roomName);
     }
 
+    const pendingTimeRange = useMemo(() => {
+        if (!bookingFormData) return null;
+        return {startHour: bookingFormData.startHour, endHour: bookingFormData.endHour};
+    }, [bookingFormData]);
+
     if (loading) {
         return (
             <Box minH="100vh" bg="#0a0a0b" display="flex" alignItems="center" justifyContent="center">
@@ -215,23 +221,13 @@ export default function FleetRoom() {
                         </Text>
                         <Box flex={1} bg="bg.secondary" borderRadius="xl" overflow="hidden">
                             <Calendar
+                                key={bookingKey}
                                 reservations={room?.reservations || []}
-                                roomName={room?.name}
                                 existingReservations={room?.reservations || []}
                             onBookingSuccess={handleBookingSuccess}
                             onDeleteReservation={setDeleteTarget}
-                            collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
-                                    <BookingForm
-                                        roomName={room?.name}
-                                        existingReservations={room?.reservations || []}
-                                        defaultDate={pendingReservation.date}
-                                        defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
-                                        defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
-                                        onTimeChange={onTimeChange}
-                                        onSuccess={onSuccess}
-                                        onCancel={onCancel}
-                                    />
-                                )}
+                            onNewReservation={(data) => setBookingFormData(data)}
+                            pendingTimeRange={pendingTimeRange}
                             />
                         </Box>
                     </Box>
@@ -294,11 +290,41 @@ export default function FleetRoom() {
                         </Box>
                     </Box>
                 )}
+
+                {bookingFormData && (
+                    <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
+                         justifyContent="center" zIndex={9999}
+                         onClick={() => { setBookingFormData(null); setBookingKey(k => k + 1); }}>
+                        <Box bg="rgba(17, 21, 34, 0.95)" borderRadius="xl" border="1px solid" borderColor="border.default"
+                             p={6} w="90%" maxW="420px" maxH="85vh" overflowY="auto"
+                             onClick={(e) => e.stopPropagation()}>
+                            <BookingForm
+                                roomName={room?.name}
+                                existingReservations={room?.reservations || []}
+                                defaultDate={bookingFormData.date}
+                                defaultHour={parseInt(bookingFormData.startHour.split(":")[0], 10)}
+                                defaultMinute={parseInt(bookingFormData.startHour.split(":")[1], 10)}
+                                onTimeChange={(h, m, eh, em) => {
+                                    const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                    const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                    setBookingFormData(prev => prev ? {...prev, startHour, endHour} : prev);
+                                }}
+                                onSuccess={(reservation) => {
+                                    setBookingFormData(null);
+                                    handleBookingSuccess(reservation);
+                                }}
+                                onCancel={() => {
+                                    setBookingFormData(null);
+                                    setBookingKey(k => k + 1);
+                                }}
+                            />
+                        </Box>
+                    </Box>
+                )}
             </Box>
         );
     }
 
-    // === BOOKING FLOW ===
     const currentRoom = selectedRoomData || room;
 
     return (
@@ -327,22 +353,12 @@ export default function FleetRoom() {
                     {/* Calendar */}
                     <Box flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
                         <Calendar
+                            key={bookingKey}
                             reservations={currentRoom?.reservations || []}
-                            roomName={currentRoom?.name}
                             existingReservations={currentRoom?.reservations || []}
                             onBookingSuccess={handleBookingSuccess}
-                            collapsibleContent={({pendingReservation, onTimeChange, onSuccess, onCancel}) => (
-                                <BookingForm
-                                    roomName={currentRoom?.name}
-                                    existingReservations={currentRoom?.reservations || []}
-                                    defaultDate={pendingReservation.date}
-                                    defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
-                                    defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
-                                    onTimeChange={onTimeChange}
-                                    onSuccess={onSuccess}
-                                    onCancel={onCancel}
-                                />
-                            )}
+                            onNewReservation={(data) => setBookingFormData(data)}
+                            pendingTimeRange={pendingTimeRange}
                         />
                     </Box>
                 </SplitterPanel>
@@ -463,6 +479,37 @@ export default function FleetRoom() {
                                 Oui
                             </Button>
                         </Flex>
+                    </Box>
+                </Box>
+            )}
+
+            {bookingFormData && (
+                <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
+                     justifyContent="center" zIndex={9999}
+                     onClick={() => { setBookingFormData(null); setBookingKey(k => k + 1); }}>
+                    <Box bg="rgba(17, 21, 34, 0.95)" borderRadius="xl" border="1px solid" borderColor="border.default"
+                         p={6} w="90%" maxW="420px" maxH="85vh" overflowY="auto"
+                         onClick={(e) => e.stopPropagation()}>
+                        <BookingForm
+                            roomName={currentRoom?.name}
+                            existingReservations={currentRoom?.reservations || []}
+                            defaultDate={bookingFormData.date}
+                            defaultHour={parseInt(bookingFormData.startHour.split(":")[0], 10)}
+                            defaultMinute={parseInt(bookingFormData.startHour.split(":")[1], 10)}
+                            onTimeChange={(h, m, eh, em) => {
+                                const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                setBookingFormData(prev => prev ? {...prev, startHour, endHour} : prev);
+                            }}
+                            onSuccess={(reservation) => {
+                                setBookingFormData(null);
+                                handleBookingSuccess(reservation);
+                            }}
+                            onCancel={() => {
+                                setBookingFormData(null);
+                                setBookingKey(k => k + 1);
+                            }}
+                        />
                     </Box>
                 </Box>
             )}

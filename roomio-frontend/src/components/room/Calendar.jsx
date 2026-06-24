@@ -177,14 +177,15 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
  * Main calendar component with reservation display, long-press provisional creation,
  * drag of the provisional block, and collapsible booking form on release.
  * @param {Array} [reservations=[]] List of reservation objects
- * @param {Function} [onNewReservation] Called with (date, start, end) on provisional release
+ * @param {Function} [onNewReservation] Called with {date, dateStr, startHour, endHour} on provisional release
  * @param {string} [roomName] Room name (enables collapsible booking form)
  * @param {Array} [existingReservations] Existing reservations for overlap check
  * @param {Function} [onDeleteReservation] Called with reservation object on double-click
  * @param {Function} [onBookingSuccess] Called with new reservation after successful booking
+ * @param {boolean} [modalForm=false] Render the booking form as a centered modal overlay
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent}) {
+export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange}) {
     const {dayStart, dayEnd} = useSettings();
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
@@ -319,8 +320,9 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             const startHour = fmtHHMM(provisional.startDec);
             const endHour = fmtHHMM(endDec);
 
-            setPendingReservation({date: selectedDate, dateStr, startHour, endHour});
-            onNewReservation?.(dateStr, startHour, endHour);
+            const reservationData = {date: selectedDate, dateStr, startHour, endHour};
+            setPendingReservation(reservationData);
+            onNewReservation?.(reservationData);
 
             dragRef.current = false;
             setProvisional(null);
@@ -432,8 +434,8 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 {pendingReservation && !provisional && (
                     <Reservation
                         key="__pending"
-                        startHour={pendingReservation.startHour}
-                        endHour={pendingReservation.endHour}
+                        startHour={pendingTimeRange?.startHour || pendingReservation.startHour}
+                        endHour={pendingTimeRange?.endHour || pendingReservation.endHour}
                         color="purple.500"
                         animation={`${bumpIn} 0.2s ease-out`}
                         transformOrigin="top center"
@@ -442,14 +444,78 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                             Nouvelle réservation
                         </Text>
                         <Text fontSize="xs" color="whiteAlpha.800">
-                            {pendingReservation.startHour} – {pendingReservation.endHour}
+                            {pendingTimeRange?.startHour || pendingReservation.startHour} – {pendingTimeRange?.endHour || pendingReservation.endHour}
                         </Text>
                     </Reservation>
                 )}
             </BgCalendar>
 
-            {/* Booking form overlay — fixed at bottom, scrollable */}
-            {pendingReservation && roomName && (
+            {/* Booking form overlay — modal or bottom-anchored */}
+            {pendingReservation && roomName && (modalForm ? (
+                <Box
+                    position="fixed"
+                    inset={0}
+                    bg="rgba(0,0,0,0.6)"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    zIndex={9999}
+                    onPointerDown={() => { setPendingReservation(null); }}
+                >
+                    <Box
+                        bg="rgba(17, 21, 34, 0.95)"
+                        borderRadius="xl"
+                        border="1px solid"
+                        borderColor="border.default"
+                        p={6}
+                        w="90%"
+                        maxW="420px"
+                        maxH="85vh"
+                        overflowY="auto"
+                        onPointerDown={(e) => e.stopPropagation()}
+                    >
+                        <Collapsible.Root open={true} unmountOnExit>
+                            <Collapsible.Content>
+                                {collapsibleContent
+                                    ? (typeof collapsibleContent === "function"
+                                        ? collapsibleContent({
+                                            pendingReservation,
+                                            onTimeChange: (h, m, eh, em) => {
+                                                const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                                const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                                setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                            },
+                                            onSuccess: (reservation) => {
+                                                setPendingReservation(null);
+                                                onBookingSuccess?.(reservation);
+                                            },
+                                            onCancel: () => setPendingReservation(null),
+                                          })
+                                        : collapsibleContent)
+                                    : (
+                                        <BookingForm
+                                            roomName={roomName}
+                                            existingReservations={existingReservations}
+                                            defaultDate={pendingReservation.date}
+                                            defaultHour={parseInt(pendingReservation.startHour.split(":")[0], 10)}
+                                            defaultMinute={parseInt(pendingReservation.startHour.split(":")[1], 10)}
+                                            onTimeChange={(h, m, eh, em) => {
+                                                const startHour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                                const endHour = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+                                                setPendingReservation(prev => prev ? {...prev, startHour, endHour} : prev);
+                                            }}
+                                            onSuccess={(reservation) => {
+                                                setPendingReservation(null);
+                                                onBookingSuccess?.(reservation);
+                                            }}
+                                            onCancel={() => setPendingReservation(null)}
+                                        />
+                                    )}
+                            </Collapsible.Content>
+                        </Collapsible.Root>
+                    </Box>
+                </Box>
+            ) : (
                 <Box
                     position="absolute"
                     bottom="-10"
@@ -504,7 +570,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                         </Collapsible.Content>
                     </Collapsible.Root>
                 </Box>
-            )}
+            ))}
         </Box>
     );
 }
