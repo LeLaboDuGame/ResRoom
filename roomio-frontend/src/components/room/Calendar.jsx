@@ -383,11 +383,24 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             >
                 {/* Existing reservation blocks */}
                 {sorted.map(r => {
-                    const s = r.start.slice(11, 16);
-                    const e = r.end.slice(11, 16);
+                    const rStart = new Date(r.start.replace(" ", "T"));
+                    const rEnd = new Date(r.end.replace(" ", "T"));
+                    const clipStart = new Date(Math.max(rStart.getTime(), dayStartDate.getTime()));
+                    const clipEnd = new Date(Math.min(rEnd.getTime(), dayEndDate.getTime()));
+                    const s = `${String(clipStart.getHours()).padStart(2, "0")}:${String(clipStart.getMinutes()).padStart(2, "0")}`;
+                    const e = `${String(clipEnd.getHours()).padStart(2, "0")}:${String(clipEnd.getMinutes()).padStart(2, "0")}`;
+                    const multiDay = rStart.toDateString() !== rEnd.toDateString();
+                    const isStartDay = rStart.toDateString() === selectedDate.toDateString();
+                    const isEndDay = rEnd.toDateString() === selectedDate.toDateString();
+                    const label = multiDay
+                        ? isStartDay ? `${s} – ${e} → +1` : isEndDay ? `← ${s} – ${e}` : `↔`
+                        : `${s} – ${e}`;
                     return (
                         <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
-                                     style={{cursor: onDeleteReservation ? "pointer" : undefined}}
+                                     style={{
+                                         cursor: onDeleteReservation ? "pointer" : undefined,
+                                         borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
+                                     }}
                                      onClick={() => {
                                          if (!onDeleteReservation) return;
                                          const now = Date.now();
@@ -403,7 +416,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                                 {r.title}
                             </Text>
                             <Text fontSize="xs" color="whiteAlpha.800">
-                                {s} – {e} · {r.reserved_by}
+                                {label} · {r.reserved_by}
                             </Text>
                         </Reservation>
                     );

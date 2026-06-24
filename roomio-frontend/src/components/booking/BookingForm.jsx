@@ -44,7 +44,8 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
 
   const fallbackEndHour = Math.min(dayEnd - 1, fallbackHour + 1);
 
-  const [dateValue, setDateValue] = useState(defaultDateProp ? [parseDate(defaultDateProp)] : [parseDate(new Date())]);
+  const defaultParsed = defaultDateProp ? parseDate(defaultDateProp) : parseDate(new Date());
+  const [dateValue, setDateValue] = useState([defaultParsed, defaultParsed]);
   const [hour, setHour] = useState(defaultHourProp ?? fallbackHour);
   const [minute, setMinute] = useState(defaultMinuteProp ?? fallbackMin);
   const [endHour, setEndHour] = useState(defaultHourProp !== undefined ? Math.min(dayEnd - 1, defaultHourProp + 1) : fallbackEndHour);
@@ -65,25 +66,25 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /** Formats date from DatePicker value + hour/minute into "YYYY-MM-DD HH:mm" */
+  function fmtDate(d) {
+    return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+  }
+
+  /** Formats start datetime from dateValue[0] + hour/minute into "YYYY-MM-DD HH:mm" */
   function formatDatetime() {
     const d = dateValue[0];
     if (!d) return "";
-    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
-    const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-    return `${dateStr} ${timeStr}`;
+    return `${fmtDate(d)} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   }
 
   /**
-   * Computes the end datetime from the date and endHour/endMinute.
+   * Computes the end datetime from dateValue[1] (or dateValue[0] if missing) and endHour/endMinute.
    * @returns {string} End datetime string
    */
   function computeEnd() {
-    const d = dateValue[0];
+    const d = dateValue[1] || dateValue[0];
     if (!d) return "";
-    const dateStr = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
-    const timeStr = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
-    return `${dateStr} ${timeStr}`;
+    return `${fmtDate(d)} ${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
   }
 
   /**
@@ -218,7 +219,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
           <Box bg="gray.300" borderRadius="lg" p={3} borderWidth="1px" borderColor="border.default">
             <DatePicker.Root
               inline
-              selectionMode="single"
+              selectionMode="range"
               value={dateValue}
               onValueChange={(details) => setDateValue(details.value)}
               startOfWeek={1}
