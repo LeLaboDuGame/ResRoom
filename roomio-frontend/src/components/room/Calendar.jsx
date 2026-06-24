@@ -105,6 +105,7 @@ export function Reservation({startHour, endHour, color = "blue.500", children, .
  * Provides dayStart/dayEnd via CalendarCtx.
  * @param {number} [dayStart=7] First displayed hour
  * @param {number} [dayEnd=20] Last displayed hour
+ * @param {boolean} [isToday=true] Whether the selected day is today (shows current-time bar)
  * @param {React.ReactNode} children Reservation blocks
  * @param {Object} gridRef Ref for the grid container
  * @param {Function} onPointerDown Pointer down handler
@@ -112,7 +113,7 @@ export function Reservation({startHour, endHour, color = "blue.500", children, .
  * @param {Function} onPointerUp Pointer up handler
  * @returns {JSX.Element} Background calendar grid
  */
-function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown, onPointerMove, onPointerUp}) {
+function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRef, onPointerDown, onPointerMove, onPointerUp}) {
     const hours = Array.from({length: dayEnd - dayStart + 1}, (_, i) => dayStart + i);
 
     const now = new Date();
@@ -148,7 +149,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, children, gridRef, onPointerDown
                         </Stack>
 
                         {/* Current time red bar */}
-                        {showBar && (
+                        {showBar && isToday && (
                             <Box
                                 position="absolute"
                                 top={`${barTop}px`}
@@ -381,6 +382,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             <BgCalendar
                 dayStart={dayStart}
                 dayEnd={dayEnd}
+                isToday={fmtDateKey(selectedDate) === fmtDateKey(new Date())}
                 gridRef={gridRef}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
