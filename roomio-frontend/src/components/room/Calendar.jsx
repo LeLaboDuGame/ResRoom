@@ -472,6 +472,38 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 )}
             </BgCalendar>
 
+            {/* Today button */}
+            <Box
+                as="button"
+                position="absolute"
+                bottom="-10%"
+                left="10%"
+                zIndex={10}
+                bg="red.500"
+                color="white"
+                fontWeight="semibold"
+                fontSize="sm"
+                px={3}
+                py={1}
+                borderRadius="md"
+                _hover={{ bg: "red.400" }}
+                onClick={() => {
+                    setWeekOffset(0);
+                    const d = new Date();
+                    d.setHours(0, 0, 0, 0);
+                    setSelectedDate(d);
+                    // scroll to current hour
+                    const viewport = gridRef.current?.parentElement;
+                    if (viewport) {
+                        const curHour = new Date().getHours() + new Date().getMinutes() / 60;
+                        const scrollTo = PAD_T + (curHour - dayStart) * ROW_H + ROW_H / 2 - 100;
+                        viewport.scrollTop = Math.max(0, scrollTo);
+                    }
+                }}
+            >
+                Today
+            </Box>
+
             {/* Booking form overlay — modal or bottom-anchored */}
             {pendingReservation && roomName && (modalForm ? (
                 <Box
