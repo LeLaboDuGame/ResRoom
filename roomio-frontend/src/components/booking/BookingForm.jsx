@@ -48,8 +48,27 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
   const [dateValue, setDateValue] = useState([defaultParsed, defaultParsed]);
   const [hour, setHour] = useState(defaultHourProp ?? fallbackHour);
   const [minute, setMinute] = useState(defaultMinuteProp ?? fallbackMin);
-  const [endHour, setEndHour] = useState(defaultHourProp !== undefined ? Math.min(dayEnd - 1, defaultHourProp + 1) : fallbackEndHour);
+  const initialEndHour = defaultHourProp !== undefined ? Math.min(dayEnd - 1, defaultHourProp + 1) : fallbackEndHour;
+  const [endHour, setEndHour] = useState(initialEndHour);
   const [endMinute, setEndMinute] = useState(defaultMinuteProp ?? fallbackMin);
+
+  const durationRef = useRef((initialEndHour * 60 + (defaultMinuteProp ?? fallbackMin)) - ((defaultHourProp ?? fallbackHour) * 60 + (defaultMinuteProp ?? fallbackMin)));
+
+  function updateEndFromDuration() {
+    const startMin = hour * 60 + minute;
+    const endMin = Math.min(startMin + durationRef.current, dayEnd * 60 - 5);
+    const newEndHour = Math.floor(endMin / 60);
+    const newEndMin = endMin % 60;
+    if (newEndHour !== endHour || newEndMin !== endMinute) {
+      setEndHour(newEndHour);
+      setEndMinute(newEndMin);
+    }
+  }
+
+  useEffect(() => {
+    updateEndFromDuration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hour, minute]);
 
   const prevTime = useRef({hour, minute, endHour, endMinute});
   useEffect(() => {
@@ -271,7 +290,11 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
                 <ScrollDownSlider
                   items={hourItems}
                   value={String(endHour).padStart(2, "0")}
-                  onChange={(v) => setEndHour(parseInt(v, 10))}
+                  onChange={(v) => {
+                    const eh = parseInt(v, 10);
+                    setEndHour(eh);
+                    durationRef.current = (eh * 60 + endMinute) - (hour * 60 + minute);
+                  }}
                   w={{ base: "60px", md: "80px" }}
                   open={finOpen}
                   onOpenChange={setFinOpen}
@@ -279,7 +302,11 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
                 <ScrollDownSlider
                   items={minItems}
                   value={String(endMinute).padStart(2, "0")}
-                  onChange={(v) => setEndMinute(parseInt(v, 10))}
+                  onChange={(v) => {
+                    const em = parseInt(v, 10);
+                    setEndMinute(em);
+                    durationRef.current = (endHour * 60 + em) - (hour * 60 + minute);
+                  }}
                   w={{ base: "60px", md: "80px" }}
                   open={finOpen}
                   onOpenChange={setFinOpen}
