@@ -213,14 +213,14 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         const dow = today.getDay();
         const monday = new Date(today);
         monday.setDate(today.getDate() - ((dow + 6) % 7) + weekOffset * 7);
-        return Array.from({length: 6}, (_, i) => {
+        return Array.from({length: 7}, (_, i) => {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
             return d;
         });
     }, [weekOffset]);
 
-    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat."];
+    const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Fry."];
 
     /** Formats a Date into "YYYY-MM-DD" */
     const fmtDateKey = useCallback((d) => {
@@ -335,11 +335,18 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             const dy = e.clientY - sw.startY;
             if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
                 sw.handled = true;
-                setSelectedDate(prev => {
-                    const next = new Date(prev);
-                    next.setDate(prev.getDate() + (dx > 0 ? -1 : 1));
-                    return next;
-                });
+                const next = new Date(selectedDate);
+                next.setDate(selectedDate.getDate() + (dx > 0 ? -1 : 1));
+                setSelectedDate(next);
+                // sync weekOffset so day selector follows
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const refMonday = new Date(today);
+                refMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+                const nd = next.getDay();
+                const newMonday = new Date(next);
+                newMonday.setDate(next.getDate() - ((nd + 6) % 7));
+                setWeekOffset(Math.round((newMonday - refMonday) / 604800000));
             }
         }
         swipeGridRef.current = null;
