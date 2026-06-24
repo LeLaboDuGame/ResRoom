@@ -194,6 +194,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         d.setHours(0, 0, 0, 0);
         return d;
     });
+    const [weekOffset, setWeekOffset] = useState(0);
 
     const longTimer = useRef(null);
     const dragRef = useRef(false);
@@ -201,20 +202,21 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const pointerStart = useRef(null);
     const lastClickRef = useRef({time: 0, uid: null});
     const scrollLockRef = useRef(null);
+    const swipeDayRef = useRef(null);
 
-    /** Mon-Sat of the current week */
+    /** Mon-Sat of the week at weekOffset */
     const dayItems = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dow = today.getDay();
         const monday = new Date(today);
-        monday.setDate(today.getDate() - ((dow + 6) % 7));
+        monday.setDate(today.getDate() - ((dow + 6) % 7) + weekOffset * 7);
         return Array.from({length: 6}, (_, i) => {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
             return d;
         });
-    }, []);
+    }, [weekOffset]);
 
     const dayLetters = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat."];
 
@@ -331,10 +333,23 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         return upcoming.sort((a, b) => a.start.localeCompare(b.start));
     }, [reservations, dayStartDate, dayEndDate]);
 
+    const handleDaySwipeStart = useCallback((e) => {
+        swipeDayRef.current = e.clientX;
+    }, []);
+
+    const handleDaySwipeEnd = useCallback((e) => {
+        if (swipeDayRef.current === null) return;
+        const dx = e.clientX - swipeDayRef.current;
+        swipeDayRef.current = null;
+        if (dx > 40) setWeekOffset((o) => o - 1);
+        else if (dx < -40) setWeekOffset((o) => o + 1);
+    }, []);
+
     return (
         <Box h="90%" w="100%" bg="bg.secondary" position="relative">
             {/* Day selector */}
-            <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200">
+            <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200"
+                  onPointerDown={handleDaySwipeStart} onPointerUp={handleDaySwipeEnd}>
                 {dayItems.map((d, i) => {
                     const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
                     const isToday = fmtDateKey(d) === fmtDateKey(new Date());
