@@ -9,19 +9,39 @@ const MAX_ZOOM = 4096;
 const FREE_COLOR = "var(--chakra-colors-status-free)"
 const STARTING_SOON_COLOR = "var(--chakra-colors-status-starting-soon)"
 const MEETING_COLOR = "var(--chakra-colors-status-meeting)"
-const FINISHING_SOON_COLOR = "var(--chakra-colors-status-finishing-soon)"
 
 const STATUS_COLORS = {
     "Free": {fill: FREE_COLOR, stroke: FREE_COLOR},
     "Starting Soon": {fill: STARTING_SOON_COLOR, stroke: STARTING_SOON_COLOR},
     "Meeting": {fill: MEETING_COLOR, stroke: MEETING_COLOR},
-    "Finishing Soon": {fill: FINISHING_SOON_COLOR, stroke: FINISHING_SOON_COLOR},
 };
+
+function lerpColor(c1, c2, t) {
+    const r1 = parseInt(c1.slice(1,3), 16), g1 = parseInt(c1.slice(3,5), 16), b1 = parseInt(c1.slice(5,7), 16);
+    const r2 = parseInt(c2.slice(1,3), 16), g2 = parseInt(c2.slice(3,5), 16), b2 = parseInt(c2.slice(5,7), 16);
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const b = Math.round(b1 + (b2 - b1) * t);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+function getStartingSoonColor(reservations) {
+    const now = new Date();
+    const parsed = reservations
+        .map(r => ({...r, startDate: new Date(r.start?.replace(" ", "T"))}))
+        .filter(r => !isNaN(r.startDate?.getTime()));
+    const next = parsed.filter(r => r.startDate > now).sort((a, b) => a.startDate - b.startDate)[0];
+    if (!next) return STARTING_SOON_COLOR;
+    const diffMs = next.startDate - now;
+    const progress = 1 - diffMs / (15 * 60000); // 0 at threshold, 1 at start time
+    const t = Math.max(0, Math.min(1, progress));
+    return lerpColor("#fbbf24", "#ff0000", t);
+}
 
 /**
  * Determines the occupancy status of a room from its reservations.
  * @param {Array} reservations List of reservation objects with start/end
- * @returns {"Free"|"Starting Soon"|"Meeting"|"Finishing Soon"} Status string
+ * @returns {"Free"|"Starting Soon"|"Meeting"} Status string
  */
 function getRoomStatus(reservations) {
     const now = new Date();
@@ -34,9 +54,7 @@ function getRoomStatus(reservations) {
         }))
         .filter(r => !isNaN(r.startDate.getTime()) && !isNaN(r.endDate.getTime()));
     const active = parsed.find(r => r.startDate <= now && now <= r.endDate);
-    if (active) {
-        return (active.endDate - now) / 60000 <= 15 ? "Finishing Soon" : "Meeting";
-    }
+    if (active) return "Meeting";
     const next = parsed.filter(r => r.startDate > now).sort((a, b) => a.startDate - b.startDate)[0];
     if (next && (next.startDate - now) / 60000 <= 15) return "Starting Soon";
     return "Free";
@@ -268,10 +286,9 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
     const vbStr = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
 
     const legendItems = [
-        {color: "#43957c", label: "Libre / Free"},
-        {color: "#cdac5f", label: "Bientôt occupée / Starting Soon"},
-        {color: "#74394d", label: "En réunion / Meeting"},
-        {color: "#ff6b9d", label: "Termine / Finishing Soon"},
+        {color: "status.free", label: "Free"},
+        {color: "status.startingSoon", label: "Starting Soon"},
+        {color: "status.meeting", label: "Meeting"},
     ];
 
     const WALL_COLOR = "#555";
@@ -293,11 +310,11 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
         const isSelected = selectedRoom && room.name === selectedRoom;
         const isDimmed = dimmedRooms?.length > 0 && !dimmedRooms.includes(room.name);
 
-        let fill = colors.fill;
-        let stroke = colors.stroke;
-        let fillOpacity = 0.25;
-        let strokeOpacity = 0.5;
-        let strokeWidth = 1.5;
+        let fill = status === "Starting Soon" && roomData ? getStartingSoonColor(roomData.reservations) : colors.fill;
+        let stroke = fill;
+        let fillOpacity = 0.6;
+        let strokeOpacity = 0.8;
+        let strokeWidth = 10;
 
         if (isDimmed) {
             fillOpacity = 0.04;
