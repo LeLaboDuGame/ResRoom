@@ -506,14 +506,15 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 bottom="-10%"
                 left="10%"
                 zIndex={10}
-                bg="red.500"
+                width="100px"
+                bg="blue.700/30"
                 color="white"
                 fontWeight="semibold"
                 fontSize="sm"
                 px={3}
                 py={1}
-                borderRadius="md"
-                _hover={{ bg: "red.400" }}
+                borderRadius="50px"
+                _hover={{ bg: "blue.400"}}
                 onClick={() => {
                     setWeekOffset(0);
                     const d = new Date();
