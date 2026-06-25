@@ -1,7 +1,7 @@
 import {useState, useEffect, useMemo, useCallback, useRef} from "react";
 import {Box, Flex, Text, IconButton, Spinner, Button, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
 import {useParams, useNavigate} from "react-router-dom";
-import {ArrowLeft, ChevronLeft} from "lucide-react";
+import {ArrowLeft, ChevronLeft, ChevronRight} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
 import {deleteReservation} from "../api/apiCall.js";
 import {RoomStatusCard} from "../components/room/RoomStatusCard";
@@ -148,6 +148,7 @@ export default function FleetRoom() {
     }
 
     function goToBooking() {
+        window.history.pushState({view: "booking"}, "");
         setView("booking");
         setSelectedRoomName(roomName);
     }
@@ -156,6 +157,17 @@ export default function FleetRoom() {
         setView("room");
         setSelectedRoomName(roomName);
     }
+
+    // Intercept browser back gesture (edge swipe / hardware back) → go to room view
+    useEffect(() => {
+        const handler = () => {
+            if (view === "booking") {
+                goToRoom();
+            }
+        };
+        window.addEventListener("popstate", handler);
+        return () => window.removeEventListener("popstate", handler);
+    }, [view]);
 
     const pendingTimeRange = useMemo(() => {
         if (!bookingFormData) return null;
@@ -329,7 +341,30 @@ export default function FleetRoom() {
 
     return (
         <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative"
+             style={{touchAction: "pan-y"}}
              onPointerDown={handleBookingSwipeStart} onPointerMove={handleBookingSwipeMove} onPointerUp={handleBookingSwipeEnd}>
+
+            {/* Swipe indicator — left edge */}
+            <Flex
+                position="absolute"
+                left={0}
+                top="50%"
+                transform="translateY(-50%)"
+                zIndex={30}
+                align="center"
+                justify="center"
+                pointerEvents="none"
+                userSelect="none"
+                w={5}
+                h={12}
+                bg="rgba(255,255,255,0.06)"
+                borderLeft="1px solid rgba(255,255,255,0.1)"
+                borderRight="1px solid rgba(255,255,255,0.1)"
+                borderRightRadius="md"
+                style={{borderTopLeftRadius: 0, borderBottomLeftRadius: 0}}
+            >
+                <ChevronRight size={20} color="rgba(255,255,255,0.35)" strokeWidth={2.5}/>
+            </Flex>
 
             <SplitterRoot defaultSize={[35, 65]} panels={[{id: "left"}, {id: "right"}]} style={{height: "100%", width: "100%"}}>
                 <SplitterPanel id="left" style={{padding: 24, display: "flex", flexDirection: "column", gap: 16, overflow: "hidden"}}>
