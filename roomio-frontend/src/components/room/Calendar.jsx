@@ -287,10 +287,11 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
             const dy = e.clientY - sw.startY;
             if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
                 sw.handled = true;
+                onGridSwipe?.(dx < 0 ? 1 : -1);
             }
         }
         swipeGridRef.current = null;
-    }, [provisional, onNewReservation, date, fmtDateKey, onPendingChange]);
+    }, [provisional, onNewReservation, date, fmtDateKey, onPendingChange, onGridSwipe]);
 
     return (
         <Box flex={1} minW="0" position="relative"
