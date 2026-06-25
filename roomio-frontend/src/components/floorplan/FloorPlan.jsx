@@ -421,11 +421,10 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
                                 x={centroid.x}
                                 y={centroid.y}
                                 fill="#f5f5f7"
-                                fontSize={Math.max(8, Math.min(16, (defaultVb.w + defaultVb.h) / 60))}
                                 textAnchor="middle"
                                 dominantBaseline="central"
                                 pointerEvents="none"
-                                style={{textShadow: "0 1px 3px rgba(0,0,0,0.8)"}}
+                                style={{fontSize: 35, fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.8)"}}
                             >
                                 {room.name}
                             </text>
