@@ -1,4 +1,4 @@
-import {useState, createContext, useContext, useRef, useCallback, useMemo} from "react";
+import {useState, useEffect, createContext, useContext, useRef, useCallback, useMemo} from "react";
 import {
     Box, Flex, Text, ScrollArea, Stack, Collapsible
 } from "@chakra-ui/react";
@@ -432,6 +432,23 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         return days;
     }, [selectedDate, splitDays]);
 
+    /** Synchronise scroll between split viewports */
+    useEffect(() => {
+        const vps = viewportRefs.current.filter(Boolean);
+        if (vps.length < 2) return;
+        const onScroll = (e) => {
+            scrollTopRef.current = e.target.scrollTop;
+            const sy = scrollTopRef.current;
+            vps.forEach((vp) => {
+                if (Math.abs(vp.scrollTop - sy) > 1) {
+                    vp.scrollTop = sy;
+                }
+            });
+        };
+        vps.forEach((vp) => vp.addEventListener("scroll", onScroll, {passive: true}));
+        return () => vps.forEach((vp) => vp.removeEventListener("scroll", onScroll));
+    }, [dayRange]);
+
     /** Mon-Sat of the week at weekOffset */
     const dayItems = useMemo(() => {
         const today = new Date();
@@ -519,27 +536,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                         isLast={idx === dayRange.length - 1}
                         pendingTimeRange={pendingTimeRange}
                         bumpIn={bumpIn}
-                        viewportRef={(el) => {
-                            viewportRefs.current[idx] = el;
-                            if (el) {
-                                el._scrollHandler = () => {
-                                    const sy = el.scrollTop;
-                                    if (sy === scrollTopRef.current) return;
-                                    scrollTopRef.current = sy;
-                                    viewportRefs.current.forEach((vp, i) => {
-                                        if (vp && i !== idx && Math.abs(vp.scrollTop - sy) > 1) {
-                                            vp.scrollTop = sy;
-                                        }
-                                    });
-                                };
-                                el.addEventListener("scroll", el._scrollHandler, {passive: true});
-                            } else {
-                                const prev = viewportRefs.current[idx];
-                                if (prev && prev._scrollHandler) {
-                                    prev.removeEventListener("scroll", prev._scrollHandler);
-                                }
-                            }
-                        }}
+                        viewportRef={(el) => { viewportRefs.current[idx] = el; }}
                         onPendingChange={idx === 0 ? setPendingReservation : undefined}
                         onGridSwipe={(dir) => {
                             const next = new Date(selectedDate);
