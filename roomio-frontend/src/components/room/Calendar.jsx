@@ -186,7 +186,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
  * @param {boolean} [modalForm=false] Render the booking form as a centered modal overlay
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange}) {
+export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1}) {
     const {dayStart, dayEnd} = useSettings();
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
@@ -205,6 +205,17 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const scrollLockRef = useRef(null);
     const swipeDayRef = useRef(null);
     const swipeGridRef = useRef(null);
+
+    /** Array of consecutive days to display starting from selectedDate */
+    const dayRange = useMemo(() => {
+        const days = [];
+        for (let i = 0; i < splitDays; i++) {
+            const d = new Date(selectedDate);
+            d.setDate(selectedDate.getDate() + i);
+            days.push(d);
+        }
+        return days;
+    }, [selectedDate, splitDays]);
 
     /** Mon-Sat of the week at weekOffset */
     const dayItems = useMemo(() => {
@@ -352,14 +363,6 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         swipeGridRef.current = null;
     }, [provisional, onNewReservation, selectedDate, fmtDateKey]);
 
-    /* Filter reservations for the selected date, within operating hours, sorted */
-    const dayStartDate = useMemo(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), dayStart, 0, 0), [selectedDate, dayStart]);
-    const dayEndDate = useMemo(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), dayEnd, 0, 0), [selectedDate, dayEnd]);
-    const sorted = useMemo(() => {
-        const upcoming = reservations.filter((r) => new Date(r.end) > dayStartDate && new Date(r.start) < dayEndDate);
-        return upcoming.sort((a, b) => a.start.localeCompare(b.start));
-    }, [reservations, dayStartDate, dayEndDate]);
-
     const handleDaySwipeStart = useCallback((e) => {
         swipeDayRef.current = e.clientX;
     }, []);
@@ -408,96 +411,118 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 })}
             </Flex>
 
-            <BgCalendar
-                dayStart={dayStart}
-                dayEnd={dayEnd}
-                isToday={fmtDateKey(selectedDate) === fmtDateKey(new Date())}
-                gridRef={gridRef}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-            >
-                {/* Existing reservation blocks */}
-                {sorted.map(r => {
-                    const rStart = new Date(r.start.replace(" ", "T"));
-                    const rEnd = new Date(r.end.replace(" ", "T"));
-                    const clipStart = new Date(Math.max(rStart.getTime(), dayStartDate.getTime()));
-                    const clipEnd = new Date(Math.min(rEnd.getTime(), dayEndDate.getTime()));
-                    const s = `${String(clipStart.getHours()).padStart(2, "0")}:${String(clipStart.getMinutes()).padStart(2, "0")}`;
-                    const e = `${String(clipEnd.getHours()).padStart(2, "0")}:${String(clipEnd.getMinutes()).padStart(2, "0")}`;
-                    const multiDay = rStart.toDateString() !== rEnd.toDateString();
-                    const isStartDay = rStart.toDateString() === selectedDate.toDateString();
-                    const isEndDay = rEnd.toDateString() === selectedDate.toDateString();
-                    const label = multiDay
-                        ? isStartDay ? `${s} – ${e} → +1` : isEndDay ? `← ${s} – ${e}` : `↔`
-                        : `${s} – ${e}`;
+            <Flex direction="row" w="100%" flex={1} overflow="hidden">
+                {dayRange.map((d, idx) => {
+                    const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate(), dayStart, 0, 0);
+                    const de = new Date(d.getFullYear(), d.getMonth(), d.getDate(), dayEnd, 0, 0);
+                    const dayReservations = reservations
+                        .filter((r) => new Date(r.end) > ds && new Date(r.start) < de)
+                        .sort((a, b) => a.start.localeCompare(b.start));
+                    const isPrimary = idx === 0;
+
                     return (
-                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
-                                     style={{
-                                         cursor: onDeleteReservation ? "pointer" : undefined,
-                                         borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
-                                     }}
-                                     onClick={() => {
-                                         if (!onDeleteReservation) return;
-                                         const now = Date.now();
-                                         const prev = lastClickRef.current;
-                                         if (prev.uid === r.uid && now - prev.time < DBL_CLICK_DELAY) {
-                                             lastClickRef.current = {time: 0, uid: null};
-                                             onDeleteReservation(r);
-                                         } else {
-                                             lastClickRef.current = {time: now, uid: r.uid};
-                                         }
-                                     }}>
-                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                {r.title}
+                        <Box key={d.toISOString()} flex={1} minW="0" position="relative"
+                             borderRight={idx < dayRange.length - 1 ? "1px solid" : undefined}
+                             borderColor="whiteAlpha.200">
+                            {/* Day column header */}
+                            <Text textAlign="center" fontSize="xs" color="text.secondary" py={1}
+                                  bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.100">
+                                {dayLetters[(d.getDay() + 6) % 7]} {d.getDate()}/{d.getMonth() + 1}
                             </Text>
-                            <Text fontSize="xs" color="whiteAlpha.800">
-                                {label} · {r.reserved_by}
-                            </Text>
-                        </Reservation>
+
+                            <BgCalendar
+                                dayStart={dayStart}
+                                dayEnd={dayEnd}
+                                isToday={fmtDateKey(d) === fmtDateKey(new Date())}
+                                gridRef={isPrimary ? gridRef : undefined}
+                                onPointerDown={isPrimary ? handlePointerDown : undefined}
+                                onPointerMove={isPrimary ? handlePointerMove : undefined}
+                                onPointerUp={isPrimary ? handlePointerUp : undefined}
+                            >
+                                {/* Reservation blocks for this day */}
+                                {dayReservations.map(r => {
+                                    const rStart = new Date(r.start.replace(" ", "T"));
+                                    const rEnd = new Date(r.end.replace(" ", "T"));
+                                    const clipStart = new Date(Math.max(rStart.getTime(), ds.getTime()));
+                                    const clipEnd = new Date(Math.min(rEnd.getTime(), de.getTime()));
+                                    const s = `${String(clipStart.getHours()).padStart(2, "0")}:${String(clipStart.getMinutes()).padStart(2, "0")}`;
+                                    const e = `${String(clipEnd.getHours()).padStart(2, "0")}:${String(clipEnd.getMinutes()).padStart(2, "0")}`;
+                                    const multiDay = rStart.toDateString() !== rEnd.toDateString();
+                                    const isStartDay = rStart.toDateString() === d.toDateString();
+                                    const isEndDay = rEnd.toDateString() === d.toDateString();
+                                    const label = multiDay
+                                        ? isStartDay ? `${s} – ${e} → +1` : isEndDay ? `← ${s} – ${e}` : `↔`
+                                        : `${s} – ${e}`;
+                                    return (
+                                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
+                                                     style={{
+                                                         cursor: onDeleteReservation ? "pointer" : undefined,
+                                                         borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
+                                                     }}
+                                                     onClick={() => {
+                                                         if (!onDeleteReservation) return;
+                                                         const now = Date.now();
+                                                         const prev = lastClickRef.current;
+                                                         if (prev.uid === r.uid && now - prev.time < DBL_CLICK_DELAY) {
+                                                             lastClickRef.current = {time: 0, uid: null};
+                                                             onDeleteReservation(r);
+                                                         } else {
+                                                             lastClickRef.current = {time: now, uid: r.uid};
+                                                         }
+                                                     }}>
+                                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
+                                                {r.title}
+                                            </Text>
+                                            <Text fontSize="xs" color="whiteAlpha.800">
+                                                {label} · {r.reserved_by}
+                                            </Text>
+                                        </Reservation>
+                                    );
+                                })}
+
+                                {/* Provisional block — only on primary day */}
+                                {provisional && isPrimary && (() => {
+                                    const endDec = provisional.startDec + 1;
+                                    const sh = fmtHHMM(provisional.startDec);
+                                    const eh = fmtHHMM(endDec);
+                                    return (
+                                        <Reservation key="__provisional" startHour={sh} endHour={eh} color="purple.500"
+                                                     animation={`${bumpIn} 0.2s ease-out`}
+                                                     transformOrigin="top center"
+                                        >
+                                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
+                                                Nouvelle réservation
+                                            </Text>
+                                            <Text fontSize="xs" color="whiteAlpha.800">
+                                                {sh} – {eh}
+                                            </Text>
+                                        </Reservation>
+                                    );
+                                })()}
+
+                                {/* Pending reservation block — only on primary day */}
+                                {pendingReservation && !provisional && isPrimary && (
+                                    <Reservation
+                                        key="__pending"
+                                        startHour={pendingTimeRange?.startHour || pendingReservation.startHour}
+                                        endHour={pendingTimeRange?.endHour || pendingReservation.endHour}
+                                        color="purple.500"
+                                        animation={`${bumpIn} 0.2s ease-out`}
+                                        transformOrigin="top center"
+                                    >
+                                        <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
+                                            Nouvelle réservation
+                                        </Text>
+                                        <Text fontSize="xs" color="whiteAlpha.800">
+                                            {pendingTimeRange?.startHour || pendingReservation.startHour} – {pendingTimeRange?.endHour || pendingReservation.endHour}
+                                        </Text>
+                                    </Reservation>
+                                )}
+                            </BgCalendar>
+                        </Box>
                     );
                 })}
-
-                {/* Provisional block (long-press drag preview) */}
-                {provisional && (() => {
-                    const endDec = provisional.startDec + 1;
-                    const sh = fmtHHMM(provisional.startDec);
-                    const eh = fmtHHMM(endDec);
-                    return (
-                        <Reservation key="__provisional" startHour={sh} endHour={eh} color="purple.500"
-                                     animation={`${bumpIn} 0.2s ease-out`}
-                                     transformOrigin="top center"
-
-                        >
-                            <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                Nouvelle réservation
-                            </Text>
-                            <Text fontSize="xs" color="whiteAlpha.800">
-                                {sh} – {eh}
-                            </Text>
-                        </Reservation>
-                    );
-                })()}
-
-                {/* Pending reservation block (kept after release while form is open) */}
-                {pendingReservation && !provisional && (
-                    <Reservation
-                        key="__pending"
-                        startHour={pendingTimeRange?.startHour || pendingReservation.startHour}
-                        endHour={pendingTimeRange?.endHour || pendingReservation.endHour}
-                        color="purple.500"
-                        animation={`${bumpIn} 0.2s ease-out`}
-                        transformOrigin="top center"
-                    >
-                        <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                            Nouvelle réservation
-                        </Text>
-                        <Text fontSize="xs" color="whiteAlpha.800">
-                            {pendingTimeRange?.startHour || pendingReservation.startHour} – {pendingTimeRange?.endHour || pendingReservation.endHour}
-                        </Text>
-                    </Reservation>
-                )}
-            </BgCalendar>
+            </Flex>
 
             {/* Today button */}
             <Box
