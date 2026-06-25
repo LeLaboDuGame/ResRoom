@@ -46,6 +46,8 @@ export default function FleetRoom() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
     const [bookingFormData, setBookingFormData] = useState(null);
+    const [leftPanelSize, setLeftPanelSize] = useState(35);
+    const calendarSplitDays = leftPanelSize >= 50 ? 2 : 1;
 
     // Reset selected room when current room changes
     useEffect(() => {
@@ -116,6 +118,7 @@ export default function FleetRoom() {
     }
 
     const swipeRef = useRef(null);
+    const leftPanelRef = useRef(null);
 
     function handleSwipeStart(e) {
         if (e.clientX > window.innerWidth - 40) {
@@ -177,6 +180,19 @@ export default function FleetRoom() {
         };
         window.addEventListener("popstate", handler);
         return () => window.removeEventListener("popstate", handler);
+    }, [view]);
+
+    // Track left panel width → auto split calendar when ≥ 50%
+    useEffect(() => {
+        const el = leftPanelRef.current;
+        if (!el || view !== "booking") return;
+        const observer = new ResizeObserver((entries) => {
+            const {width} = entries[0].contentRect;
+            const pct = (width / window.innerWidth) * 100;
+            setLeftPanelSize(pct);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
     }, [view]);
 
     const pendingTimeRange = useMemo(() => {
@@ -362,7 +378,6 @@ export default function FleetRoom() {
 
     return (
         <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative"
-             style={{touchAction: "pan-y"}}
              onPointerDown={handleBookingSwipeStart} onPointerMove={handleBookingSwipeMove}
              onPointerUp={handleBookingSwipeEnd}>
 
@@ -415,7 +430,7 @@ export default function FleetRoom() {
                     </Flex>
 
                     {/* Calendar */}
-                    <Box flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
+                    <Box ref={leftPanelRef} flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
                         <Calendar
                             key={bookingKey}
                             reservations={currentRoom?.reservations || []}
@@ -423,6 +438,7 @@ export default function FleetRoom() {
                             onBookingSuccess={handleBookingSuccess}
                             onNewReservation={(data) => setBookingFormData(data)}
                             pendingTimeRange={pendingTimeRange}
+                            splitDays={calendarSplitDays}
                         />
                     </Box>
                 </SplitterPanel>

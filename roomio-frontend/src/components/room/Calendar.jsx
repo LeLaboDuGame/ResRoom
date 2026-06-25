@@ -376,7 +376,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     }, []);
 
     return (
-        <Box h="90%" w="100%" bg="bg.secondary" position="relative">
+        <Box h="90%" w="100%" bg="bg.secondary" position="relative" display="flex" flexDirection="column">
             {/* Day selector */}
             <Flex justify="center" gap={2} py={3} px={2} bg="bg.secondary" borderBottom="1px solid" borderColor="whiteAlpha.200"
                   onPointerDown={handleDaySwipeStart} onPointerUp={handleDaySwipeEnd}>
