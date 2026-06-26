@@ -494,6 +494,8 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                 {dayItems.map((d, i) => {
                     const isSelected = fmtDateKey(d) === fmtDateKey(selectedDate);
                     const isToday = fmtDateKey(d) === fmtDateKey(new Date());
+                    const inRange = dayRange.some(r => fmtDateKey(r) === fmtDateKey(d));
+                    const isRangeDay = dayRange.length >= 2 && inRange && !isSelected;
                     return (
                         <Box
                             key={fmtDateKey(d)}
@@ -508,14 +510,14 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
                             borderRadius="md"
                             cursor="pointer"
                             position="relative"
-                            bg={isSelected ? (isToday ? "red.500" : "accent.default") : "transparent"}
-                            color={isSelected ? "white" : "text.secondary"}
+                            bg={isSelected ? (isToday ? "red.500" : "accent.default") : isRangeDay ? "blue.800" : "transparent"}
+                            color={isSelected ? "white" : isRangeDay ? "whiteAlpha.800" : "text.secondary"}
                             fontWeight={isSelected ? "bold" : "medium"}
                             fontSize="sm"
                             transition="all 0.15s"
                             _hover={!isSelected ? {bg: "whiteAlpha.100"} : undefined}
                         >
-                            <Text fontSize="md" lineHeight={1.3} fontWeight="semibold" color={!isSelected && isToday ? "red.400" : undefined}>{dayLetters[i]}</Text>
+                            <Text fontSize="md" lineHeight={1.3} fontWeight="semibold" color={!isSelected && isToday ? "red.400" : "inherit"}>{dayLetters[i]}</Text>
                             <Text fontSize="xs" color={isSelected ? "whiteAlpha.800" : "text.muted"}>{d.getDate()}/{d.getMonth() + 1}</Text>
                         </Box>
                     );
