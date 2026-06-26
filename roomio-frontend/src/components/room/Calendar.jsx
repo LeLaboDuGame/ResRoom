@@ -176,6 +176,21 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
  * A single day column inside the split calendar.
  * Owns its own interaction state (provisional, drag, etc.)
  * so each column supports long-press independently.
+ * @param {Date} date Day to display
+ * @param {Array} reservations Reservation list
+ * @param {number} dayStart First displayed hour
+ * @param {number} dayEnd Last displayed hour
+ * @param {string[]} dayLetters Day-of-week labels
+ * @param {Function} [onDeleteReservation] Called with reservation on double-click
+ * @param {Function} [onNewReservation] Called with {date, dateStr, startHour, endHour} on provisional release
+ * @param {Function} fmtDateKey Date-to-string formatter
+ * @param {boolean} isLast Whether this is the rightmost column
+ * @param {Object} [pendingTimeRange] External time range for pending reservation
+ * @param {Object} bumpIn Keyframe animation object
+ * @param {Function} viewportRef Callback ref for the scroll viewport
+ * @param {Function} [onPendingChange] Called with pending reservation data
+ * @param {Function} [onGridSwipe] Called with direction (1/-1) when horizontal swipe detected
+ * @returns {JSX.Element} DayColumn component
  */
 function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteReservation, onNewReservation, fmtDateKey, isLast, pendingTimeRange, bumpIn, viewportRef, onPendingChange, onGridSwipe}) {
     const [provisional, setProvisional] = useState(null);
@@ -405,7 +420,10 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
  * @param {Array} [existingReservations] Existing reservations for overlap check
  * @param {Function} [onDeleteReservation] Called with reservation object on double-click
  * @param {Function} [onBookingSuccess] Called with new reservation after successful booking
+ * @param {Function|React.ReactNode} [collapsibleContent] Custom content for the booking form overlay
  * @param {boolean} [modalForm=false] Render the booking form as a centered modal overlay
+ * @param {Object} [pendingTimeRange] External startHour/endHour for the pending block
+ * @param {number} [splitDays=1] Number of consecutive days to display side by side
  * @returns {JSX.Element} Calendar component
  */
 export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1}) {
