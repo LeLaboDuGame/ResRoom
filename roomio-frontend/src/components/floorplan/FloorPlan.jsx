@@ -16,6 +16,13 @@ const STATUS_COLORS = {
     "Meeting": {fill: MEETING_COLOR, stroke: MEETING_COLOR},
 };
 
+/**
+ * Linearly interpolates between two hex colours.
+ * @param {string} c1 Start colour in "#rrggbb" format
+ * @param {string} c2 End colour in "#rrggbb" format
+ * @param {number} t Interpolation factor (0–1)
+ * @returns {string} Interpolated hex colour
+ */
 function lerpColor(c1, c2, t) {
     const r1 = parseInt(c1.slice(1,3), 16), g1 = parseInt(c1.slice(3,5), 16), b1 = parseInt(c1.slice(5,7), 16);
     const r2 = parseInt(c2.slice(1,3), 16), g2 = parseInt(c2.slice(3,5), 16), b2 = parseInt(c2.slice(5,7), 16);
@@ -25,6 +32,12 @@ function lerpColor(c1, c2, t) {
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
+/**
+ * Returns a colour for rooms whose next reservation starts within 15 minutes.
+ * Starts yellow (#fbbf24) at the threshold and fades to red (#ff0000) at start time.
+ * @param {Array} reservations List of reservation objects with start/end
+ * @returns {string} Hex colour string
+ */
 function getStartingSoonColor(reservations) {
     const now = new Date();
     const parsed = reservations
