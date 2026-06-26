@@ -98,6 +98,7 @@ export default function FleetRoom() {
             .map((r) => r.name);
     }, [rooms, filters]);
 
+    /** Called after a successful booking — refreshes room data and returns to room view. */
     function handleBookingSuccess() {
         setBookingKey((k) => k + 1);
         refetchRoom();
@@ -105,6 +106,10 @@ export default function FleetRoom() {
         goToRoom();
     }
 
+    /**
+     * Deletes a reservation and refreshes room data.
+     * @param {string} uid Reservation UID
+     */
     async function handleDeleteReservation(uid) {
         setDeleteError(null);
         try {
@@ -120,12 +125,21 @@ export default function FleetRoom() {
     const swipeRef = useRef(null);
     const leftPanelRef = useRef(null);
 
+    /**
+     * Captures pointer start for left-edge swipe (opening booking view).
+     * Only activates when the pointer enters the rightmost 40 px of the screen.
+     * @param {React.PointerEvent} e Pointer event
+     */
     function handleSwipeStart(e) {
         if (e.clientX > window.innerWidth - 40) {
             swipeRef.current = {startX: e.clientX, startY: e.clientY};
         }
     }
 
+    /**
+     * If a left-edge swipe exceeds 50 px leftward with minimal vertical drift, opens booking view.
+     * @param {React.PointerEvent} e Pointer event
+     */
     function handleSwipeMove(e) {
         if (!swipeRef.current) return;
         const dx = e.clientX - swipeRef.current.startX;
@@ -136,16 +150,26 @@ export default function FleetRoom() {
         }
     }
 
+    /** Cleans up swipe state on pointer up. */
     function handleSwipeEnd() {
         swipeRef.current = null;
     }
 
+    /**
+     * Captures pointer start for right-edge swipe (returning from booking view).
+     * Only activates when the pointer enters the leftmost 40 px of the screen.
+     * @param {React.PointerEvent} e Pointer event
+     */
     function handleBookingSwipeStart(e) {
         if (e.clientX < 40) {
             swipeRef.current = {startX: e.clientX, startY: e.clientY};
         }
     }
 
+    /**
+     * If a right-edge swipe exceeds 50 px rightward with minimal vertical drift, returns to room view.
+     * @param {React.PointerEvent} e Pointer event
+     */
     function handleBookingSwipeMove(e) {
         if (!swipeRef.current) return;
         const dx = e.clientX - swipeRef.current.startX;
@@ -156,16 +180,22 @@ export default function FleetRoom() {
         }
     }
 
+    /** Cleans up booking-swipe state on pointer up. */
     function handleBookingSwipeEnd() {
         swipeRef.current = null;
     }
 
+    /**
+     * Pushes a history entry and switches to the booking view.
+     * Enables back-gesture interception via popstate.
+     */
     function goToBooking() {
         window.history.pushState({view: "booking"}, "");
         setView("booking");
         setSelectedRoomName(roomName);
     }
 
+    /** Returns to the room view (no history entry). */
     function goToRoom() {
         setView("room");
         setSelectedRoomName(roomName);
