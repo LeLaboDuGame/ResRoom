@@ -20,3 +20,13 @@ Application source code for the ResRoom frontend (React 19, Chakra UI v3, Vite 8
 - **`App.jsx`** — Root component with React Router route definitions
 - **`App.css`** — App-level styles
 - **`index.css`** — Global styles (CSS reset, fonts)
+
+## Conventions
+
+- **Exports**: Page components use `export default`; all other components/modules use named `export`.
+- **JSDoc**: Every exported function and internal helper of non-trivial size has a JSDoc block describing its purpose, parameters, and return value.
+- **Hooks** (in `hooks/`) each return a plain object — no context providers unless necessary.
+- **Components** in `components/` are grouped by domain subdirectory. Generic/reusable primitives live under `components/ui/`.
+- **Utils** (`utils/`) are pure functions with no React dependencies.
+- **HTTP calls** go through `api/apiCall.js` — components never call `fetch` directly.
+- **Colour tokens** reference Chakra UI semantic tokens defined in `config/theme.js`.

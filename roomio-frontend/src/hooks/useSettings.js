@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { fetchSettings } from "../api/apiCall.js";
 import { SETTINGS } from "../config/settings";
 
+/**
+ * Fetch global settings (day start/end, notification thresholds) once on mount.
+ * Falls back to SETTINGS defaults when the API call fails.
+ * @returns {{ dayStart: number, dayEnd: number, startingSoonBefore: number, finishingSoonBefore: number, loading: boolean }}
+ */
 export function useSettings() {
   const [settings, setSettings] = useState({
     dayStart: SETTINGS.DAY_START,
