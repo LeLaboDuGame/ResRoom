@@ -1,16 +1,64 @@
-# React + Vite
+# ResRoom — Roomio Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Room booking dashboard for the ResRoom ecosystem. Built with **React 19**, **Chakra UI v3**, and **Vite 8**.
 
-Currently, two official plugins are available:
+## Quick start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev        # development server with HMR
+npm run build      # production build
+npm run preview    # preview production build locally
+```
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 |
+| UI library | Chakra UI v3 |
+| Build tool | Vite 8 |
+| Language | JavaScript (JSX) |
+| Routing | react-router-dom |
+| HTTP | fetch-based client in `src/api/` |
+| Icons | lucide-react |
 
-## Expanding the ESLint configuration
+## Project structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+roomio-frontend/
+├── public/            Static assets served as-is
+├── src/
+│   ├── api/           HTTP client for the backend REST API
+│   ├── assets/        Static assets (SVGs, floor plan JSON)
+│   ├── components/    Reusable UI components by domain
+│   │   ├── admin/     Admin panel (rooms, settings, history)
+│   │   ├── booking/   Booking form, button, delete modal
+│   │   ├── floorplan/ Interactive SVG floor plan
+│   │   ├── layout/    App shell and header
+│   │   ├── room/      Calendar, room card, info panel, progress
+│   │   └── ui/        Generic primitives (Clock, StatusBadge, …)
+│   ├── config/        Theme tokens and app settings
+│   ├── hooks/         Custom React hooks (useRooms, useSettings, …)
+│   ├── pages/         Page components, one per route
+│   └── utils/         Pure utility functions (SVG shapes, timeline)
+├── index.html         Entry HTML
+├── vite.config.js     Vite configuration
+└── package.json       Dependencies and scripts
+```
+
+## Routes
+
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/` | `Dashboard` | Floor plan + side panel with daily calendar and booking form |
+| `/admin` | `Admin` | Admin panel (rooms, settings, history) |
+| `/debug` | `Debug` | Dev/testing page for UI components and API calls |
+| `/fleet/:roomName` | `FleetRoom` | Kiosk-style single-room page with split layout and booking |
+
+## Available scripts
+
+- `npm run dev` — Start Vite dev server with HMR
+- `npm run build` — Build for production
+- `npm run preview` — Preview the production build
+- `npm run lint` — Run ESLint
