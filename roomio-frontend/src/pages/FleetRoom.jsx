@@ -1,5 +1,15 @@
 import {useState, useEffect, useMemo, useCallback, useRef} from "react";
-import {Box, Flex, Text, IconButton, Spinner, Button, SplitterRoot, SplitterPanel, SplitterResizeTrigger} from "@chakra-ui/react";
+import {
+    Box,
+    Flex,
+    Text,
+    IconButton,
+    Spinner,
+    Button,
+    SplitterRoot,
+    SplitterPanel,
+    SplitterResizeTrigger
+} from "@chakra-ui/react";
 import {useParams, useNavigate} from "react-router-dom";
 import {ArrowLeft, ChevronLeft, ChevronRight} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
@@ -36,6 +46,8 @@ export default function FleetRoom() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
     const [bookingFormData, setBookingFormData] = useState(null);
+    const [leftPanelSize, setLeftPanelSize] = useState(35);
+    const calendarSplitDays = leftPanelSize >= 50 ? 2 : 1;
 
     // Reset selected room when current room changes
     useEffect(() => {
@@ -106,6 +118,7 @@ export default function FleetRoom() {
     }
 
     const swipeRef = useRef(null);
+    const leftPanelRef = useRef(null);
 
     function handleSwipeStart(e) {
         if (e.clientX > window.innerWidth - 40) {
@@ -169,6 +182,19 @@ export default function FleetRoom() {
         return () => window.removeEventListener("popstate", handler);
     }, [view]);
 
+    // Track left panel width → auto split calendar when ≥ 50%
+    useEffect(() => {
+        const el = leftPanelRef.current;
+        if (!el || view !== "booking") return;
+        const observer = new ResizeObserver((entries) => {
+            const {width} = entries[0].contentRect;
+            const pct = (width / window.innerWidth) * 100;
+            setLeftPanelSize(pct);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [view]);
+
     const pendingTimeRange = useMemo(() => {
         if (!bookingFormData) return null;
         return {startHour: bookingFormData.startHour, endHour: bookingFormData.endHour};
@@ -220,8 +246,8 @@ export default function FleetRoom() {
 
                 <Flex h="100%" w="100%">
                     {/* Left 50%: Room status card */}
-                    <Box w="50%" h="100%" p={6} display="flex" >
-                        <Box w="100%" maxW="95%" flex={1} display="flex" >
+                    <Box w="50%" h="100%" p={6} display="flex">
+                        <Box w="100%" maxW="95%" flex={1} display="flex">
                             <RoomStatusCard room={room} onBook={goToBooking} activateReservationButton={false}/>
                         </Box>
                     </Box>
@@ -236,10 +262,10 @@ export default function FleetRoom() {
                                 key={bookingKey}
                                 reservations={room?.reservations || []}
                                 existingReservations={room?.reservations || []}
-                            onBookingSuccess={handleBookingSuccess}
-                            onDeleteReservation={setDeleteTarget}
-                            onNewReservation={(data) => setBookingFormData(data)}
-                            pendingTimeRange={pendingTimeRange}
+                                onBookingSuccess={handleBookingSuccess}
+                                onDeleteReservation={setDeleteTarget}
+                                onNewReservation={(data) => setBookingFormData(data)}
+                                pendingTimeRange={pendingTimeRange}
                             />
                         </Box>
                     </Box>
@@ -274,14 +300,18 @@ export default function FleetRoom() {
 
                 {deleteTarget && (
                     <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                         justifyContent="center" zIndex={9999} onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
+                         justifyContent="center" zIndex={9999} onClick={() => {
+                        setDeleteTarget(null);
+                        setDeleteError(null);
+                    }}>
                         <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
                              p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
                             <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
                                 Supprimer la réservation
                             </Text>
                             <Text fontSize="sm" color="text.secondary" mb={6}>
-                                "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
+                                "{deleteTarget.title}"
+                                — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
                             </Text>
                             {deleteError && (
                                 <Text fontSize="sm" color="red.400" mb={4}>
@@ -291,7 +321,10 @@ export default function FleetRoom() {
                             <Flex gap={2} justify="flex-end">
                                 <Button size="sm" variant="ghost" color="text.secondary"
                                         _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                        onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
+                                        onClick={() => {
+                                            setDeleteTarget(null);
+                                            setDeleteError(null);
+                                        }}>
                                     Non
                                 </Button>
                                 <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
@@ -306,8 +339,12 @@ export default function FleetRoom() {
                 {bookingFormData && (
                     <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
                          justifyContent="center" zIndex={9999}
-                         onClick={() => { setBookingFormData(null); setBookingKey(k => k + 1); }}>
-                        <Box bg="rgba(17, 21, 34, 0.95)" borderRadius="xl" border="1px solid" borderColor="border.default"
+                         onClick={() => {
+                             setBookingFormData(null);
+                             setBookingKey(k => k + 1);
+                         }}>
+                        <Box bg="rgba(17, 21, 34, 0.95)" borderRadius="xl" border="1px solid"
+                             borderColor="border.default"
                              p={6} w="90%" maxW="420px" maxH="85vh" overflowY="auto"
                              onClick={(e) => e.stopPropagation()}>
                             <BookingForm
@@ -341,8 +378,8 @@ export default function FleetRoom() {
 
     return (
         <Box h="100vh" w="100vw" overflow="hidden" bg="#0a0a0b" position="relative"
-             style={{touchAction: "pan-y"}}
-             onPointerDown={handleBookingSwipeStart} onPointerMove={handleBookingSwipeMove} onPointerUp={handleBookingSwipeEnd}>
+             onPointerDown={handleBookingSwipeStart} onPointerMove={handleBookingSwipeMove}
+             onPointerUp={handleBookingSwipeEnd}>
 
             {/* Swipe indicator — left edge */}
             <Flex
@@ -366,8 +403,15 @@ export default function FleetRoom() {
                 <ChevronRight size={20} color="rgba(255,255,255,0.35)" strokeWidth={2.5}/>
             </Flex>
 
-            <SplitterRoot defaultSize={[35, 65]} panels={[{id: "left"}, {id: "right"}]} style={{height: "100%", width: "100%"}}>
-                <SplitterPanel id="left" style={{padding: 24, display: "flex", flexDirection: "column", gap: 16, overflow: "hidden"}}>
+            <SplitterRoot defaultSize={[35, 65]} panels={[{id: "left"}, {id: "right"}]}
+                          style={{height: "100%", width: "100%"}}>
+                <SplitterPanel id="left" style={{
+                    padding: 24,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
+                    overflow: "hidden"
+                }}>
                     {/* Back button */}
                     <Flex align="center" gap={3}>
                         <IconButton
@@ -386,7 +430,7 @@ export default function FleetRoom() {
                     </Flex>
 
                     {/* Calendar */}
-                    <Box flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
+                    <Box ref={leftPanelRef} flex={1} overflowY="auto" bg="bg.secondary" borderRadius="xl">
                         <Calendar
                             key={bookingKey}
                             reservations={currentRoom?.reservations || []}
@@ -394,6 +438,7 @@ export default function FleetRoom() {
                             onBookingSuccess={handleBookingSuccess}
                             onNewReservation={(data) => setBookingFormData(data)}
                             pendingTimeRange={pendingTimeRange}
+                            splitDays={calendarSplitDays}
                         />
                     </Box>
                 </SplitterPanel>
@@ -438,9 +483,9 @@ export default function FleetRoom() {
                                 gap: 3,
                             }}
                         >
-                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
-                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
-                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}} />
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}}/>
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}}/>
+                            <div style={{width: 3, height: 3, borderRadius: "50%", background: "#666"}}/>
                         </div>
                     </div>
                 </SplitterResizeTrigger>
@@ -489,14 +534,18 @@ export default function FleetRoom() {
 
             {deleteTarget && (
                 <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                     justifyContent="center" zIndex={9999} onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
+                     justifyContent="center" zIndex={9999} onClick={() => {
+                    setDeleteTarget(null);
+                    setDeleteError(null);
+                }}>
                     <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
                          p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
                         <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
                             Supprimer la réservation
                         </Text>
                         <Text fontSize="sm" color="text.secondary" mb={6}>
-                            "{deleteTarget.title}" — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
+                            "{deleteTarget.title}"
+                            — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
                         </Text>
                         {deleteError && (
                             <Text fontSize="sm" color="red.400" mb={4}>
@@ -506,7 +555,10 @@ export default function FleetRoom() {
                         <Flex gap={2} justify="flex-end">
                             <Button size="sm" variant="ghost" color="text.secondary"
                                     _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                    onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
+                                    onClick={() => {
+                                        setDeleteTarget(null);
+                                        setDeleteError(null);
+                                    }}>
                                 Non
                             </Button>
                             <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
@@ -521,7 +573,10 @@ export default function FleetRoom() {
             {bookingFormData && (
                 <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
                      justifyContent="center" zIndex={9999}
-                     onClick={() => { setBookingFormData(null); setBookingKey(k => k + 1); }}>
+                     onClick={() => {
+                         setBookingFormData(null);
+                         setBookingKey(k => k + 1);
+                     }}>
                     <Box bg="rgba(17, 21, 34, 0.95)" borderRadius="xl" border="1px solid" borderColor="border.default"
                          p={6} w="90%" maxW="420px" maxH="85vh" overflowY="auto"
                          onClick={(e) => e.stopPropagation()}>
