@@ -14,6 +14,10 @@ from rich import status
 
 from config import DB_FILE, LOG_FILE, DATE_FORMAT
 from db import Database
+import dotenv
+
+dotenv.load_dotenv()
+ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS").split(",")
 
 
 
@@ -32,12 +36,8 @@ app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://10.233.31.200:4173",
-    ],
+    type(CORSMiddleware),
+    allow_origins=ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
