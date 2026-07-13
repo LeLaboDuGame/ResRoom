@@ -47,7 +47,7 @@ export default function FleetRoom() {
     const [deleteError, setDeleteError] = useState(null);
     const [bookingFormData, setBookingFormData] = useState(null);
     const [leftPanelSize, setLeftPanelSize] = useState(35);
-    const calendarSplitDays = leftPanelSize >= 50 ? 2 : 1;
+    const calendarSplitDays = leftPanelSize >= 30 ? 2 : 1;
 
     // Reset selected room when current room changes
     useEffect(() => {
