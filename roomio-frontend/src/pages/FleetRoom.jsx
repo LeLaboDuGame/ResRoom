@@ -212,7 +212,7 @@ export default function FleetRoom() {
         return () => window.removeEventListener("popstate", handler);
     }, [view]);
 
-    // Track left panel width → auto split calendar when ≥ 50%
+    // Track left panel width → auto split calendar when ≥ 30%
     useEffect(() => {
         const el = leftPanelRef.current;
         if (!el || view !== "booking") return;
@@ -296,6 +296,7 @@ export default function FleetRoom() {
                                 onDeleteReservation={setDeleteTarget}
                                 onNewReservation={(data) => setBookingFormData(data)}
                                 pendingTimeRange={pendingTimeRange}
+                                splitDays={2}
                             />
                         </Box>
                     </Box>
