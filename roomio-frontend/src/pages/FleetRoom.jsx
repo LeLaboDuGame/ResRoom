@@ -575,6 +575,7 @@ export default function FleetRoom() {
                         selectedRoom={currentRoom.name}
                         dimmedRooms={filteredRoomNames}
                         onRoomClick={(name) => setSelectedRoomName(name)}
+                        tabletRoom={roomName}
                     />
 
                 </SplitterPanel>
