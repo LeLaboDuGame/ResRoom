@@ -129,9 +129,10 @@ function getPolygonCentroid(points) {
  * @param {string|null} selectedRoom Currently selected room name
  * @param {string[]} dimmedRooms Rooms to keep lit; others are dimmed
  * @param {Function} onRoomClick Click/Enter handler with room name
+ * @param {string|null} [tabletRoom] Room name where the tablet is located (shows red dot)
  * @returns {JSX.Element} FloorPlan component
  */
-export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
+export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick, tabletRoom}) {
     const [hovered, setHovered] = useState(null);
     const [isPanning, setIsPanning] = useState(false);
     const svgRef = useRef(null);
@@ -441,6 +442,60 @@ export function FloorPlan({rooms, selectedRoom, dimmedRooms, onRoomClick}) {
                             >
                                 {room.name}
                             </text>
+                            {room.name === tabletRoom && (
+                                <g pointerEvents="none">
+                                    {[0, 0.8, 1.6].map((delay, i) => (
+                                        <polygon
+                                            key={`ripple-${i}`}
+                                            points={pts}
+                                            fill="none"
+                                            stroke="#ef4444"
+                                            strokeLinejoin="round"
+                                        >
+                                            <animate
+                                                attributeName="stroke-width"
+                                                values="10;80"
+                                                dur="2.4s"
+                                                begin={`${delay}s`}
+                                                repeatCount="indefinite"
+                                            />
+                                            <animate
+                                                attributeName="stroke-opacity"
+                                                values="0.6;0"
+                                                dur="2.4s"
+                                                begin={`${delay}s`}
+                                                repeatCount="indefinite"
+                                            />
+                                        </polygon>
+                                    ))}
+                                    <rect
+                                        x={centroid.x - 90}
+                                        y={centroid.y + 30}
+                                        width={180}
+                                        height={55}
+                                        rx={12}
+                                        ry={12}
+                                        fill="#ef4444"
+                                    >
+                                        <animate
+                                            attributeName="opacity"
+                                            values="1;0.4;1"
+                                            dur="2s"
+                                            repeatCount="indefinite"
+                                        />
+                                    </rect>
+                                    <text
+                                        x={centroid.x}
+                                        y={centroid.y + 57.5}
+                                        fill="white"
+                                        textAnchor="middle"
+                                        dominantBaseline="central"
+                                        style={{fontSize: 26, fontWeight: 700}}
+                                    >
+                                        Vous êtes ici
+                                    </text>
+                                </g>
+                            )}
                         </g>
                     );
                 })}
