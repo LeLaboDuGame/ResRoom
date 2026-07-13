@@ -17,7 +17,11 @@ from db import Database
 import dotenv
 
 dotenv.load_dotenv()
-ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS").split(",")
+if os.getenv("ALLOW_ORIGINS"):
+    ALLOW_ORIGINS = str(os.getenv("ALLOW_ORIGINS")).split(",")
+else:
+    raise Exception("No ALLOW_ORIGINS environment variable")
+
 
 
 
@@ -36,7 +40,7 @@ app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
-    type(CORSMiddleware),
+    CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
