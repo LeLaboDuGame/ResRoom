@@ -124,6 +124,7 @@ export default function FleetRoom() {
 
     const swipeRef = useRef(null);
     const leftPanelRef = useRef(null);
+    const calendarRef = useRef(null);
 
     /**
      * Captures pointer start for left-edge swipe (opening booking view).
@@ -289,6 +290,7 @@ export default function FleetRoom() {
                         </Text>
                         <Box flex={1} bg="bg.secondary" borderRadius="xl" overflow="hidden">
                             <Calendar
+                                ref={calendarRef}
                                 key={bookingKey}
                                 reservations={room?.reservations || []}
                                 existingReservations={room?.reservations || []}
@@ -297,15 +299,30 @@ export default function FleetRoom() {
                                 onNewReservation={(data) => setBookingFormData(data)}
                                 pendingTimeRange={pendingTimeRange}
                                 splitDays={2}
+                                hideTodayButton
                             />
                         </Box>
                     </Box>
                 </Flex>
 
-                {/* Bottom-right booking button */}
-                <Box position="absolute" bottom={8} right={8} zIndex={10}>
+                {/* Bottom-right: Today button + map button */}
+                <Flex position="absolute" bottom={8} right={8} zIndex={10} gap={3} align="center">
+                    <Button
+                        size="sm"
+                        bg="blue.700/30"
+                        color="white"
+                        fontWeight="semibold"
+                        fontSize="sm"
+                        px={4}
+                        py={1}
+                        borderRadius="50px"
+                        _hover={{bg: "blue.400"}}
+                        onClick={() => calendarRef.current?.goToToday()}
+                    >
+                        Today
+                    </Button>
                     <BookingButton variant="plus" onClick={goToBooking} ariaLabel="Réserver une salle"/>
-                </Box>
+                </Flex>
 
                 {/* Swipe indicator */}
                 <Flex

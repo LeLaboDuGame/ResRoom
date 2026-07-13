@@ -1,4 +1,4 @@
-import {useState, useEffect, createContext, useContext, useRef, useCallback, useMemo} from "react";
+import {useState, useEffect, createContext, useContext, useRef, useCallback, useMemo, forwardRef, useImperativeHandle} from "react";
 import {
     Box, Flex, Text, ScrollArea, Stack, Collapsible
 } from "@chakra-ui/react";
@@ -424,9 +424,10 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
  * @param {boolean} [modalForm=false] Render the booking form as a centered modal overlay
  * @param {Object} [pendingTimeRange] External startHour/endHour for the pending block
  * @param {number} [splitDays=1] Number of consecutive days to display side by side
+ * @param {boolean} [hideTodayButton=false] Hide the built-in Today button
  * @returns {JSX.Element} Calendar component
  */
-export function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1}) {
+export const Calendar = forwardRef(function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1, hideTodayButton = false}, ref) {
     const {dayStart, dayEnd} = useSettings();
     const [pendingReservation, setPendingReservation] = useState(null);
     const [selectedDate, setSelectedDate] = useState(() => {
@@ -439,6 +440,21 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
     const scrollTopRef = useRef(0);
     const viewportRefs = useRef([]);
     const swipeDayRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        goToToday() {
+            setWeekOffset(0);
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            setSelectedDate(d);
+            const viewport = viewportRefs.current[0];
+            if (viewport) {
+                const curHour = new Date().getHours() + new Date().getMinutes() / 60;
+                const scrollTo = PAD_T + (curHour - dayStart) * ROW_H + ROW_H / 2 - 100;
+                viewport.scrollTop = Math.max(0, scrollTo);
+            }
+        }
+    }), [dayStart]);
 
     /** Array of consecutive days to display starting from selectedDate */
     const dayRange = useMemo(() => {
@@ -577,6 +593,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             </Flex>
 
             {/* Today button */}
+            {!hideTodayButton && (
             <Box
                 as="button"
                 position="absolute"
@@ -608,6 +625,7 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
             >
                 Today
             </Box>
+            )}
 
             {/* Booking form overlay — modal or bottom-anchored */}
             {pendingReservation && roomName && (modalForm ? (
@@ -733,3 +751,4 @@ export function Calendar({reservations = [], onNewReservation, roomName, existin
         </Box>
     );
 }
+)
