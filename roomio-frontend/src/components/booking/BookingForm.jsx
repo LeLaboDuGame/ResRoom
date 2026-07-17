@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
-  Box, Flex, Input, Button, Text, Badge, HStack,
+  Box, Flex, Input, Button, Text,
   DatePicker,
 } from "@chakra-ui/react";
 import { parseDate } from "@ark-ui/react/date-picker";
@@ -105,16 +105,25 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
     );
   }, [emailInput, emailDirectory, selectedEmails]);
 
+  const isValidEmail = useCallback((email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }, []);
+
   const addEmail = useCallback((email) => {
     const trimmed = email.trim();
     if (!trimmed) return;
+    if (!isValidEmail(trimmed)) {
+      setError("Adresse email invalide.");
+      return;
+    }
     if (!selectedEmails.includes(trimmed)) {
       setSelectedEmails((prev) => [...prev, trimmed]);
     }
     setEmailInput("");
     setEmailDropdownOpen(false);
     setEmailHighlightIndex(-1);
-  }, [selectedEmails]);
+    setError("");
+  }, [selectedEmails, isValidEmail]);
 
   const removeEmail = useCallback((email) => {
     setSelectedEmails((prev) => prev.filter((e) => e !== email));
@@ -286,9 +295,10 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
             _focusWithin={{ borderColor: "accent.default" }}
           >
             {selectedEmails.map((email) => (
-              <Badge
+              <Flex
                 key={email}
-                size="lg"
+                align="center"
+                gap={1}
                 bg="accent.default"
                 color="white"
                 borderRadius="full"
@@ -296,22 +306,22 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
                 py={0.5}
                 fontSize="xs"
                 fontWeight="medium"
-                css={{ maxW: "180px" }}
+                maxW="200px"
+                minW={0}
               >
-                <HStack gap={1} align="center">
-                  <Text as="span" noOfLines={1}>{email}</Text>
-                  <Box
-                    as="button"
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); removeEmail(email); }}
-                    cursor="pointer"
-                    lineHeight={1}
-                    _hover={{ opacity: 0.7 }}
-                  >
-                    ✕
-                  </Box>
-                </HStack>
-              </Badge>
+                <Text as="span" noOfLines={1} truncate>{email}</Text>
+                <Box
+                  as="button"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); removeEmail(email); }}
+                  cursor="pointer"
+                  lineHeight={1}
+                  flexShrink={0}
+                  _hover={{ opacity: 0.7 }}
+                >
+                  ✕
+                </Box>
+              </Flex>
             ))}
             <Input
               ref={emailInputRef}
@@ -323,6 +333,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
                 setEmailInput(e.target.value);
                 setEmailDropdownOpen(true);
                 setEmailHighlightIndex(-1);
+                setError("");
               }}
               onFocus={() => setEmailDropdownOpen(true)}
               onBlur={() => setTimeout(() => setEmailDropdownOpen(false), 150)}
