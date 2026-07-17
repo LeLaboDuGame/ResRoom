@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
-  Box, Flex, Input, Button, Text,
+  Box, Flex, Input, Button, Text, Badge, HStack,
   DatePicker,
 } from "@chakra-ui/react";
 import { parseDate } from "@ark-ui/react/date-picker";
-import { createReservation } from "../../api/apiCall.js";
+import { createReservation, fetchEmails } from "../../api/apiCall.js";
 import { useSettings } from "../../hooks/useSettings";
 import { ScrollDownSlider } from "../ui/ScrollDownSlider";
 
@@ -79,11 +79,68 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
     }
   }, [hour, minute, endHour, endMinute, onTimeChange]);
   const [title, setTitle] = useState("");
-  const [reservedBy, setReservedBy] = useState("");
+  const [selectedEmails, setSelectedEmails] = useState([]);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailDirectory, setEmailDirectory] = useState([]);
+  const [emailDropdownOpen, setEmailDropdownOpen] = useState(false);
+  const [emailHighlightIndex, setEmailHighlightIndex] = useState(-1);
+  const emailDropdownRef = useRef(null);
+  const emailInputRef = useRef(null);
   const [debutOpen, setDebutOpen] = useState(false);
   const [finOpen, setFinOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchEmails()
+      .then((data) => setEmailDirectory(data.emails || []))
+      .catch(() => {});
+  }, []);
+
+  const emailSuggestions = useMemo(() => {
+    const q = emailInput.trim().toLowerCase();
+    if (!q) return emailDirectory.filter((e) => !selectedEmails.includes(e));
+    return emailDirectory.filter(
+      (e) => e.toLowerCase().includes(q) && !selectedEmails.includes(e),
+    );
+  }, [emailInput, emailDirectory, selectedEmails]);
+
+  const addEmail = useCallback((email) => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    if (!selectedEmails.includes(trimmed)) {
+      setSelectedEmails((prev) => [...prev, trimmed]);
+    }
+    setEmailInput("");
+    setEmailDropdownOpen(false);
+    setEmailHighlightIndex(-1);
+  }, [selectedEmails]);
+
+  const removeEmail = useCallback((email) => {
+    setSelectedEmails((prev) => prev.filter((e) => e !== email));
+  }, []);
+
+  function handleEmailKeyDown(e) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setEmailHighlightIndex((prev) => Math.min(prev + 1, emailSuggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setEmailHighlightIndex((prev) => Math.max(prev - 1, -1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (emailHighlightIndex >= 0 && emailHighlightIndex < emailSuggestions.length) {
+        addEmail(emailSuggestions[emailHighlightIndex]);
+      } else if (emailInput.trim()) {
+        addEmail(emailInput);
+      }
+    } else if (e.key === "Escape") {
+      setEmailDropdownOpen(false);
+      setEmailHighlightIndex(-1);
+    } else if (e.key === "Backspace" && !emailInput && selectedEmails.length > 0) {
+      setSelectedEmails((prev) => prev.slice(0, -1));
+    }
+  }
 
   function fmtDate(d) {
     return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
@@ -167,7 +224,7 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
         start,
         end,
         title,
-        reserved_by: reservedBy,
+        reserved_by: selectedEmails.join(", "),
       });
       onSuccess?.(result.reservation);
     } catch (err) {
@@ -212,24 +269,110 @@ export function BookingForm({ roomName, existingReservations = [], onSuccess, on
           />
         </Box>
 
-        {/* Réservé par */}
-        <Box>
-          <Input
-            size="md"
-            value={reservedBy}
-            onChange={(e) => setReservedBy(e.target.value)}
-            placeholder="Réservé par"
+        {/* Réservé par — multi-email combobox */}
+        <Box position="relative" ref={emailDropdownRef}>
+          <Flex
+            gap={1}
+            flexWrap="wrap"
+            align="center"
             bg="bg.primary"
-            border="none"
             borderBottom="2px solid"
             borderColor="border.default"
-            color="text.primary"
-            fontSize="md"
             px={0}
-            borderRadius={0}
-            _focus={{ borderColor: "accent.default", outline: "none" }}
-            _placeholder={{ color: "text.muted" }}
-          />
+            py={1}
+            minH="40px"
+            cursor="text"
+            onClick={() => emailInputRef.current?.focus()}
+            _focusWithin={{ borderColor: "accent.default" }}
+          >
+            {selectedEmails.map((email) => (
+              <Badge
+                key={email}
+                size="lg"
+                bg="accent.default"
+                color="white"
+                borderRadius="full"
+                px={2}
+                py={0.5}
+                fontSize="xs"
+                fontWeight="medium"
+                css={{ maxW: "180px" }}
+              >
+                <HStack gap={1} align="center">
+                  <Text as="span" noOfLines={1}>{email}</Text>
+                  <Box
+                    as="button"
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeEmail(email); }}
+                    cursor="pointer"
+                    lineHeight={1}
+                    _hover={{ opacity: 0.7 }}
+                  >
+                    ✕
+                  </Box>
+                </HStack>
+              </Badge>
+            ))}
+            <Input
+              ref={emailInputRef}
+              size="sm"
+              flex={1}
+              minW="120px"
+              value={emailInput}
+              onChange={(e) => {
+                setEmailInput(e.target.value);
+                setEmailDropdownOpen(true);
+                setEmailHighlightIndex(-1);
+              }}
+              onFocus={() => setEmailDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setEmailDropdownOpen(false), 150)}
+              onKeyDown={handleEmailKeyDown}
+              placeholder={selectedEmails.length === 0 ? "Réservé par" : "Ajouter..."}
+              bg="transparent"
+              border="none"
+              color="text.primary"
+              fontSize="md"
+              px={0}
+              _focus={{ outline: "none" }}
+              _placeholder={{ color: "text.muted" }}
+            />
+          </Flex>
+
+          {/* Suggestions dropdown */}
+          {emailDropdownOpen && emailSuggestions.length > 0 && (
+            <Box
+              position="absolute"
+              top="100%"
+              left={0}
+              right={0}
+              mt={1}
+              bg="bg.primary"
+              border="1px solid"
+              borderColor="border.default"
+              borderRadius="md"
+              maxH="180px"
+              overflowY="auto"
+              zIndex={100}
+              boxShadow="lg"
+            >
+              {emailSuggestions.map((email, i) => (
+                <Box
+                  key={email}
+                  px={3}
+                  py={2}
+                  fontSize="sm"
+                  cursor="pointer"
+                  bg={i === emailHighlightIndex ? "accent.default" : "transparent"}
+                  color={i === emailHighlightIndex ? "white" : "text.primary"}
+                  _hover={{ bg: i === emailHighlightIndex ? "accent.default" : "bg.secondary" }}
+                  onMouseDown={(e) => { e.preventDefault(); addEmail(email); }}
+                  onMouseEnter={() => setEmailHighlightIndex(i)}
+                >
+                  {email}
+                </Box>
+              ))}
+            </Box>
+          )}
         </Box>
 
         {/* Date picker + time wheels */}

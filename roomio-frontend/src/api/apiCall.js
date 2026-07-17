@@ -1,6 +1,16 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 /**
+ * Fetch all known email addresses from the directory.
+ * @return {Promise<{emails: string[]}>} Object containing emails array
+ */
+export async function fetchEmails() {
+  const res = await fetch(`${API_URL}/api/emails`);
+  if (!res.ok) throw new Error("Failed to fetch emails");
+  return res.json();
+}
+
+/**
  * Fetch all rooms.
  * @return {Promise<{rooms: Array}>} Object containing rooms array
  */

@@ -23,6 +23,20 @@ else:
     raise Exception("No ALLOW_ORIGINS environment variable")
 
 
+# ---- EMAIL DIRECTORY ----
+# TODO: replace with database-driven list once DB is connected
+EMAIL_DIRECTORY: list[str] = [
+    "adrien.dumontet@entreprise.com",
+    "adrien.garcia@entreprise.com",
+    "marie.dupont@entreprise.com",
+    "jean.martin@entreprise.com",
+    "sophie.bernard@entreprise.com",
+    "lucas.petit@entreprise.com",
+    "camille.moreau@entreprise.com",
+    "nicolas.durand@entreprise.com",
+    "julie.robert@entreprise.com",
+    "pierre.leroy@entreprise.com",
+]
 
 
 
@@ -83,6 +97,15 @@ def get_room(room_name: str) -> dict | None:
             room_res = room
 
     return room_res
+
+
+@app.get("/api/emails")
+def get_emails() -> dict:
+    """Return the full list of known email addresses.
+
+    :return: A dictionary containing the list of emails.
+    """
+    return {"emails": EMAIL_DIRECTORY}
 
 
 @app.get("/api/room/fetch/all")
