@@ -630,7 +630,7 @@
           "x": 0,
           "y": 0
         },
-        "scale": 1.9,
+        "scale": 1.95,
         "opacity": 1,
         "rotation": 0,
         "locked": false
@@ -639,5 +639,5 @@
   ],
   "activeFloorId": "andcw3ac",
   "createdAt": "2026-06-04T16:58:06.205Z",
-  "updatedAt": "2026-06-15T15:39:32.517Z"
+  "updatedAt": "2026-07-22T09:20:58.617Z"
 }

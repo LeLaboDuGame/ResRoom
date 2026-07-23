@@ -272,7 +272,7 @@ To edit global settings, go to the `database.json`. At the bottom of the file, t
 global settings.
 
 ```json
-// database.json
+// config.json
 {
   ...,
   "settings": {

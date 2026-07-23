@@ -5,15 +5,18 @@ photos.  All persistent data is delegated to the :mod:`db` module.
 """
 
 import os
+
+from azure.identity import ClientSecretCredential
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+from msgraph import GraphServiceClient
 from pydantic import BaseModel
 from rich import status
 
-from config import DB_FILE, LOG_FILE, DATE_FORMAT
-from db import Database
+from config import Config
 import dotenv
 
 dotenv.load_dotenv()
@@ -23,8 +26,25 @@ else:
     raise Exception("No ALLOW_ORIGINS environment variable")
 
 
+import asyncio
+import os
+import dotenv
+
+# ---- LOG ----
+LOG_FILE: str = 'log.txt'
+
+# ---- Config ----
+CONFIG_FILE: str = 'config.json'
+DATE_FORMAT: str = '%Y-%m-%d %H:%M'
+
+dotenv.load_dotenv()
+TENANT_ID: str = os.getenv("TENANT_ID")
+CLIENT_ID: str = os.getenv("CLIENT_ID")
+CLIENT_SECRET: str = os.getenv("CLIENT_SECRET")
+USER_ID: str = os.getenv("USER_ID")
+
 # ---- EMAIL DIRECTORY ----
-# TODO: replace with database-driven list once DB is connected
+# TODO: replace with Config-driven list once DB is connected
 EMAIL_DIRECTORY: list[str] = [
     "adrien.dumontet@entreprise.com",
     "adrien.garcia@entreprise.com",
@@ -37,6 +57,14 @@ EMAIL_DIRECTORY: list[str] = [
     "julie.robert@entreprise.com",
     "pierre.leroy@entreprise.com",
 ]
+
+# Initialisation of MS Graph
+credential = ClientSecretCredential(
+    tenant_id=TENANT_ID,
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET
+)
+client = GraphServiceClient(credentials=credential, scopes=['https://graph.microsoft.com/.default'])
 
 
 
@@ -62,13 +90,13 @@ app.add_middleware(
 )
 
 # ---- DATA BASE ----
-database = Database(DB_FILE)
-database.load()  # Load database
+config = Config(CONFIG_FILE)
+config.load()  # Load Config
 
 
 def get_settings() -> dict:
-    """Return the current application settings from the database."""
-    return database.data.get("settings", {
+    """Return the current application settings from the Config."""
+    return config.data.get("settings", {
         "dayStart": 8,
         "dayEnd": 20,
         "startingSoonBefore": 15,
@@ -92,7 +120,7 @@ def get_room(room_name: str) -> dict | None:
     :return: The room dictionary if found, otherwise ``None``.
     """
     room_res: dict | None = None
-    for room in database.data["rooms"]:
+    for room in config.data["rooms"]:
         if room["name"] == room_name:
             room_res = room
 
@@ -110,11 +138,11 @@ def get_emails() -> dict:
 
 @app.get("/api/room/fetch/all")
 def get_all_rooms() -> dict:
-    """Return all rooms stored in the database.
+    """Return all rooms stored in the Config.
 
     :return: A dictionary containing the list of all rooms.
     """
-    return {"rooms": database.data["rooms"]}
+    return {"rooms": config.data["rooms"]}
 
 
 @app.get("/api/room/fetch/name/{room_name}")
@@ -238,7 +266,7 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     )
 
     logging.info(f"Reservation created in room: {room_name}! ->\n{new_reservation}")
-    database.save()
+    config.save()
     return {"message": "Reservation created!", "reservation": new_reservation}
 
 
@@ -293,7 +321,7 @@ def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
     )
 
     logging.info(f"Reservation {reservation_uid} removed from room: {room_name}!")
-    database.save()
+    config.save()
     return {"message": "Reservation removed successfully!"}
 
 
@@ -337,7 +365,7 @@ def update_room(room_name: str, update: RoomUpdate) -> dict:
         room_res.setdefault("elements", {})["computer"] = update.computer
 
     logging.info(f"Room updated: {room_name} -> {room_res}")
-    database.save()
+    config.save()
     return {"message": "Room updated!", "room": room_res}
 
 
@@ -362,8 +390,8 @@ def create_room(room_name: str) -> dict:
         "status": "free",
         "reservations": [],
     }
-    database.data["rooms"].append(new_room)
-    database.save()
+    config.data["rooms"].append(new_room)
+    config.save()
     logging.info(f"Room created: {room_name}")
     return {"message": "Room created!", "room": new_room}
 
@@ -383,8 +411,8 @@ def delete_room(room_name: str) -> dict:
             detail="Room doesn't exist"
         )
 
-    database.data["rooms"] = [r for r in database.data["rooms"] if r["name"] != room_name]
-    database.save()
+    config.data["rooms"] = [r for r in config.data["rooms"] if r["name"] != room_name]
+    config.save()
     logging.info(f"Room deleted: {room_name}")
     return {"message": "Room deleted!"}
 
@@ -398,7 +426,7 @@ def get_reservations_history(room: str | None = None) -> dict:
     :return: List of all reservations with room name attached.
     """
     all_reservations = []
-    for r in database.data["rooms"]:
+    for r in config.data["rooms"]:
         if room and r["name"] != room:
             continue
         for res in r["reservations"]:
@@ -430,9 +458,9 @@ def update_app_settings(settings: dict) -> dict:
         if key in allowed_keys:
             current[key] = value
 
-    database.data["settings"] = current
+    config.data["settings"] = current
     logging.info(f"Settings updated: {current}")
-    database.save()
+    config.save()
     return {"message": "Settings updated!", "settings": current}
 
 @app.get("/api/fetch/settings")
@@ -483,4 +511,4 @@ async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dic
     return {"message": "Photo uploaded!", "filename": filename}
 
 
-database.save()
+config.save()
