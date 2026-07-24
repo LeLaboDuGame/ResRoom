@@ -358,10 +358,10 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
                                          }
                                      }}>
                             <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                {r.title}
+                                {r.title || r.subject}
                             </Text>
                             <Text fontSize="xs" color="whiteAlpha.800">
-                                {label} · {r.reserved_by}
+                                {label}{r.reserved_by ? ` · ${r.reserved_by}` : ''}
                             </Text>
                         </Reservation>
                     );

@@ -14,6 +14,8 @@ from uuid import uuid4
 
 from msgraph import GraphServiceClient
 from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
+from msgraph.generated.models.event import Event
+from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from pydantic import BaseModel
 from rich import status
@@ -79,11 +81,37 @@ async def graph_get_events_for_room(room_email: str) -> list[dict]:
     return [
         {
             "id": event.id,
+            "subject": event.subject,
             "start": event.start.date_time if event.start else None,
             "end": event.end.date_time if event.end else None,
         }
         for event in result.value
     ]
+
+
+async def graph_create_event_for_room(room_email: str, subject: str, start: str, end: str) -> str | None:
+    """Create a calendar event on a room's mailbox. Returns the event ID."""
+    event = Event(
+        subject=subject,
+        start=DateTimeTimeZone(date_time=start, time_zone="Europe/Paris"),
+        end=DateTimeTimeZone(date_time=end, time_zone="Europe/Paris"),
+    )
+    try:
+        result = await client.users.by_user_id(room_email).events.post(event)
+        return result.id if result else None
+    except Exception as e:
+        logging.warning(f"Could not create Graph event on {room_email}: {e}")
+        return None
+
+
+async def graph_delete_event_for_room(room_email: str, event_id: str) -> bool:
+    """Delete a calendar event from a room's mailbox."""
+    try:
+        await client.users.by_user_id(room_email).events.by_event_id(event_id).delete()
+        return True
+    except Exception as e:
+        logging.warning(f"Could not delete Graph event {event_id} on {room_email}: {e}")
+        return False
 
 
 
@@ -220,9 +248,9 @@ from fastapi import status
 
 
 @app.post("/api/reservation/create/{room_name}", status_code=status.HTTP_201_CREATED)
-def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
+async def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     """
-    Create a reservation for a specific room.
+    Create a reservation for a specific room and sync it to Outlook via Microsoft Graph.
 
     :param room_name: The name of the target room
     :param reservation: The reservation data from the request body
@@ -230,14 +258,12 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     """
     room_res = get_room(room_name)
 
-    # Check if the room exists
     if not room_res:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Room doesn't exist"
         )
 
-    # Validate date string formats
     try:
         start_dt = datetime.strptime(reservation.start, DATE_FORMAT)
         end_dt = datetime.strptime(reservation.end, DATE_FORMAT)
@@ -247,7 +273,6 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
             detail="Invalid date format"
         )
 
-    # Prevent reservation in the past
     now = datetime.now()
     if start_dt < now:
         raise HTTPException(
@@ -255,36 +280,43 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
             detail="Cannot create a reservation in the past"
         )
 
-    # Prevent reservation where end is not after start
     if end_dt <= start_dt:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="End time must be after start time"
         )
 
-    # Check for any overlapping reservations in the same room
-    for r in room_res["reservations"]:
+    for r in room_res.get("reservations", []):
         r_start_dt = datetime.strptime(r["start"], DATE_FORMAT)
         r_end_dt = datetime.strptime(r["end"], DATE_FORMAT)
 
-        # Robust overlap detection formula
         if start_dt < r_end_dt and end_dt > r_start_dt:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You are placing a reservation over an existing one!"
             )
 
-    # Create the new reservation payload
+    # Format dates for Graph API (ISO format)
+    graph_start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
+    graph_end = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Create event on room's Outlook calendar
+    graph_event_id = None
+    if room_res.get("email"):
+        graph_event_id = await graph_create_event_for_room(
+            room_res["email"], reservation.title, graph_start, graph_end
+        )
+
     new_reservation = {
         "start": reservation.start,
         "end": reservation.end,
         "title": reservation.title,
         "reserved_by": reservation.reserved_by,
-        "uid": str(uuid4())
+        "uid": str(uuid4()),
+        "graph_event_id": graph_event_id,
     }
 
-    # Append and sort reservations by start date (descending)
-    room_res["reservations"].append(new_reservation)
+    room_res.setdefault("reservations", []).append(new_reservation)
     room_res["reservations"].sort(
         key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
         reverse=True
@@ -296,9 +328,9 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
 
 
 @app.post("/api/reservation/remove/{room_name}/{reservation_uid}")
-def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
+async def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
     """
-    Remove a reservation from a specific room using its unique identifier (UID).
+    Remove a reservation and its corresponding Outlook event via Microsoft Graph.
 
     :param room_name: The name of the room
     :param reservation_uid: The unique ID of the reservation to delete
@@ -306,16 +338,14 @@ def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
     """
     room_res = get_room(room_name)
 
-    # Check if the room exists
     if not room_res:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Room doesn't exist"
         )
 
-    # Find the reservation matching the given UID
     target = next(
-        (r for r in room_res["reservations"] if r["uid"] == reservation_uid),
+        (r for r in room_res.get("reservations", []) if r.get("uid") == reservation_uid),
         None,
     )
 
@@ -325,7 +355,6 @@ def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
             detail="Reservation UID not found",
         )
 
-    # Prevent deletion if the reservation has already started or is in the past
     now = datetime.now()
     r_start = datetime.strptime(target["start"], DATE_FORMAT)
     if now >= r_start:
@@ -334,12 +363,15 @@ def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
             detail="Cannot delete a reservation that is already in progress or past",
         )
 
-    # Filter out the reservation matching the given UID
+    # Delete the corresponding Graph event if it exists
+    graph_event_id = target.get("graph_event_id")
+    if graph_event_id and room_res.get("email"):
+        await graph_delete_event_for_room(room_res["email"], graph_event_id)
+
     room_res["reservations"] = [
-        r for r in room_res["reservations"] if r["uid"] != reservation_uid
+        r for r in room_res["reservations"] if r.get("uid") != reservation_uid
     ]
 
-    # Maintain the sorted order by start date (descending)
     room_res["reservations"].sort(
         key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
         reverse=True
