@@ -78,6 +78,7 @@ async def graph_get_events_for_room(room_email: str) -> list[dict]:
         return []
     return [
         {
+            "id": event.id,
             "start": event.start.date_time if event.start else None,
             "end": event.end.date_time if event.end else None,
         }

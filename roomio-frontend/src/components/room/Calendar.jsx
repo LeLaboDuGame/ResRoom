@@ -341,7 +341,7 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
                         ? isStartDay ? `${s} – ${e} → +1` : isEndDay ? `← ${s} – ${e}` : `↔`
                         : `${s} – ${e}`;
                     return (
-                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
+                        <Reservation key={r.uid || r.id} startHour={s} endHour={e} color="blue.500"
                                      style={{
                                          cursor: onDeleteReservation ? "pointer" : undefined,
                                          borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
