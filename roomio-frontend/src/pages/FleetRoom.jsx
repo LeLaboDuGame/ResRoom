@@ -13,7 +13,6 @@ import {
 import {useParams, useNavigate} from "react-router-dom";
 import {ArrowLeft, ChevronLeft, ChevronRight} from "lucide-react";
 import {useRoom, useRooms} from "../hooks/useRooms";
-import {deleteReservation} from "../api/apiCall.js";
 import {RoomStatusCard} from "../components/room/RoomStatusCard";
 import {Calendar} from "../components/room/Calendar.jsx";
 import {RoomInfoPanel} from "../components/room/RoomInfoPanel";
@@ -43,8 +42,6 @@ export default function FleetRoom() {
     const [selectedRoomName, setSelectedRoomName] = useState(roomName);
     const [bookingKey, setBookingKey] = useState(0);
     const [filters, setFilters] = useState({capacity: 0, tv: false, whiteboard: false, computer: false});
-    const [deleteTarget, setDeleteTarget] = useState(null);
-    const [deleteError, setDeleteError] = useState(null);
     const [bookingFormData, setBookingFormData] = useState(null);
     const [leftPanelSize, setLeftPanelSize] = useState(35);
     const calendarSplitDays = leftPanelSize >= 30 ? 2 : 1;
@@ -106,21 +103,6 @@ export default function FleetRoom() {
         goToRoom();
     }
 
-    /**
-     * Deletes a reservation and refreshes room data.
-     * @param {string} uid Reservation UID
-     */
-    async function handleDeleteReservation(uid) {
-        setDeleteError(null);
-        try {
-            await deleteReservation(roomName, uid);
-            setDeleteTarget(null);
-            refetchRoom();
-            refetchRooms();
-        } catch (e) {
-            setDeleteError(e?.message || "Erreur lors de la suppression");
-        }
-    }
 
     const swipeRef = useRef(null);
     const leftPanelRef = useRef(null);
@@ -295,7 +277,6 @@ export default function FleetRoom() {
                                 reservations={room?.reservations || []}
                                 existingReservations={room?.reservations || []}
                                 onBookingSuccess={handleBookingSuccess}
-                                onDeleteReservation={setDeleteTarget}
                                 onNewReservation={(data) => setBookingFormData(data)}
                                 pendingTimeRange={pendingTimeRange}
                                 splitDays={2}
@@ -346,43 +327,6 @@ export default function FleetRoom() {
                     <ChevronLeft size={20} color="rgba(255,255,255,0.35)" strokeWidth={2.5}/>
                 </Flex>
 
-                {deleteTarget && (
-                    <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                         justifyContent="center" zIndex={9999} onClick={() => {
-                        setDeleteTarget(null);
-                        setDeleteError(null);
-                    }}>
-                        <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
-                             p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
-                            <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
-                                Supprimer la réservation
-                            </Text>
-                            <Text fontSize="sm" color="text.secondary" mb={6}>
-                                "{deleteTarget.title}"
-                                — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
-                            </Text>
-                            {deleteError && (
-                                <Text fontSize="sm" color="red.400" mb={4}>
-                                    {deleteError}
-                                </Text>
-                            )}
-                            <Flex gap={2} justify="flex-end">
-                                <Button size="sm" variant="ghost" color="text.secondary"
-                                        _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                        onClick={() => {
-                                            setDeleteTarget(null);
-                                            setDeleteError(null);
-                                        }}>
-                                    Non
-                                </Button>
-                                <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
-                                        onClick={() => handleDeleteReservation(deleteTarget.uid)}>
-                                    Oui
-                                </Button>
-                            </Flex>
-                        </Box>
-                    </Box>
-                )}
 
                 {bookingFormData && (
                     <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
@@ -581,43 +525,6 @@ export default function FleetRoom() {
                 </SplitterPanel>
             </SplitterRoot>
 
-            {deleteTarget && (
-                <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"
-                     justifyContent="center" zIndex={9999} onClick={() => {
-                    setDeleteTarget(null);
-                    setDeleteError(null);
-                }}>
-                    <Box bg="bg.elevated" borderRadius="xl" border="1px solid" borderColor="border.default"
-                         p={6} w="90%" maxW="400px" onClick={(e) => e.stopPropagation()}>
-                        <Text fontSize="lg" fontWeight="bold" color="text.primary" mb={1}>
-                            Supprimer la réservation
-                        </Text>
-                        <Text fontSize="sm" color="text.secondary" mb={6}>
-                            "{deleteTarget.title}"
-                            — {deleteTarget.start?.slice(11, 16)} à {deleteTarget.end?.slice(11, 16)}
-                        </Text>
-                        {deleteError && (
-                            <Text fontSize="sm" color="red.400" mb={4}>
-                                {deleteError}
-                            </Text>
-                        )}
-                        <Flex gap={2} justify="flex-end">
-                            <Button size="sm" variant="ghost" color="text.secondary"
-                                    _hover={{color: "text.primary", bg: "bg.secondary"}}
-                                    onClick={() => {
-                                        setDeleteTarget(null);
-                                        setDeleteError(null);
-                                    }}>
-                                Non
-                            </Button>
-                            <Button size="sm" bg="#f87171" color="white" _hover={{bg: "#ef4444"}}
-                                    onClick={() => handleDeleteReservation(deleteTarget.uid)}>
-                                Oui
-                            </Button>
-                        </Flex>
-                    </Box>
-                </Box>
-            )}
 
             {bookingFormData && (
                 <Box position="fixed" inset={0} bg="rgba(0,0,0,0.6)" display="flex" alignItems="center"

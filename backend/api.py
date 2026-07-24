@@ -50,6 +50,7 @@ credential = ClientSecretCredential(
 )
 client = GraphServiceClient(credentials=credential, scopes=['https://graph.microsoft.com/.default'])
 
+
 # ---- GRAPH HELPERS ----
 async def graph_get_users() -> list[dict]:
     """Fetch all users from Microsoft Graph."""
@@ -102,17 +103,6 @@ async def graph_create_event_for_room(room_email: str, subject: str, start: str,
     except Exception as e:
         logging.warning(f"Could not create Graph event on {room_email}: {e}")
         return None
-
-
-async def graph_delete_event_for_room(room_email: str, event_id: str) -> bool:
-    """Delete a calendar event from a room's mailbox."""
-    try:
-        await client.users.by_user_id(room_email).events.by_event_id(event_id).delete()
-        return True
-    except Exception as e:
-        logging.warning(f"Could not delete Graph event {event_id} on {room_email}: {e}")
-        return False
-
 
 
 # Logging
@@ -327,61 +317,6 @@ async def create_a_reservation(room_name: str, reservation: Reservation) -> dict
     return {"message": "Reservation created!", "reservation": new_reservation}
 
 
-@app.post("/api/reservation/remove/{room_name}/{reservation_uid}")
-async def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
-    """
-    Remove a reservation and its corresponding Outlook event via Microsoft Graph.
-
-    :param room_name: The name of the room
-    :param reservation_uid: The unique ID of the reservation to delete
-    :return: A success confirmation message
-    """
-    room_res = get_room(room_name)
-
-    if not room_res:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Room doesn't exist"
-        )
-
-    target = next(
-        (r for r in room_res.get("reservations", []) if r.get("uid") == reservation_uid),
-        None,
-    )
-
-    if not target:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Reservation UID not found",
-        )
-
-    now = datetime.now()
-    r_start = datetime.strptime(target["start"], DATE_FORMAT)
-    if now >= r_start:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a reservation that is already in progress or past",
-        )
-
-    # Delete the corresponding Graph event if it exists
-    graph_event_id = target.get("graph_event_id")
-    if graph_event_id and room_res.get("email"):
-        await graph_delete_event_for_room(room_res["email"], graph_event_id)
-
-    room_res["reservations"] = [
-        r for r in room_res["reservations"] if r.get("uid") != reservation_uid
-    ]
-
-    room_res["reservations"].sort(
-        key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
-        reverse=True
-    )
-
-    logging.info(f"Reservation {reservation_uid} removed from room: {room_name}!")
-    config.save()
-    return {"message": "Reservation removed successfully!"}
-
-
 @app.put("/api/room/update/{room_name}")
 def update_room(room_name: str, update: RoomUpdate) -> dict:
     """
@@ -499,6 +434,7 @@ def get_reservations_history(room: str | None = None) -> dict:
 
     return {"reservations": all_reservations}
 
+
 @app.post("/api/settings")
 def update_app_settings(settings: dict) -> dict:
     """
@@ -520,6 +456,7 @@ def update_app_settings(settings: dict) -> dict:
     config.save()
     return {"message": "Settings updated!", "settings": current}
 
+
 @app.get("/api/fetch/settings")
 def fetch_app_settings() -> dict:
     """
@@ -528,6 +465,7 @@ def fetch_app_settings() -> dict:
     :return: The settings object.
     """
     return {"settings": get_settings()}
+
 
 @app.post("/api/room/upload-photo/{room_name}")
 async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict:
