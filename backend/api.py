@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from msgraph import GraphServiceClient
+from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from pydantic import BaseModel
 from rich import status
 
@@ -60,6 +62,26 @@ async def graph_get_users() -> list[dict]:
             "userPrincipalName": user.user_principal_name,
         }
         for user in users.value
+    ]
+
+
+async def graph_get_events_for_room(room_email: str) -> list[dict]:
+    """Fetch calendar events for a room mailbox from Microsoft Graph."""
+    query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
+        select=["subject", "start", "end"],
+    )
+    request_configuration = RequestConfiguration(query_parameters=query_params)
+    result = await client.users.by_user_id(room_email).events.get(
+        request_configuration=request_configuration
+    )
+    if not result or not result.value:
+        return []
+    return [
+        {
+            "start": event.start.date_time if event.start else None,
+            "end": event.end.date_time if event.end else None,
+        }
+        for event in result.value
     ]
 
 
@@ -135,42 +157,46 @@ async def get_emails() -> dict:
 
 
 @app.get("/api/room/fetch/all")
-def get_all_rooms() -> dict:
-    """Return all rooms stored in the Config.
+async def get_all_rooms() -> dict:
+    """Return all rooms with their calendar events from Microsoft Graph.
 
-    :return: A dictionary containing the list of all rooms.
+    :return: A dictionary containing the list of all rooms with events.
     """
-    return {"rooms": config.data["rooms"]}
+    rooms = []
+    for room in config.data["rooms"]:
+        room_data = {**room, "reservations": []}
+        if room.get("email"):
+            try:
+                events = await graph_get_events_for_room(room["email"])
+                room_data["reservations"] = events
+            except Exception as e:
+                logging.warning(f"Could not fetch events for {room['name']}: {e}")
+        rooms.append(room_data)
+    return {"rooms": rooms}
 
 
 @app.get("/api/room/fetch/name/{room_name}")
-def get_room_by_name(room_name: str) -> dict:
+async def get_room_by_name(room_name: str) -> dict:
     """
-    Fetch a room information.
-
-    - Room: dict[
-    - -    name: str
-    - -    elements: dict
-    - -    status: str[FREE, STARTING_SOON, OCCUPIED, FINISHING_SOON]
-    - -     reservations: list[dict[
-                id: int,
-                date: str,
-                for: str,
-                by: str]]]
-    - -    description: str
-
+    Fetch a room's information with its calendar events from Microsoft Graph.
 
     :param room_name: room name
-    :return: Room information. If the room doesn't exist return an error message
+    :return: Room information with events. If the room doesn't exist return an error message
     """
-
-    # Get info of the room
     room_res: dict | None = get_room(room_name)
 
-    if room_res:
-        return {"room": room_res}
-    else:
+    if not room_res:
         return {"error": "Room doesn't exist"}
+
+    room_data = {**room_res, "reservations": []}
+    if room_res.get("email"):
+        try:
+            events = await graph_get_events_for_room(room_res["email"])
+            room_data["reservations"] = events
+        except Exception as e:
+            logging.warning(f"Could not fetch events for {room_name}: {e}")
+
+    return {"room": room_data}
 
 
 class Reservation(BaseModel):
