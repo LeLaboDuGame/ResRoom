@@ -12,8 +12,6 @@ const ROW_H = 70;
 const PAD_T = 8;
 /** Snap interval in hours (0.25 = 15 minutes) */
 const SNAP = 0.25;
-/** Max time (ms) between clicks to consider it a double-click */
-const DBL_CLICK_DELAY = 300;
 
 const CalendarCtx = createContext({dayStart: 7});
 /**
@@ -181,7 +179,6 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
  * @param {number} dayStart First displayed hour
  * @param {number} dayEnd Last displayed hour
  * @param {string[]} dayLetters Day-of-week labels
- * @param {Function} [onDeleteReservation] Called with reservation on double-click
  * @param {Function} [onNewReservation] Called with {date, dateStr, startHour, endHour} on provisional release
  * @param {Function} fmtDateKey Date-to-string formatter
  * @param {boolean} isLast Whether this is the rightmost column
@@ -192,7 +189,7 @@ function BgCalendar({dayStart = 7, dayEnd = 20, isToday = true, children, gridRe
  * @param {Function} [onGridSwipe] Called with direction (1/-1) when horizontal swipe detected
  * @returns {JSX.Element} DayColumn component
  */
-function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteReservation, onNewReservation, fmtDateKey, isLast, pendingTimeRange, bumpIn, viewportRef, onPendingChange, onGridSwipe}) {
+function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onNewReservation, fmtDateKey, isLast, pendingTimeRange, bumpIn, viewportRef, onPendingChange, onGridSwipe}) {
     const [provisional, setProvisional] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
     const gridRef = useRef(null);
@@ -201,7 +198,6 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
     const pointerStart = useRef(null);
     const scrollLockRef = useRef(null);
     const swipeGridRef = useRef(null);
-    const lastClickRef = useRef({time: 0, uid: null});
 
     const ds = new Date(date.getFullYear(), date.getMonth(), date.getDate(), dayStart, 0, 0);
     const de = new Date(date.getFullYear(), date.getMonth(), date.getDate(), dayEnd, 0, 0);
@@ -341,27 +337,15 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
                         ? isStartDay ? `${s} – ${e} → +1` : isEndDay ? `← ${s} – ${e}` : `↔`
                         : `${s} – ${e}`;
                     return (
-                        <Reservation key={r.uid} startHour={s} endHour={e} color="blue.500"
+                        <Reservation key={r.uid || r.id} startHour={s} endHour={e} color="blue.500"
                                      style={{
-                                         cursor: onDeleteReservation ? "pointer" : undefined,
                                          borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
-                                     }}
-                                     onClick={() => {
-                                         if (!onDeleteReservation) return;
-                                         const now = Date.now();
-                                         const prev = lastClickRef.current;
-                                         if (prev.uid === r.uid && now - prev.time < DBL_CLICK_DELAY) {
-                                             lastClickRef.current = {time: 0, uid: null};
-                                             onDeleteReservation(r);
-                                         } else {
-                                             lastClickRef.current = {time: now, uid: r.uid};
-                                         }
                                      }}>
                             <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                {r.title}
+                                {r.organizer || r.title || r.subject}
                             </Text>
                             <Text fontSize="xs" color="whiteAlpha.800">
-                                {label} · {r.reserved_by}
+                                {label}{r.reserved_by ? ` · ${r.reserved_by}` : ''}
                             </Text>
                         </Reservation>
                     );
@@ -418,7 +402,6 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
  * @param {Function} [onNewReservation] Called with {date, dateStr, startHour, endHour} on provisional release
  * @param {string} [roomName] Room name (enables collapsible booking form)
  * @param {Array} [existingReservations] Existing reservations for overlap check
- * @param {Function} [onDeleteReservation] Called with reservation object on double-click
  * @param {Function} [onBookingSuccess] Called with new reservation after successful booking
  * @param {Function|React.ReactNode} [collapsibleContent] Custom content for the booking form overlay
  * @param {boolean} [modalForm=false] Render the booking form as a centered modal overlay
@@ -427,7 +410,7 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onDeleteRe
  * @param {boolean} [hideTodayButton=false] Hide the built-in Today button
  * @returns {JSX.Element} Calendar component
  */
-export const Calendar = forwardRef(function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onDeleteReservation, onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1, hideTodayButton = false}, ref) {
+export const Calendar = forwardRef(function Calendar({reservations = [], onNewReservation, roomName, existingReservations = [], onBookingSuccess, collapsibleContent, modalForm = false, pendingTimeRange, splitDays = 1, hideTodayButton = false}, ref) {
     const {dayStart, dayEnd} = useSettings();
     const [pendingReservation, setPendingReservation] = useState(null);
     const [selectedDate, setSelectedDate] = useState(() => {
@@ -567,7 +550,6 @@ export const Calendar = forwardRef(function Calendar({reservations = [], onNewRe
                         dayStart={dayStart}
                         dayEnd={dayEnd}
                         dayLetters={dayLetters}
-                        onDeleteReservation={onDeleteReservation}
                         onNewReservation={onNewReservation}
                         fmtDateKey={fmtDateKey}
                         isLast={idx === dayRange.length - 1}

@@ -5,16 +5,32 @@ photos.  All persistent data is delegated to the :mod:`db` module.
 """
 
 import os
+
+from azure.identity import ClientSecretCredential
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
+import re
+
+from msgraph import GraphServiceClient
+from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
+from msgraph.generated.models.event import Event
+from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from pydantic import BaseModel
 from rich import status
 
-from config import DB_FILE, LOG_FILE, DATE_FORMAT
-from db import Database
+from config import Config
 import dotenv
+import asyncio
+
+# ---- LOG ----
+LOG_FILE: str = 'log.txt'
+
+# ---- Config ----
+CONFIG_FILE: str = 'config.json'
+DATE_FORMAT: str = '%Y-%m-%d %H:%M'
 
 dotenv.load_dotenv()
 if os.getenv("ALLOW_ORIGINS"):
@@ -22,22 +38,86 @@ if os.getenv("ALLOW_ORIGINS"):
 else:
     raise Exception("No ALLOW_ORIGINS environment variable")
 
+TENANT_ID: str = os.getenv("TENANT_ID")
+CLIENT_ID: str = os.getenv("CLIENT_ID")
+CLIENT_SECRET: str = os.getenv("CLIENT_SECRET")
+USER_ID: str = os.getenv("USER_ID")
 
-# ---- EMAIL DIRECTORY ----
-# TODO: replace with database-driven list once DB is connected
-EMAIL_DIRECTORY: list[str] = [
-    "adrien.dumontet@entreprise.com",
-    "adrien.garcia@entreprise.com",
-    "marie.dupont@entreprise.com",
-    "jean.martin@entreprise.com",
-    "sophie.bernard@entreprise.com",
-    "lucas.petit@entreprise.com",
-    "camille.moreau@entreprise.com",
-    "nicolas.durand@entreprise.com",
-    "julie.robert@entreprise.com",
-    "pierre.leroy@entreprise.com",
-]
+# Initialisation of MS Graph
+credential = ClientSecretCredential(
+    tenant_id=TENANT_ID,
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET
+)
+client = GraphServiceClient(credentials=credential, scopes=['https://graph.microsoft.com/.default'])
 
+
+# ---- GRAPH HELPERS ----
+def email_to_display_name(email: str | None) -> str | None:
+    """Convert an email like 'adrien.dumontet@ecm-crit.com' to 'Adrien DUMONTET'."""
+    if not email:
+        return None
+    local = email.split("@")[0]
+    parts = re.split(r'[._\-]', local)
+    if len(parts) >= 2:
+        first = parts[0].capitalize()
+        last = parts[-1].upper()
+        return f"{first} {last}"
+    return local.capitalize()
+
+
+async def graph_get_users() -> list[dict]:
+    """Fetch all users from Microsoft Graph."""
+    users = await client.users.get()
+    if not users or not users.value:
+        return []
+    return [
+        {
+            "id": user.id,
+            "displayName": user.display_name,
+            "mail": user.mail,
+            "userPrincipalName": user.user_principal_name,
+        }
+        for user in users.value
+    ]
+
+
+async def graph_get_events_for_room(room_email: str) -> list[dict]:
+    """Fetch calendar events for a room mailbox from Microsoft Graph."""
+    query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
+        select=["subject", "start", "end", "organizer"],
+    )
+    request_configuration = RequestConfiguration(query_parameters=query_params)
+    result = await client.users.by_user_id(room_email).events.get(
+        request_configuration=request_configuration
+    )
+    if not result or not result.value:
+        return []
+    return [
+        {
+            "id": event.id,
+            "subject": event.subject,
+            "start": event.start.date_time if event.start else None,
+            "end": event.end.date_time if event.end else None,
+            "organizer": email_to_display_name(event.organizer.email_address.address) if event.organizer and event.organizer.email_address else None,
+        }
+        for event in result.value
+    ]
+
+
+async def graph_create_event_for_room(room_email: str, subject: str, start: str, end: str) -> str | None:
+    """Create a calendar event on a room's mailbox. Returns the event ID."""
+    event = Event(
+        subject=subject,
+        start=DateTimeTimeZone(date_time=start, time_zone="Europe/Paris"),
+        end=DateTimeTimeZone(date_time=end, time_zone="Europe/Paris"),
+    )
+    try:
+        result = await client.users.by_user_id(room_email).events.post(event)
+        return result.id if result else None
+    except Exception as e:
+        logging.warning(f"Could not create Graph event on {room_email}: {e}")
+        return None
 
 
 # Logging
@@ -62,13 +142,13 @@ app.add_middleware(
 )
 
 # ---- DATA BASE ----
-database = Database(DB_FILE)
-database.load()  # Load database
+config = Config(CONFIG_FILE)
+config.load()  # Load Config
 
 
 def get_settings() -> dict:
-    """Return the current application settings from the database."""
-    return database.data.get("settings", {
+    """Return the current application settings from the Config."""
+    return config.data.get("settings", {
         "dayStart": 8,
         "dayEnd": 20,
         "startingSoonBefore": 15,
@@ -92,7 +172,7 @@ def get_room(room_name: str) -> dict | None:
     :return: The room dictionary if found, otherwise ``None``.
     """
     room_res: dict | None = None
-    for room in database.data["rooms"]:
+    for room in config.data["rooms"]:
         if room["name"] == room_name:
             room_res = room
 
@@ -100,51 +180,57 @@ def get_room(room_name: str) -> dict | None:
 
 
 @app.get("/api/emails")
-def get_emails() -> dict:
-    """Return the full list of known email addresses.
+async def get_emails() -> dict:
+    """Return the full list of email addresses from Microsoft Graph.
 
     :return: A dictionary containing the list of emails.
     """
-    return {"emails": EMAIL_DIRECTORY}
+    users = await graph_get_users()
+    emails = [u["mail"] or u["userPrincipalName"] for u in users if u["mail"] or u["userPrincipalName"]]
+    return {"emails": emails}
 
 
 @app.get("/api/room/fetch/all")
-def get_all_rooms() -> dict:
-    """Return all rooms stored in the database.
+async def get_all_rooms() -> dict:
+    """Return all rooms with their calendar events from Microsoft Graph.
 
-    :return: A dictionary containing the list of all rooms.
+    :return: A dictionary containing the list of all rooms with events.
     """
-    return {"rooms": database.data["rooms"]}
+    rooms = []
+    for room in config.data["rooms"]:
+        room_data = {**room, "reservations": []}
+        if room.get("email"):
+            try:
+                events = await graph_get_events_for_room(room["email"])
+                room_data["reservations"] = events
+            except Exception as e:
+                logging.warning(f"Could not fetch events for {room['name']}: {e}")
+        rooms.append(room_data)
+    return {"rooms": rooms}
 
 
 @app.get("/api/room/fetch/name/{room_name}")
-def get_room_by_name(room_name: str) -> dict:
+async def get_room_by_name(room_name: str) -> dict:
     """
-    Fetch a room information.
-
-    - Room: dict[
-    - -    name: str
-    - -    elements: dict
-    - -    status: str[FREE, STARTING_SOON, OCCUPIED, FINISHING_SOON]
-    - -     reservations: list[dict[
-                id: int,
-                date: str,
-                for: str,
-                by: str]]]
-    - -    description: str
-
+    Fetch a room's information with its calendar events from Microsoft Graph.
 
     :param room_name: room name
-    :return: Room information. If the room doesn't exist return an error message
+    :return: Room information with events. If the room doesn't exist return an error message
     """
-
-    # Get info of the room
     room_res: dict | None = get_room(room_name)
 
-    if room_res:
-        return {"room": room_res}
-    else:
+    if not room_res:
         return {"error": "Room doesn't exist"}
+
+    room_data = {**room_res, "reservations": []}
+    if room_res.get("email"):
+        try:
+            events = await graph_get_events_for_room(room_res["email"])
+            room_data["reservations"] = events
+        except Exception as e:
+            logging.warning(f"Could not fetch events for {room_name}: {e}")
+
+    return {"room": room_data}
 
 
 class Reservation(BaseModel):
@@ -167,9 +253,9 @@ from fastapi import status
 
 
 @app.post("/api/reservation/create/{room_name}", status_code=status.HTTP_201_CREATED)
-def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
+async def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     """
-    Create a reservation for a specific room.
+    Create a reservation for a specific room and sync it to Outlook via Microsoft Graph.
 
     :param room_name: The name of the target room
     :param reservation: The reservation data from the request body
@@ -177,14 +263,12 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
     """
     room_res = get_room(room_name)
 
-    # Check if the room exists
     if not room_res:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Room doesn't exist"
         )
 
-    # Validate date string formats
     try:
         start_dt = datetime.strptime(reservation.start, DATE_FORMAT)
         end_dt = datetime.strptime(reservation.end, DATE_FORMAT)
@@ -194,7 +278,6 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
             detail="Invalid date format"
         )
 
-    # Prevent reservation in the past
     now = datetime.now()
     if start_dt < now:
         raise HTTPException(
@@ -202,99 +285,51 @@ def create_a_reservation(room_name: str, reservation: Reservation) -> dict:
             detail="Cannot create a reservation in the past"
         )
 
-    # Prevent reservation where end is not after start
     if end_dt <= start_dt:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="End time must be after start time"
         )
 
-    # Check for any overlapping reservations in the same room
-    for r in room_res["reservations"]:
+    for r in room_res.get("reservations", []):
         r_start_dt = datetime.strptime(r["start"], DATE_FORMAT)
         r_end_dt = datetime.strptime(r["end"], DATE_FORMAT)
 
-        # Robust overlap detection formula
         if start_dt < r_end_dt and end_dt > r_start_dt:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You are placing a reservation over an existing one!"
             )
 
-    # Create the new reservation payload
+    # Format dates for Graph API (ISO format)
+    graph_start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
+    graph_end = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Create event on room's Outlook calendar
+    graph_event_id = None
+    if room_res.get("email"):
+        graph_event_id = await graph_create_event_for_room(
+            room_res["email"], reservation.title, graph_start, graph_end
+        )
+
     new_reservation = {
         "start": reservation.start,
         "end": reservation.end,
         "title": reservation.title,
         "reserved_by": reservation.reserved_by,
-        "uid": str(uuid4())
+        "uid": str(uuid4()),
+        "graph_event_id": graph_event_id,
     }
 
-    # Append and sort reservations by start date (descending)
-    room_res["reservations"].append(new_reservation)
+    room_res.setdefault("reservations", []).append(new_reservation)
     room_res["reservations"].sort(
         key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
         reverse=True
     )
 
     logging.info(f"Reservation created in room: {room_name}! ->\n{new_reservation}")
-    database.save()
+    config.save()
     return {"message": "Reservation created!", "reservation": new_reservation}
-
-
-@app.post("/api/reservation/remove/{room_name}/{reservation_uid}")
-def remove_a_reservation(room_name: str, reservation_uid: str) -> dict:
-    """
-    Remove a reservation from a specific room using its unique identifier (UID).
-
-    :param room_name: The name of the room
-    :param reservation_uid: The unique ID of the reservation to delete
-    :return: A success confirmation message
-    """
-    room_res = get_room(room_name)
-
-    # Check if the room exists
-    if not room_res:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Room doesn't exist"
-        )
-
-    # Find the reservation matching the given UID
-    target = next(
-        (r for r in room_res["reservations"] if r["uid"] == reservation_uid),
-        None,
-    )
-
-    if not target:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Reservation UID not found",
-        )
-
-    # Prevent deletion if the reservation has already started or is in the past
-    now = datetime.now()
-    r_start = datetime.strptime(target["start"], DATE_FORMAT)
-    if now >= r_start:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a reservation that is already in progress or past",
-        )
-
-    # Filter out the reservation matching the given UID
-    room_res["reservations"] = [
-        r for r in room_res["reservations"] if r["uid"] != reservation_uid
-    ]
-
-    # Maintain the sorted order by start date (descending)
-    room_res["reservations"].sort(
-        key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
-        reverse=True
-    )
-
-    logging.info(f"Reservation {reservation_uid} removed from room: {room_name}!")
-    database.save()
-    return {"message": "Reservation removed successfully!"}
 
 
 @app.put("/api/room/update/{room_name}")
@@ -337,7 +372,7 @@ def update_room(room_name: str, update: RoomUpdate) -> dict:
         room_res.setdefault("elements", {})["computer"] = update.computer
 
     logging.info(f"Room updated: {room_name} -> {room_res}")
-    database.save()
+    config.save()
     return {"message": "Room updated!", "room": room_res}
 
 
@@ -362,8 +397,8 @@ def create_room(room_name: str) -> dict:
         "status": "free",
         "reservations": [],
     }
-    database.data["rooms"].append(new_room)
-    database.save()
+    config.data["rooms"].append(new_room)
+    config.save()
     logging.info(f"Room created: {room_name}")
     return {"message": "Room created!", "room": new_room}
 
@@ -383,8 +418,8 @@ def delete_room(room_name: str) -> dict:
             detail="Room doesn't exist"
         )
 
-    database.data["rooms"] = [r for r in database.data["rooms"] if r["name"] != room_name]
-    database.save()
+    config.data["rooms"] = [r for r in config.data["rooms"] if r["name"] != room_name]
+    config.save()
     logging.info(f"Room deleted: {room_name}")
     return {"message": "Room deleted!"}
 
@@ -398,7 +433,7 @@ def get_reservations_history(room: str | None = None) -> dict:
     :return: List of all reservations with room name attached.
     """
     all_reservations = []
-    for r in database.data["rooms"]:
+    for r in config.data["rooms"]:
         if room and r["name"] != room:
             continue
         for res in r["reservations"]:
@@ -413,6 +448,7 @@ def get_reservations_history(room: str | None = None) -> dict:
     )
 
     return {"reservations": all_reservations}
+
 
 @app.post("/api/settings")
 def update_app_settings(settings: dict) -> dict:
@@ -430,10 +466,11 @@ def update_app_settings(settings: dict) -> dict:
         if key in allowed_keys:
             current[key] = value
 
-    database.data["settings"] = current
+    config.data["settings"] = current
     logging.info(f"Settings updated: {current}")
-    database.save()
+    config.save()
     return {"message": "Settings updated!", "settings": current}
+
 
 @app.get("/api/fetch/settings")
 def fetch_app_settings() -> dict:
@@ -443,6 +480,7 @@ def fetch_app_settings() -> dict:
     :return: The settings object.
     """
     return {"settings": get_settings()}
+
 
 @app.post("/api/room/upload-photo/{room_name}")
 async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict:
@@ -483,4 +521,4 @@ async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dic
     return {"message": "Photo uploaded!", "filename": filename}
 
 
-database.save()
+config.save()
