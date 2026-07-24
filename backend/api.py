@@ -18,17 +18,7 @@ from rich import status
 
 from config import Config
 import dotenv
-
-dotenv.load_dotenv()
-if os.getenv("ALLOW_ORIGINS"):
-    ALLOW_ORIGINS = str(os.getenv("ALLOW_ORIGINS")).split(",")
-else:
-    raise Exception("No ALLOW_ORIGINS environment variable")
-
-
 import asyncio
-import os
-import dotenv
 
 # ---- LOG ----
 LOG_FILE: str = 'log.txt'
@@ -38,25 +28,15 @@ CONFIG_FILE: str = 'config.json'
 DATE_FORMAT: str = '%Y-%m-%d %H:%M'
 
 dotenv.load_dotenv()
+if os.getenv("ALLOW_ORIGINS"):
+    ALLOW_ORIGINS = str(os.getenv("ALLOW_ORIGINS")).split(",")
+else:
+    raise Exception("No ALLOW_ORIGINS environment variable")
+
 TENANT_ID: str = os.getenv("TENANT_ID")
 CLIENT_ID: str = os.getenv("CLIENT_ID")
 CLIENT_SECRET: str = os.getenv("CLIENT_SECRET")
 USER_ID: str = os.getenv("USER_ID")
-
-# ---- EMAIL DIRECTORY ----
-# TODO: replace with Config-driven list once DB is connected
-EMAIL_DIRECTORY: list[str] = [
-    "adrien.dumontet@entreprise.com",
-    "adrien.garcia@entreprise.com",
-    "marie.dupont@entreprise.com",
-    "jean.martin@entreprise.com",
-    "sophie.bernard@entreprise.com",
-    "lucas.petit@entreprise.com",
-    "camille.moreau@entreprise.com",
-    "nicolas.durand@entreprise.com",
-    "julie.robert@entreprise.com",
-    "pierre.leroy@entreprise.com",
-]
 
 # Initialisation of MS Graph
 credential = ClientSecretCredential(
@@ -65,6 +45,22 @@ credential = ClientSecretCredential(
     client_secret=CLIENT_SECRET
 )
 client = GraphServiceClient(credentials=credential, scopes=['https://graph.microsoft.com/.default'])
+
+# ---- GRAPH HELPERS ----
+async def graph_get_users() -> list[dict]:
+    """Fetch all users from Microsoft Graph."""
+    users = await client.users.get()
+    if not users or not users.value:
+        return []
+    return [
+        {
+            "id": user.id,
+            "displayName": user.display_name,
+            "mail": user.mail,
+            "userPrincipalName": user.user_principal_name,
+        }
+        for user in users.value
+    ]
 
 
 
@@ -128,12 +124,14 @@ def get_room(room_name: str) -> dict | None:
 
 
 @app.get("/api/emails")
-def get_emails() -> dict:
-    """Return the full list of known email addresses.
+async def get_emails() -> dict:
+    """Return the full list of email addresses from Microsoft Graph.
 
     :return: A dictionary containing the list of emails.
     """
-    return {"emails": EMAIL_DIRECTORY}
+    users = await graph_get_users()
+    emails = [u["mail"] or u["userPrincipalName"] for u in users if u["mail"] or u["userPrincipalName"]]
+    return {"emails": emails}
 
 
 @app.get("/api/room/fetch/all")
