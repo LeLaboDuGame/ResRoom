@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
+import re
 
 from msgraph import GraphServiceClient
 from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
@@ -52,6 +53,19 @@ client = GraphServiceClient(credentials=credential, scopes=['https://graph.micro
 
 
 # ---- GRAPH HELPERS ----
+def email_to_display_name(email: str | None) -> str | None:
+    """Convert an email like 'adrien.dumontet@ecm-crit.com' to 'Adrien DUMONTET'."""
+    if not email:
+        return None
+    local = email.split("@")[0]
+    parts = re.split(r'[._\-]', local)
+    if len(parts) >= 2:
+        first = parts[0].capitalize()
+        last = parts[-1].upper()
+        return f"{first} {last}"
+    return local.capitalize()
+
+
 async def graph_get_users() -> list[dict]:
     """Fetch all users from Microsoft Graph."""
     users = await client.users.get()
@@ -71,7 +85,7 @@ async def graph_get_users() -> list[dict]:
 async def graph_get_events_for_room(room_email: str) -> list[dict]:
     """Fetch calendar events for a room mailbox from Microsoft Graph."""
     query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
-        select=["subject", "start", "end"],
+        select=["subject", "start", "end", "organizer"],
     )
     request_configuration = RequestConfiguration(query_parameters=query_params)
     result = await client.users.by_user_id(room_email).events.get(
@@ -85,6 +99,7 @@ async def graph_get_events_for_room(room_email: str) -> list[dict]:
             "subject": event.subject,
             "start": event.start.date_time if event.start else None,
             "end": event.end.date_time if event.end else None,
+            "organizer": email_to_display_name(event.organizer.email_address.address) if event.organizer and event.organizer.email_address else None,
         }
         for event in result.value
     ]

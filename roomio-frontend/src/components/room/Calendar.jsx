@@ -342,7 +342,7 @@ function DayColumn({date, reservations, dayStart, dayEnd, dayLetters, onNewReser
                                          borderLeft: multiDay ? "3px solid #fbbf24" : undefined,
                                      }}>
                             <Text fontSize="xs" color="white" fontWeight="semibold" noOfLines={1}>
-                                {r.title || r.subject}
+                                {r.organizer || r.title || r.subject}
                             </Text>
                             <Text fontSize="xs" color="whiteAlpha.800">
                                 {label}{r.reserved_by ? ` · ${r.reserved_by}` : ''}
