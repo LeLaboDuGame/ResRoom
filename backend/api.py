@@ -9,24 +9,43 @@ import os
 from azure.identity import ClientSecretCredential
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
+from dateutil import tz, parser
 from uuid import uuid4
 import re
 
 from msgraph import GraphServiceClient
+from msgraph.generated.models.location import Location
 from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
 from msgraph.generated.models.event import Event
 from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
+from msgraph.generated.models.attendee import Attendee
+from msgraph.generated.models.email_address import EmailAddress
+from msgraph.generated.models.attendee_type import AttendeeType
+from msgraph.generated.models.location_type import LocationType
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from pydantic import BaseModel
 from rich import status
 
 from config import Config
 import dotenv
-import asyncio
 
 # ---- LOG ----
 LOG_FILE: str = 'log.txt'
+
+LEVEL_COLORS = {
+    "DEBUG":    "\033[44m DEBUG \033[0m",     # blue bg
+    "INFO":     "\033[42m INFO \033[0m",      # green bg
+    "WARNING":  "\033[43m WARNING \033[0m",   # yellow bg
+    "ERROR":    "\033[41m ERROR \033[0m",     # red bg
+    "CRITICAL": "\033[45m CRIT \033[0m",      # magenta bg
+}
+
+
+class ColorFormatter(logging.Formatter):
+    def format(self, record):
+        record.colored_level = LEVEL_COLORS.get(record.levelname, record.levelname)
+        return super().format(record)
 
 # ---- Config ----
 CONFIG_FILE: str = 'config.json'
@@ -51,10 +70,51 @@ credential = ClientSecretCredential(
 )
 client = GraphServiceClient(credentials=credential, scopes=['https://graph.microsoft.com/.default'])
 
+# Logging
+_color_fmt = ColorFormatter(
+    fmt='%(asctime)s, %(name)s %(colored_level)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+_file_fmt = logging.Formatter(
+    fmt='%(asctime)s, %(name)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+
+_stream_handler = logging.StreamHandler()
+_stream_handler.setFormatter(_color_fmt)
+
+_file_handler = logging.FileHandler(LOG_FILE, mode='a')
+_file_handler.setFormatter(_file_fmt)
+
+logging.basicConfig(
+    level=logging.WARNING,
+    handlers=[_file_handler, _stream_handler],
+)
+logging.getLogger(__name__).setLevel(logging.DEBUG)
+
+# Load the api framework
+app = FastAPI()
+
+# Allow the front end to communicate with the API
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOW_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---- DATA BASE ----
+config = Config(CONFIG_FILE)
+config.load()  # Load Config
+
 
 # ---- GRAPH HELPERS ----
 def email_to_display_name(email: str | None) -> str | None:
-    """Convert an email like 'adrien.dumontet@ecm-crit.com' to 'Adrien DUMONTET'."""
+    """Convert an email like 'adrien.dumontet@ecm-crit.com' to 'Adrien DUMONTET'.
+    and from salle-paris-youri.gagarine@ecm-crit.com' to 'Salle Paris Youri"""
     if not email:
         return None
     local = email.split("@")[0]
@@ -82,69 +142,93 @@ async def graph_get_users() -> list[dict]:
     ]
 
 
+def _format_dt(dt_str: str | None, tz_name: str | None = None) -> str | None:
+    """Convertit une date ISO en heure de Paris et retourne 'YYYY-MM-DD HH:MM'."""
+    if not dt_str:
+        return None
+
+    try:
+        dt = parser.isoparse(dt_str)
+    except (ValueError, TypeError):
+        return dt_str
+
+    paris_tz = tz.gettz("Europe/Paris")
+
+    # Si la date n'a pas de fuseau, on considère qu'elle est en UTC
+    if dt.tzinfo is None:
+        if tz_name and tz_name.upper() != "UTC":
+            dt = dt.replace(tzinfo=paris_tz)
+        else:
+            dt = dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(paris_tz).strftime(DATE_FORMAT)
+
 async def graph_get_events_for_room(room_email: str) -> list[dict]:
-    """Fetch calendar events for a room mailbox from Microsoft Graph."""
+    """Fetch calendar events for a room mailbox from Microsoft Graph, converted to Europe/Paris."""
     query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
-        select=["subject", "start", "end", "organizer"],
+        select=["start", "end", "organizer"],
     )
     request_configuration = RequestConfiguration(query_parameters=query_params)
     result = await client.users.by_user_id(room_email).events.get(
-        request_configuration=request_configuration
+        request_configuration=request_configuration,
     )
     if not result or not result.value:
         return []
+    e = result.value[0]
     return [
         {
             "id": event.id,
-            "subject": event.subject,
-            "start": event.start.date_time if event.start else None,
-            "end": event.end.date_time if event.end else None,
-            "organizer": email_to_display_name(event.organizer.email_address.address) if event.organizer and event.organizer.email_address else None,
+            "start": _format_dt(event.start.date_time, event.start.time_zone) if event.start else None,
+            "end": _format_dt(event.end.date_time, event.end.time_zone) if event.end else None,
+            "organizer": email_to_display_name(
+                event.organizer.email_address.address) if event.organizer and event.organizer.email_address else None,
         }
         for event in result.value
     ]
 
 
-async def graph_create_event_for_room(room_email: str, subject: str, start: str, end: str) -> str | None:
-    """Create a calendar event on a room's mailbox. Returns the event ID."""
+async def graph_create_event_for_room(organizer_email: str, attendees_emails: list[str], room_email: str, subject: str,
+                                      start: str, end: str) -> str | None:
+    """Create a calendar event on the organizer's mailbox and invite the room as required attendee. Returns the event ID."""
+    attendees = [
+        Attendee(
+            email_address=EmailAddress(address=email),
+            type=AttendeeType.Required,
+        ) for email in attendees_emails
+    ]
+
+    try:
+        room_user = await client.users.by_user_id(room_email).get()
+        if room_user and room_user.display_name:
+            room_display_name = room_user.display_name
+            logging.info(f"Room display name: {room_display_name}")
+        else:
+            logging.warning(f"Could not fetch display name for room {room_email}: {room_user}")
+            return None
+    except Exception as e:
+        logging.warning(f"Could not fetch display name for room {room_email}: {e}")
+        return None
+
+    all_attendees = attendees + [
+        Attendee(
+            email_address=EmailAddress(address=room_email),
+            type=AttendeeType.Resource,
+        )
+    ]
+
     event = Event(
         subject=subject,
         start=DateTimeTimeZone(date_time=start, time_zone="Europe/Paris"),
         end=DateTimeTimeZone(date_time=end, time_zone="Europe/Paris"),
+        attendees=all_attendees,
     )
     try:
-        result = await client.users.by_user_id(room_email).events.post(event)
+        result = await client.users.by_user_id(organizer_email).events.post(event)
+        logging.info(f"Reservation created by Graph in room {room_email} by {organizer_email}")
         return result.id if result else None
     except Exception as e:
-        logging.warning(f"Could not create Graph event on {room_email}: {e}")
+        logging.warning(f"Could not create Graph event for {organizer_email}: {e}")
         return None
-
-
-# Logging
-logging.basicConfig(filename=LOG_FILE,
-                    filemode='a',
-                    format='%(asctime)s,%(msecs)03d %(name)s %(levelname)s %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.DEBUG)
-
-# Load the api framework
-app = FastAPI()
-
-# Allow the front end to communicate with the API
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOW_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ---- DATA BASE ----
-config = Config(CONFIG_FILE)
-config.load()  # Load Config
-
 
 def get_settings() -> dict:
     """Return the current application settings from the Config."""
@@ -204,7 +288,8 @@ async def get_all_rooms() -> dict:
                 events = await graph_get_events_for_room(room["email"])
                 room_data["reservations"] = events
             except Exception as e:
-                logging.warning(f"Could not fetch events for {room['name']}: {e}")
+                #TODO: Un-comment: logging.warning(f"Could not fetch events for {room['name']}: {e}")
+                pass
         rooms.append(room_data)
     return {"rooms": rooms}
 
@@ -305,31 +390,41 @@ async def create_a_reservation(room_name: str, reservation: Reservation) -> dict
     graph_start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
     graph_end = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-    # Create event on room's Outlook calendar
-    graph_event_id = None
-    if room_res.get("email"):
+    # Create event on organizer's Outlook calendar with room as attendee
+    organizer_email = reservation.reserved_by.split(",")[0].strip() if reservation.reserved_by else None
+    if room_res.get("email") and organizer_email:
         graph_event_id = await graph_create_event_for_room(
-            room_res["email"], reservation.title, graph_start, graph_end
+            organizer_email, reservation.reserved_by.split(","), room_res["email"], reservation.title, graph_start, graph_end
         )
 
+        if graph_event_id is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Graph Event can't be created! Try later or refresh the page")
+
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Email of the room or organizer doesn't exist.")
     new_reservation = {
         "start": reservation.start,
         "end": reservation.end,
         "title": reservation.title,
         "reserved_by": reservation.reserved_by,
+        "organizer": organizer_email,
         "uid": str(uuid4()),
         "graph_event_id": graph_event_id,
     }
 
-    room_res.setdefault("reservations", []).append(new_reservation)
-    room_res["reservations"].sort(
-        key=lambda r: datetime.strptime(r["start"], DATE_FORMAT),
-        reverse=True
-    )
-
     logging.info(f"Reservation created in room: {room_name}! ->\n{new_reservation}")
     config.save()
-    return {"message": "Reservation created!", "reservation": new_reservation}
+
+    updated_events = []
+    if room_res.get("email"):
+        try:
+            updated_events = await graph_get_events_for_room(room_res["email"])
+        except Exception as e:
+            logging.warning(f"Could not refetch events for {room_name}: {e}")
+
+    return {"message": "Reservation created!", "reservation": new_reservation, "reservations": updated_events}
 
 
 @app.put("/api/room/update/{room_name}")
