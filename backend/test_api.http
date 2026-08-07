@@ -1,0 +1,58 @@
+### Fetch room by name
+GET http://127.0.0.1:8000/api/room/fetch/name/Howard%20Hughes
+Accept: application/json
+
+### Fetch all rooms
+GET http://127.0.0.1:8000/api/room/fetch/all
+Accept: application/json
+
+
+### CREATE RESERVATION TEST
+POST http://127.0.0.1:8000/api/reservation/create/Youri Gargarine
+Content-Type: application/json
+
+{
+    "start": "2026-06-05 10:00",
+    "end": "2026-06-05 11:00",
+    "title": "Just a Test",
+    "reserved_by": "Adrien Dumontet"
+}
+
+> {%
+    let res = response.body;
+
+    let reservationUid = res.reservation.uid;
+
+    client.global.set("reservation_uid", reservationUid);
+%}
+
+### REMOVE RESERVATION TEST
+POST http://127.0.0.1:8000/api/reservation/remove/Youri%20Gargarine/{{reservation_uid}}
+
+### UPDATE ROOM TEST
+PUT http://127.0.0.1:8000/api/room/update/Howard%20Hughes
+Content-Type: application/json
+
+{
+    "capacity": 8,
+    "tv": true,
+    "whiteboard": true,
+    "computer": true
+}
+
+### GET RESERVATIONS HISTORY
+GET http://127.0.0.1:8000/api/reservations/history
+
+### GET SETTINGS
+GET http://127.0.0.1:8000/api/settings
+
+### UPDATE SETTINGS
+POST http://127.0.0.1:8000/api/settings
+Content-Type: application/json
+
+{
+    "dayStart": 7,
+    "dayEnd": 22
+}
+
+###
